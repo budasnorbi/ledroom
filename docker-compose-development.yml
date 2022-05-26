@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  frontend:
+    container_name: ledroom-frontend-development
+    build:
+      context: .
+      target: development
+      dockerfile: ./frontend/Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - ./env/.env.development
+    ports:
+      - ${FRONTEND_PORT_PUBLIC}:${FRONTEND_PORT_CONTAINER}
+    depends_on:
+      - backend
+      - db
+
+  backend:
+    # network_mode: host
+    container_name: ledroom-backend-development
+    build:
+      context: ./backend
+      target: development
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/src:/usr/backend/src
+    env_file:
+      - ./env/.env.development
+    ports:
+      - ${BACKEND_PORT_PUBLIC}:${BACKEND_PORT_CONTAINER}
+      - ${BACKEND_WS_PORT_PUBLIC}:${BACKEND_WS_PORT_CONTAINER}
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0.28
+    platform: linux/x86_64
+    container_name: ledroom-db-development
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_HOST: localhost
+      MYSQL_PORT: ${DB_PORT_CONTAINER}
+    volumes:
+      - ./db/data:/var/lib/mysql
+      - ./db/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - ${DB_PORT_PUBLIC}:${DB_PORT_CONTAINER}
