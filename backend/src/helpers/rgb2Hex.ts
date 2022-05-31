@@ -4,5 +4,3 @@ export const rgb2Hex = (color: [number, number, number]): string => {
   const hex = ((color[1] << 16) + (color[0] << 8) + color[2]).toString(16)
   return "0".repeat(6 - hex.length) + hex
 }
-
-export const fixOrder = (red, green, blue) => [green, red, blue]

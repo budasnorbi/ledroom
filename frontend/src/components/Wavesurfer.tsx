@@ -52,8 +52,8 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
         wavesurfer.loadArrayBuffer(arrayBuffer.slice(0))
 
         wavesurfer.once("ready", () => {
-          wavesurfer.zoom(250)
-          wavesurfer.setVolume(0.2)
+          wavesurfer.zoom(200)
+          wavesurfer.setVolume(0)
 
           wavesurfer.on("play", () => {
             const currTime = wavesurfer.getCurrentTime()
@@ -80,10 +80,10 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
           for (let i = 0; i < beatOccurences; i++) {
             wavesurfer.regions.add({
               id: `${i}`,
-              start: i * beatInterval,
-              end: i * beatInterval + beatInterval,
+              start: i * beatInterval + 0.14858537097840407,
+              end: i * beatInterval + beatInterval + 0.14858537097840407,
               drag: false,
-              color: "rgba(0,0,0,0)",
+              color: "rgba(255,0,0,0)",
               resize: false
             })
           }

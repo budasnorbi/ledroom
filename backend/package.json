@@ -29,6 +29,7 @@
     "@nestjs/typeorm": "^8.0.3",
     "@nestjs/websockets": "^8.4.5",
     "cookie-parser": "^1.4.6",
+    "g.js": "^0.1.17",
     "lodash": "^4.17.21",
     "mysql2": "^2.3.3",
     "reflect-metadata": "^0.1.13",
