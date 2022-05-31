@@ -49,17 +49,18 @@ export class LedService {
 
   songEffect(time: number) {
     let ledColors = this.effectService.step({
-      barColorOrLed: [0, 255, 0],
+      barColorOrLed: this.blueBuffer,
       clipLed: [0, 0, 0],
       barCount: 50,
-      speed: 8
+      direction: "right",
+      speed: 1000 / 60
     })
 
     ledColors = this.effectService.blink({
       currentColorOrLed: ledColors,
       toColor: [0, 0, 255],
       watchOnlyColored: true,
-      duration: 3
+      duration: 1
     })
 
     return ledColors

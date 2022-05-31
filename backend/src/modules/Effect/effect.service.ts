@@ -16,6 +16,7 @@ interface Step {
   clipLed: [number, number, number]
   speed: number
   barCount: number
+  direction: "left" | "right"
 }
 
 @Injectable()
@@ -28,14 +29,22 @@ export class EffectService {
   private blinkStart: undefined | number
 
   public step(config: Step): number[] {
-    const { barColorOrLed, barCount, clipLed, speed } = config
+    const { barColorOrLed, barCount, clipLed, speed, direction } = config
     const timeWindowPosition = (Date.now() / speed) % this.ledCount
 
     const frame = barColorOrLed.length === 3 ? [] : cloneArray(barColorOrLed)
+    const directionNumber = direction === "left" ? -1 : 1
 
     if (barColorOrLed.length === 3) {
       for (let i = this.ledCount; i < this.ledCount * 2; i++) {
-        if (g.squareWave((i - timeWindowPosition) % this.ledCount, 0, 1, barCount) === 1) {
+        if (
+          g.squareWave(
+            (i - timeWindowPosition * directionNumber) % this.ledCount,
+            0,
+            1,
+            barCount
+          ) === 1
+        ) {
           frame.push(clipLed[0], clipLed[1], clipLed[2])
         } else {
           frame.push(barColorOrLed[0], barColorOrLed[1], barColorOrLed[2])
@@ -45,7 +54,14 @@ export class EffectService {
 
     if (barColorOrLed.length === this.ledCount * 3) {
       for (let i = this.ledCount; i < this.ledCount * 2; i++) {
-        if (g.squareWave((i - timeWindowPosition) % this.ledCount, 0, 1, barCount) === 1) {
+        if (
+          g.squareWave(
+            (i - timeWindowPosition * directionNumber) % this.ledCount,
+            0,
+            1,
+            barCount
+          ) === 1
+        ) {
           const actualIndex = (i - this.ledCount) * 3
           frame[actualIndex] = clipLed[0]
           frame[actualIndex + 1] = clipLed[1]
