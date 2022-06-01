@@ -5,18 +5,22 @@ import { cloneArray } from "@helpers/cloneArray"
 
 interface Blink {
   yGenerator?: (mappedX: number) => number
-  currentColorOrLed: [number, number, number] | number[]
+  ledColor: number[]
+  fromColor?: [number, number, number]
   toColor: number[]
   watchOnlyColored: boolean
   duration: number
+  range?: [number, number]
 }
 
 interface Step {
-  barColorOrLed: [number, number, number] | number[]
+  ledColor: number[]
+  barColor?: [number, number, number]
   clipLed: [number, number, number]
   speed: number
   barCount: number
   direction: "left" | "right"
+  range?: [number, number]
 }
 
 @Injectable()
@@ -29,13 +33,16 @@ export class EffectService {
   private blinkStart: undefined | number
 
   public step(config: Step): number[] {
-    const { barColorOrLed, barCount, clipLed, speed, direction } = config
+    const { ledColor, barCount, clipLed, speed, direction, barColor } = config
+    const [startLed, endLed] = config.range ?? [0, this.ledCount]
+
     const timeWindowPosition = (Date.now() / speed) % this.ledCount
 
-    const frame = barColorOrLed.length === 3 ? [] : cloneArray(barColorOrLed)
+    const frame = cloneArray(ledColor)
     const directionNumber = direction === "left" ? -1 : 1
 
-    if (barColorOrLed.length === 3) {
+    // Ez akkor hasznos ha van egy hátterünk és azon eltérő barColort szeretnénk
+    if (barColor) {
       for (let i = this.ledCount; i < this.ledCount * 2; i++) {
         if (
           g.squareWave(
@@ -45,14 +52,42 @@ export class EffectService {
             barCount
           ) === 1
         ) {
-          frame.push(clipLed[0], clipLed[1], clipLed[2])
+          const ledIndex = i - this.ledCount
+          const byteIndex = ledIndex * 3
+
+          if (startLed < endLed) {
+            if (ledIndex >= startLed && ledIndex <= endLed) {
+              frame[byteIndex] = barColor[0]
+              frame[byteIndex + 1] = barColor[1]
+              frame[byteIndex + 2] = barColor[2]
+            }
+          } else {
+            if (ledIndex >= startLed || ledIndex <= endLed) {
+              frame[byteIndex] = barColor[0]
+              frame[byteIndex + 1] = barColor[1]
+              frame[byteIndex + 2] = barColor[2]
+            }
+          }
         } else {
-          frame.push(barColorOrLed[0], barColorOrLed[1], barColorOrLed[2])
+          const ledIndex = i - this.ledCount
+          const byteIndex = ledIndex * 3
+
+          if (startLed < endLed) {
+            if (ledIndex >= startLed && ledIndex <= endLed) {
+              frame[byteIndex] = clipLed[0]
+              frame[byteIndex + 1] = clipLed[1]
+              frame[byteIndex + 2] = clipLed[2]
+            }
+          } else {
+            if (ledIndex >= startLed || ledIndex <= endLed) {
+              frame[byteIndex] = clipLed[0]
+              frame[byteIndex + 1] = clipLed[1]
+              frame[byteIndex + 2] = clipLed[2]
+            }
+          }
         }
       }
-    }
-
-    if (barColorOrLed.length === this.ledCount * 3) {
+    } else {
       for (let i = this.ledCount; i < this.ledCount * 2; i++) {
         if (
           g.squareWave(
@@ -62,10 +97,22 @@ export class EffectService {
             barCount
           ) === 1
         ) {
-          const actualIndex = (i - this.ledCount) * 3
-          frame[actualIndex] = clipLed[0]
-          frame[actualIndex + 1] = clipLed[1]
-          frame[actualIndex + 2] = clipLed[2]
+          const ledIndex = i - this.ledCount
+          const byteIndex = ledIndex * 3
+
+          if (startLed < endLed) {
+            if (ledIndex >= startLed && ledIndex <= endLed) {
+              frame[byteIndex] = clipLed[0]
+              frame[byteIndex + 1] = clipLed[1]
+              frame[byteIndex + 2] = clipLed[2]
+            }
+          } else {
+            if (ledIndex >= startLed || ledIndex <= endLed) {
+              frame[byteIndex] = clipLed[0]
+              frame[byteIndex + 1] = clipLed[1]
+              frame[byteIndex + 2] = clipLed[2]
+            }
+          }
         }
       }
     }
@@ -74,7 +121,7 @@ export class EffectService {
   }
 
   public blink(config: Blink) {
-    const { duration, toColor, currentColorOrLed, yGenerator, watchOnlyColored } = config
+    const { duration, toColor, ledColor, yGenerator, watchOnlyColored, fromColor } = config
 
     if (!this.blinkStart) {
       this.blinkStart = Date.now()
@@ -84,46 +131,41 @@ export class EffectService {
       this.blinkStart = undefined
     }
 
-    const frame = currentColorOrLed.length === 3 ? [] : cloneArray(currentColorOrLed)
+    const [startLed, endLed] = config.range ?? [0, this.ledCount]
+
+    const frame = cloneArray(ledColor)
 
     const mappedX = map(Date.now(), this.blinkStart, this.blinkStart + duration * 1000, 0, Math.PI)
     const y = yGenerator ? yGenerator(mappedX) : Math.sin(mappedX - Math.PI / 2) + 1
     const transitionPct = map(y, 0, 2, 0, 100)
 
-    if (currentColorOrLed.length === 3) {
-      // If i pass only a color
-      for (let i = 0; i < this.ledCount; i++) {
-        frame.push(
-          // Red
-          Math.floor(map(transitionPct, 0, 100, currentColorOrLed[0], toColor[0])),
-          // Green
-          Math.floor(map(transitionPct, 0, 100, currentColorOrLed[1], toColor[1])),
-          // Blue
-          Math.floor(map(transitionPct, 0, 100, currentColorOrLed[2], toColor[2]))
-        )
+    for (let i = 0; i < this.ledCount; i++) {
+      const actualIndex = i * 3
+
+      const frameRed = fromColor ? fromColor[0] : frame[actualIndex]
+      const frameGreen = fromColor ? fromColor[1] : frame[actualIndex + 1]
+      const frameBlue = fromColor ? fromColor[2] : frame[actualIndex + 2]
+
+      if (watchOnlyColored && frameRed === 0 && frameGreen === 0 && frameBlue === 0) {
+        continue
       }
-    }
 
-    // If i pass the whole led array
-    if (currentColorOrLed.length === this.ledCount * 3) {
-      for (let i = 0; i < this.ledCount; i++) {
-        const actualIndex = i * 3
-
-        const frameRed = frame[actualIndex]
-        const frameGreen = frame[actualIndex + 1]
-        const frameBlue = frame[actualIndex + 2]
-
-        if (watchOnlyColored && frameRed === 0 && frameGreen === 0 && frameBlue === 0) {
+      if (startLed < endLed) {
+        if (!(i >= startLed && i <= endLed)) {
           continue
         }
-
-        // Red
-        frame[actualIndex] = Math.floor(map(transitionPct, 0, 100, frameRed, toColor[0]))
-        // Green
-        frame[actualIndex + 1] = Math.floor(map(transitionPct, 0, 100, frameGreen, toColor[1]))
-        // Blue
-        frame[actualIndex + 2] = Math.floor(map(transitionPct, 0, 100, frameBlue, toColor[2]))
+      } else {
+        if (!(i >= startLed || i <= endLed)) {
+          continue
+        }
       }
+
+      // Red
+      frame[actualIndex] = Math.floor(map(transitionPct, 0, 100, frameRed, toColor[0]))
+      // Green
+      frame[actualIndex + 1] = Math.floor(map(transitionPct, 0, 100, frameGreen, toColor[1]))
+      // Blue
+      frame[actualIndex + 2] = Math.floor(map(transitionPct, 0, 100, frameBlue, toColor[2]))
     }
 
     return frame

@@ -8,11 +8,11 @@ export class LedService {
   private ledFrameIntervalID: undefined | NodeJS.Timeout
   private fps = 60
   private musicTime = 0
-  private blackBuffer = createLedsColorsArr(0, 0, 0)
-  private redBuffer = createLedsColorsArr(255, 0, 0)
-  private greenBuffer = createLedsColorsArr(0, 255, 0)
-  private blueBuffer = createLedsColorsArr(0, 0, 255)
-  private whiteBuffer = createLedsColorsArr(255, 255, 255)
+  private blackBuffer = createLedsColorsArr([0, 0, 0])
+  private redBuffer = createLedsColorsArr([255, 0, 0])
+  private greenBuffer = createLedsColorsArr([0, 255, 0])
+  private blueBuffer = createLedsColorsArr([0, 0, 255])
+  private whiteBuffer = createLedsColorsArr([255, 255, 255])
 
   constructor(private udpService: UdpService, private effectService: EffectService) {
     this.udpService.sendData(this.blackBuffer)
@@ -35,32 +35,59 @@ export class LedService {
     }
   }
 
-  t1Colors = [createLedsColorsArr(0, 255, 0), createLedsColorsArr(0, 0, 0)]
-  t2Colors = [createLedsColorsArr(0, 0, 255), createLedsColorsArr(0, 255, 0)]
-  t3Colors = [createLedsColorsArr(0, 0, 255), createLedsColorsArr(0, 255, 255)]
-  t4Colors = [createLedsColorsArr(0, 255, 255), createLedsColorsArr(0, 255, 0)]
-  t5Colors = [createLedsColorsArr(0, 0, 0), createLedsColorsArr(0, 0, 255)]
-  redColor = createLedsColorsArr(255, 0, 0)
-
-  private w1 = [682, 74]
-  private w2 = [75, 305]
-  private w3 = [306, 493]
-  private w4 = [494, 681]
+  private w1: [number, number] = [682, 74]
+  private w2: [number, number] = [75, 305]
+  private w3: [number, number] = [306, 493]
+  private w4: [number, number] = [494, 681]
 
   songEffect(time: number) {
-    let ledColors = this.effectService.step({
-      barColorOrLed: this.blueBuffer,
-      clipLed: [0, 0, 0],
-      barCount: 50,
-      direction: "right",
-      speed: 1000 / 60
-    })
+    // let ledColors = this.effectService.step({
+    //   ledColor: this.blackBuffer,
+    //   barColor: [0, 0, 255],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 50,
+    //   direction: "right",
+    //   speed: 1000 / 60,
+    //   ledRange: this.w1
+    // })
 
-    ledColors = this.effectService.blink({
-      currentColorOrLed: ledColors,
+    // ledColors = this.effectService.step({
+    //   ledColor: ledColors,
+    //   barColor: [0, 0, 255],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 50,
+    //   direction: "right",
+    //   speed: 1000 / 60,
+    //   ledRange: this.w3
+    // })
+
+    // ledColors = this.effectService.step({
+    //   ledColor: ledColors,
+    //   barColor: [0, 255, 0],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 25,
+    //   direction: "left",
+    //   speed: 1000 / 60,
+    //   ledRange: this.w2
+    // })
+
+    // ledColors = this.effectService.step({
+    //   ledColor: ledColors,
+    //   barColor: [0, 255, 0],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 25,
+    //   direction: "left",
+    //   speed: 1000 / 60,
+    //   ledRange: this.w4
+    // })
+
+    const ledColors = this.effectService.blink({
+      ledColor: this.blackBuffer,
+      fromColor: [0, 255, 0],
       toColor: [0, 0, 255],
-      watchOnlyColored: true,
-      duration: 1
+      watchOnlyColored: false,
+      duration: 1,
+      range: [0, 100]
     })
 
     return ledColors
