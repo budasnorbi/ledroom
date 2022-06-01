@@ -2,26 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { map } from "@helpers/map"
 import * as g from "g.js"
 import { cloneArray } from "@helpers/cloneArray"
-
-interface Blink {
-  yGenerator?: (mappedX: number) => number
-  ledColor: number[]
-  fromColor?: [number, number, number]
-  toColor: number[]
-  watchOnlyColored: boolean
-  duration: number
-  range?: [number, number]
-}
-
-interface Step {
-  ledColor: number[]
-  barColor?: [number, number, number]
-  clipLed: [number, number, number]
-  speed: number
-  barCount: number
-  direction: "left" | "right"
-  range?: [number, number]
-}
+import { Blink, Step } from "@type/effetc"
 
 @Injectable()
 export class EffectService {
@@ -55,17 +36,26 @@ export class EffectService {
           const ledIndex = i - this.ledCount
           const byteIndex = ledIndex * 3
 
+          // LINEAR BRIGHTNESS INCREASING
+          const brightnessMultipler = map(
+            ((i - timeWindowPosition * directionNumber) % this.ledCount) % (barCount / 2),
+            0,
+            barCount / 2,
+            0,
+            1 * directionNumber
+          )
+
           if (startLed < endLed) {
             if (ledIndex >= startLed && ledIndex <= endLed) {
-              frame[byteIndex] = barColor[0]
-              frame[byteIndex + 1] = barColor[1]
-              frame[byteIndex + 2] = barColor[2]
+              frame[byteIndex] = Math.round(barColor[0] * brightnessMultipler)
+              frame[byteIndex + 1] = Math.round(barColor[1] * brightnessMultipler)
+              frame[byteIndex + 2] = Math.round(barColor[2] * brightnessMultipler)
             }
           } else {
             if (ledIndex >= startLed || ledIndex <= endLed) {
-              frame[byteIndex] = barColor[0]
-              frame[byteIndex + 1] = barColor[1]
-              frame[byteIndex + 2] = barColor[2]
+              frame[byteIndex] = Math.round(barColor[0] * brightnessMultipler)
+              frame[byteIndex + 1] = Math.round(barColor[1] * brightnessMultipler)
+              frame[byteIndex + 2] = Math.round(barColor[2] * brightnessMultipler)
             }
           }
         } else {
