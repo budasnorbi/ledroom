@@ -15,16 +15,16 @@ export class LedService {
   private whiteBuffer = createLedsColorsArr([255, 255, 255])
 
   constructor(private udpService: UdpService, private effectService: EffectService) {
-    const ledColors = this.effectService.step({
-      ledColor: this.blackBuffer,
-      barColor: [0, 0, 255],
-      clipLed: [0, 0, 0],
-      barCount: 50,
-      direction: "left",
-      speed: 1000 / 60,
-      range: this.w1
-    })
-    this.udpService.sendData(ledColors)
+    // const ledColors = this.effectService.step({
+    //   ledColor: this.blackBuffer,
+    //   barColor: [0, 0, 255],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 50,
+    //   direction: "left",
+    //   speed: 1000 / 60,
+    //   range: this.w1
+    // })
+    this.udpService.sendData(this.blackBuffer)
   }
 
   updateTime(time: number) {
@@ -49,46 +49,50 @@ export class LedService {
   private w3: [number, number] = [306, 493]
   private w4: [number, number] = [494, 681]
 
+  private x = 0
+
   songEffect(time: number) {
-    let ledColors = this.effectService.step({
-      ledColor: this.blackBuffer,
-      barColor: [0, 0, 255],
-      clipLed: [0, 0, 0],
-      barCount: 50,
-      direction: "right",
-      speed: 1000 / 60,
-      range: this.w1
-    })
+    const ledColors = this.effectService.starlight({ ledColors: this.blackBuffer })
+    console.log(time % 20)
+    // const ledColors = this.effectService.step({
+    //   ledColor: this.blackBuffer,
+    //   barColor: [0, 0, 255],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 50,
+    //   direction: "right",
+    //   speed: 1000 / 60,
+    //   range: this.w1
+    // })
 
-    ledColors = this.effectService.step({
-      ledColor: ledColors,
-      barColor: [0, 0, 255],
-      clipLed: [0, 0, 0],
-      barCount: 50,
-      direction: "right",
-      speed: 1000 / 60,
-      range: this.w3
-    })
+    // ledColors = this.effectService.step({
+    //   ledColor: ledColors,
+    //   barColor: [0, 0, 255],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 50,
+    //   direction: "right",
+    //   speed: 1000 / 60,
+    //   range: this.w3
+    // })
 
-    ledColors = this.effectService.step({
-      ledColor: ledColors,
-      barColor: [0, 255, 0],
-      clipLed: [0, 0, 0],
-      barCount: 25,
-      direction: "left",
-      speed: 1000 / 60,
-      range: this.w2
-    })
+    // ledColors = this.effectService.step({
+    //   ledColor: ledColors,
+    //   barColor: [0, 255, 0],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 25,
+    //   direction: "left",
+    //   speed: 1000 / 60,
+    //   range: this.w2
+    // })
 
-    ledColors = this.effectService.step({
-      ledColor: ledColors,
-      barColor: [0, 255, 0],
-      clipLed: [0, 0, 0],
-      barCount: 25,
-      direction: "left",
-      speed: 1000 / 60,
-      range: this.w4
-    })
+    // ledColors = this.effectService.step({
+    //   ledColor: ledColors,
+    //   barColor: [0, 255, 0],
+    //   clipLed: [0, 0, 0],
+    //   barCount: 25,
+    //   direction: "left",
+    //   speed: 1000 / 60,
+    //   range: this.w4
+    // })
 
     // ledColors = this.effectService.blink({
     //   currentColorOrLed: ledColors,

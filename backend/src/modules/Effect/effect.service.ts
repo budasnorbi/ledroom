@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { map } from "@helpers/map"
 import * as g from "g.js"
 import { cloneArray } from "@helpers/cloneArray"
-import { Blink, Step } from "@type/effetc"
+import { Blink, Starlight, Step } from "@type/effetc"
 
 @Injectable()
 export class EffectService {
@@ -12,14 +12,22 @@ export class EffectService {
   avgMessurmentTime: undefined | number
 
   private blinkStart: undefined | number
+  private startList: any = []
+
+  starlight(config: Starlight): number[] {
+    const { ledColors } = config
+    const frame = cloneArray(ledColors)
+
+    return frame
+  }
 
   public step(config: Step): number[] {
-    const { ledColor, barCount, clipLed, speed, direction, barColor } = config
+    const { ledColors, barCount, clipLed, speed, direction, barColor } = config
     const [startLed, endLed] = config.range ?? [0, this.ledCount]
 
     const timeWindowPosition = (Date.now() / speed) % this.ledCount
 
-    const frame = cloneArray(ledColor)
+    const frame = cloneArray(ledColors)
     const directionNumber = direction === "left" ? -1 : 1
 
     // Ez akkor hasznos ha van egy hátterünk és azon eltérő barColort szeretnénk
@@ -37,13 +45,21 @@ export class EffectService {
           const byteIndex = ledIndex * 3
 
           // LINEAR BRIGHTNESS INCREASING
-          const brightnessMultipler = map(
+          let brightnessMultipler = map(
             ((i - timeWindowPosition * directionNumber) % this.ledCount) % (barCount / 2),
             0,
             barCount / 2,
             0,
             1 * directionNumber
           )
+
+          if (brightnessMultipler === 0.5) {
+            brightnessMultipler = 1
+          }
+
+          if (brightnessMultipler > 0.5) {
+            brightnessMultipler = 1 - brightnessMultipler
+          }
 
           if (startLed < endLed) {
             if (ledIndex >= startLed && ledIndex <= endLed) {
@@ -111,7 +127,7 @@ export class EffectService {
   }
 
   public blink(config: Blink) {
-    const { duration, toColor, ledColor, yGenerator, watchOnlyColored, fromColor } = config
+    const { duration, toColor, ledColors, yGenerator, watchOnlyColored, fromColor } = config
 
     if (!this.blinkStart) {
       this.blinkStart = Date.now()
@@ -123,7 +139,7 @@ export class EffectService {
 
     const [startLed, endLed] = config.range ?? [0, this.ledCount]
 
-    const frame = cloneArray(ledColor)
+    const frame = cloneArray(ledColors)
 
     const mappedX = map(Date.now(), this.blinkStart, this.blinkStart + duration * 1000, 0, Math.PI)
     const y = yGenerator ? yGenerator(mappedX) : Math.sin(mappedX - Math.PI / 2) + 1
