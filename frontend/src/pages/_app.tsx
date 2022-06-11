@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { AppProps } from "next/app"
 import { CacheProvider, EmotionCache } from "@emotion/react"
 import { createEmotionCache } from "@utils/createEmtionCache"
-import "../styles/regions.css"
+import "../styles/customhandle.css"
 
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache

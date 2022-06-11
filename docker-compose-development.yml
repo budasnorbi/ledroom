@@ -32,7 +32,6 @@ services:
       - ./env/.env.development
     ports:
       - ${BACKEND_PORT_PUBLIC}:${BACKEND_PORT_CONTAINER}
-      - ${BACKEND_WS_PORT_PUBLIC}:${BACKEND_WS_PORT_CONTAINER}
     depends_on:
       - db
 

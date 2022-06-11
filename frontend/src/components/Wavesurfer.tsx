@@ -21,10 +21,12 @@ interface WaveSurferProps {
 const WaveSurfer: FC<WaveSurferProps> = (props) => {
   const [audioPlaying, setAudioPlaying] = useState<boolean>(false)
   const wavesurferContainerRef = useRef<WaveSurfer | any>(null)
+  const [zoomLevel, setZoomLevel] = useState(200)
+  const [musicCurrentTime, setMusicCurrentTime] = useState<undefined | number>()
   const wavesurferRef = useRef<WaveSurfer>()
 
   useEffect(() => {
-    fetch("/music.mp3")
+    fetch("/music3.mp3")
       .then((response) => response.arrayBuffer())
       .then(async (arrayBuffer) => {
         const wavesurfer = Wavesurfer.create({
@@ -52,11 +54,13 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
         wavesurfer.loadArrayBuffer(arrayBuffer.slice(0))
 
         wavesurfer.once("ready", () => {
-          wavesurfer.zoom(200)
+          setMusicCurrentTime(wavesurfer.getCurrentTime())
+          wavesurfer.zoom(zoomLevel)
           wavesurfer.setVolume(0.15)
 
           wavesurfer.on("play", () => {
             const currTime = wavesurfer.getCurrentTime()
+            setMusicCurrentTime(currTime)
             props.sendStart(currTime)
           })
 
@@ -66,18 +70,20 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
 
           wavesurfer.on("seek", () => {
             const currTime = wavesurfer.getCurrentTime()
-            //console.log(currTime)
+            setMusicCurrentTime(currTime)
             props.sendSeek(currTime)
           })
 
           wavesurfer.on("audioprocess", (time: number) => {
+            setMusicCurrentTime(time)
             props.sendTimeupdate(time)
           })
 
           const beatInterval = 1 / (127 / 60)
-          const beatOffset = 0.14858537097840407
+          const beatOffset = 0.97436
           const duration = wavesurfer.getDuration()
           const beatOccurences = Math.trunc(duration / beatInterval)
+          console.log(beatOccurences)
 
           const startTimes: number[] = []
           const endTimes: number[] = []
@@ -98,6 +104,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             region.element.setAttribute("data-rangetype", "bpm-range")
 
             const tempoDiv = document.createElement("div")
+            tempoDiv.id = `tempoDiv-${i}`
             tempoDiv.textContent = `${(i + 1) % 4 === 0 ? 4 : (i + 1) % 4}`
             tempoDiv.style.height = "100%"
             tempoDiv.style.width = "100%"
@@ -105,9 +112,13 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             tempoDiv.style.alignItems = "center"
             tempoDiv.style.justifyContent = "center"
             if (i === 0) {
-              tempoDiv.style.borderLeft = "dashed 1px rgba(0,0,0,.5)"
+              tempoDiv.style.borderLeftColor = "rgba(0,0,0,.5)"
+              tempoDiv.style.borderLeftWidth = "1px "
+              tempoDiv.style.borderLeftStyle = "dashed"
             }
-            tempoDiv.style.borderRight = "dashed 1px rgba(0,0,0,.5)"
+            tempoDiv.style.borderRightColor = "rgba(0,0,0,.5)"
+            tempoDiv.style.borderRightWidth = "1px "
+            tempoDiv.style.borderRightStyle = "dashed"
 
             wavesurfer.regions.list[i].element.appendChild(tempoDiv)
           }
@@ -272,6 +283,21 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
     }
   }, [])
 
+  useEffect(() => {
+    wavesurferRef.current?.zoom(zoomLevel)
+  }, [zoomLevel])
+
+  const handleZoomIn = () => {
+    setZoomLevel((prevZoomLevel) => prevZoomLevel + 100)
+  }
+  const handleZoomOut = () => {
+    setZoomLevel((prevZoomLevel) => prevZoomLevel - 100)
+  }
+
+  const handleZoomReset = () => {
+    setZoomLevel((prevZoomLevel) => 200)
+  }
+
   const handlePlayPause = async () => {
     await wavesurferRef.current?.playPause()
     setAudioPlaying((prevState) => !prevState)
@@ -282,6 +308,10 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
       <div style={{ height: "20px" }} id="wave-timeline"></div>
       <div>
         <button onClick={handlePlayPause}>{audioPlaying ? "Resume" : "Play"}</button>
+        <button onClick={handleZoomIn}>Zoom in</button>
+        <button onClick={handleZoomOut}>Zoom Out</button>
+        <button onClick={handleZoomReset}>Reset Zoom</button>
+        <div>Time: {musicCurrentTime ? musicCurrentTime.toPrecision(5) : 0}</div>
       </div>
     </>
   )
