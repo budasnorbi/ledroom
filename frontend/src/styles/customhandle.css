@@ -3,3 +3,16 @@
   margin: 0;
   padding: 0;
 }
+
+.bpm-range {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: dashed 1px rgba(0, 0, 0, 0.5);
+}
+
+.bpm-range:first-child {
+  border-left: dashed 1px rgba(0, 0, 0, 0.5);
+}

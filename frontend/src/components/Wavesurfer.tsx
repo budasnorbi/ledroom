@@ -1,7 +1,8 @@
-import { useRef, useEffect, useState, FC } from "react"
+import { useRef, useEffect, useState, FC, useCallback } from "react"
 import Wavesurfer from "wavesurfer.js"
 import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
 import RegionsPlugin, { Region } from "wavesurfer.js/src/plugin/regions"
+import MinimapPlugin from "wavesurfer.js/src/plugin/minimap"
 
 import {
   formatTimeCallback,
@@ -9,6 +10,8 @@ import {
   secondaryLabelInterval,
   timeInterval
 } from "@utils/wavesurfer"
+import { number } from "yup"
+import { useStore } from "@utils/store"
 
 interface WaveSurferProps {
   sendStart: (time: number) => void
@@ -18,18 +21,39 @@ interface WaveSurferProps {
   sendReset: () => void
 }
 
-const WaveSurfer: FC<WaveSurferProps> = (props) => {
-  const [audioPlaying, setAudioPlaying] = useState<boolean>(false)
+let wavesurfer: Wavesurfer
+
+const WaveSurfer: FC<WaveSurferProps> = ({
+  sendReset,
+  sendSeek,
+  sendStart,
+  sendStop,
+  sendTimeupdate
+}) => {
   const wavesurferContainerRef = useRef<WaveSurfer | any>(null)
-  const [zoomLevel, setZoomLevel] = useState(200)
+  // const [zoomLevel, setZoomLevel] = useState(200)
   const [musicCurrentTime, setMusicCurrentTime] = useState<undefined | number>()
-  const wavesurferRef = useRef<WaveSurfer>()
+
+  const setWavesurferPlayPause = useStore(useCallback((state) => state.setWavesurferPlayPause, []))
+  const setWavesurferReady = useStore(useCallback((state) => state.setWavesurferReady, []))
+  const createRegion = useStore(useCallback((state) => state.createRegion, []))
+  const updateRegion = useStore(useCallback((state) => state.updateRegion, []))
+  const setDuration = useStore(useCallback((state) => state.setDuration, []))
+  const selectRegion = useStore(useCallback((state) => state.selectRegion, []))
+
+  const beatInterval = useStore(useCallback((state) => state.beatInterval, []))
+  const selectedRegion = useStore((state) => state.selectedRegion)
+  const beatEndTime = useStore(useCallback((state) => state.beatEndTime, []))
+  const beatOffset = useStore(useCallback((state) => state.beatOffset, []))
+  const duration = useStore(useCallback((state) => state.duration, []))
+  const wavesurferReady = useStore(useCallback((state) => state.wavesurferReady, []))
+  const wavesurferPlayPause = useStore(useCallback((state) => state.wavesurferPlayPause, []))
 
   useEffect(() => {
-    fetch("/music3.mp3")
+    fetch("/music.mp3")
       .then((response) => response.arrayBuffer())
       .then(async (arrayBuffer) => {
-        const wavesurfer = Wavesurfer.create({
+        wavesurfer = Wavesurfer.create({
           container: wavesurferContainerRef.current,
           barWidth: 1,
           partialRender: true,
@@ -50,50 +74,45 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             RegionsPlugin.create({})
           ]
         })
-
         wavesurfer.loadArrayBuffer(arrayBuffer.slice(0))
 
+        wavesurfer.on("play", () => {
+          const currTime = wavesurfer.getCurrentTime()
+          setMusicCurrentTime(currTime)
+          sendStart(currTime)
+        })
+
+        wavesurfer.on("pause", () => {
+          sendStop()
+        })
+
+        wavesurfer.on("seek", () => {
+          const currTime = wavesurfer.getCurrentTime()
+          setMusicCurrentTime(currTime)
+          sendSeek(currTime)
+        })
+
+        wavesurfer.on("audioprocess", (time: number) => {
+          setMusicCurrentTime(time)
+          sendTimeupdate(time)
+        })
+
         wavesurfer.once("ready", () => {
+          setWavesurferReady(true)
+          setDuration(wavesurfer.getDuration())
+
           setMusicCurrentTime(wavesurfer.getCurrentTime())
-          wavesurfer.zoom(zoomLevel)
+          wavesurfer.zoom(200)
           wavesurfer.setVolume(0.15)
 
-          wavesurfer.on("play", () => {
-            const currTime = wavesurfer.getCurrentTime()
-            setMusicCurrentTime(currTime)
-            props.sendStart(currTime)
-          })
-
-          wavesurfer.on("pause", () => {
-            props.sendStop()
-          })
-
-          wavesurfer.on("seek", () => {
-            const currTime = wavesurfer.getCurrentTime()
-            setMusicCurrentTime(currTime)
-            props.sendSeek(currTime)
-          })
-
-          wavesurfer.on("audioprocess", (time: number) => {
-            setMusicCurrentTime(time)
-            props.sendTimeupdate(time)
-          })
-
-          const beatInterval = 1 / (127 / 60)
-          const beatOffset = 0.97436
-          const duration = wavesurfer.getDuration()
-          const beatOccurences = Math.trunc(duration / beatInterval)
-          console.log(beatOccurences)
-
-          const startTimes: number[] = []
-          const endTimes: number[] = []
+          const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
 
           for (let i = 0; i < beatOccurences; i++) {
-            startTimes.push(i * beatInterval + beatOffset)
-            endTimes.push(i * beatInterval + beatInterval + beatOffset)
-
+            if (beatInterval * i + beatOffset > beatEndTime && i % 4 === 0) {
+              break
+            }
             const region = wavesurfer.regions.add({
-              id: `${i}`,
+              id: i.toString(),
               start: i * beatInterval + beatOffset,
               end: i * beatInterval + beatInterval + beatOffset,
               drag: false,
@@ -106,83 +125,102 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             const tempoDiv = document.createElement("div")
             tempoDiv.id = `tempoDiv-${i}`
             tempoDiv.textContent = `${(i + 1) % 4 === 0 ? 4 : (i + 1) % 4}`
-            tempoDiv.style.height = "100%"
-            tempoDiv.style.width = "100%"
-            tempoDiv.style.display = "flex"
-            tempoDiv.style.alignItems = "center"
-            tempoDiv.style.justifyContent = "center"
-            if (i === 0) {
-              tempoDiv.style.borderLeftColor = "rgba(0,0,0,.5)"
-              tempoDiv.style.borderLeftWidth = "1px "
-              tempoDiv.style.borderLeftStyle = "dashed"
-            }
-            tempoDiv.style.borderRightColor = "rgba(0,0,0,.5)"
-            tempoDiv.style.borderRightWidth = "1px "
-            tempoDiv.style.borderRightStyle = "dashed"
+            tempoDiv.className = "bpm-range"
 
             wavesurfer.regions.list[i].element.appendChild(tempoDiv)
           }
+        })
 
-          let handleType: undefined | "left" | "right"
-          let leftHandleLastVal: undefined | number
-          let rightHandleLastVal: undefined | number
+        let handleType: undefined | "left" | "right"
+        let leftHandleLastVal: undefined | number
+        let rightHandleLastVal: undefined | number
+        let mouseInRegionStart: undefined | number
+        let mouseInRegionEnd: undefined | number
 
-          wavesurfer.on("region-dblclick", (x) => {
-            const id =
-              Object.keys(wavesurfer.regions.list)
-                .map((x) => parseInt(x))
-                .sort((a, b) => b - a)[0] + 1
+        const clearInternals = () => {
+          handleType = undefined
+          mouseInRegionStart = undefined
+          mouseInRegionEnd = undefined
+          leftHandleLastVal = undefined
+          rightHandleLastVal = undefined
+        }
 
-            const region = wavesurfer.regions.add({
-              id: id.toString(),
-              start: x.start,
-              end: x.end,
-              drag: true,
-              color: "rgba(0,0,255,.15)",
-              resize: true
-            })
-
-            region.element.addEventListener("mousedown", () => {
-              leftHandleLastVal = region.start
-              rightHandleLastVal = region.end
-            })
-
-            region.handleLeftEl?.addEventListener("mousedown", () => {
-              leftHandleLastVal = region.start
-              handleType = "left"
-            })
-
-            region.handleRightEl?.addEventListener("mousedown", () => {
-              rightHandleLastVal = region.end
-              handleType = "right"
-            })
-          })
-
-          let mouseInRegionStart: undefined | number
-          let mouseInRegionEnd: undefined | number
-
-          const clearInternals = () => {
-            handleType = undefined
-            mouseInRegionStart = undefined
-            mouseInRegionEnd = undefined
-            leftHandleLastVal = undefined
-            rightHandleLastVal = undefined
+        wavesurfer.on("region-dblclick", (region: Region) => {
+          if (region.element.getAttribute("data-rangetype") === "effect-range") {
+            return
           }
 
-          wavesurfer.on("region-updated", (region: Region) => {
-            mouseInRegionStart = region.start
-            mouseInRegionEnd = region.end
+          const id =
+            /* @ts-ignore */
+            Object.keys(wavesurfer.regions.list)
+              .map((regionKey) => parseInt(regionKey))
+              .sort((a, b) => b - a)[0] + 1
+
+          createRegion({
+            id,
+            startTime: region.start,
+            endTime: region.end,
+            bezierValues: [0.2, 0.2, 0.8, 0.8]
+          })
+          selectRegion(id)
+
+          /* @ts-ignore */
+          const newRegion = wavesurfer.regions.add({
+            id: id.toString(),
+            start: region.start,
+            end: region.end,
+            drag: true,
+            color: "rgba(0,0,255,.15)",
+            resize: true
           })
 
-          wavesurfer.on("region-update-end", (region: Region) => {
-            if (
-              region.start < beatOffset ||
-              region.end < beatOffset ||
-              !mouseInRegionEnd ||
-              !mouseInRegionStart ||
-              !leftHandleLastVal ||
-              !rightHandleLastVal
-            ) {
+          newRegion.element.setAttribute("data-rangetype", "effect-range")
+
+          newRegion.element.addEventListener("mousedown", () => {
+            leftHandleLastVal = region.start
+            rightHandleLastVal = region.end
+          })
+
+          newRegion.handleLeftEl?.addEventListener("mousedown", () => {
+            leftHandleLastVal = region.start
+            handleType = "left"
+          })
+
+          newRegion.handleRightEl?.addEventListener("mousedown", () => {
+            rightHandleLastVal = region.end
+            handleType = "right"
+          })
+        })
+
+        wavesurfer.on("region-updated", (region: Region) => {
+          mouseInRegionStart = region.start
+          mouseInRegionEnd = region.end
+        })
+
+        wavesurfer.on("region-update-end", (region: Region) => {
+          const regionId = parseInt(region.id)
+          if (
+            region.start < beatOffset ||
+            region.end < beatOffset ||
+            !mouseInRegionEnd ||
+            !mouseInRegionStart
+          ) {
+            region.update({
+              start: leftHandleLastVal,
+              end: rightHandleLastVal
+            })
+            return clearInternals()
+          }
+
+          // drag used
+          if (!handleType) {
+            const selectedRegion = Object.values(wavesurfer.regions.list).find(
+              (region) =>
+                (mouseInRegionStart as number) >= region.start &&
+                (mouseInRegionStart as number) < region.end
+            )
+
+            if (!selectedRegion) {
               region.update({
                 start: leftHandleLastVal,
                 end: rightHandleLastVal
@@ -190,127 +228,153 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
               return clearInternals()
             }
 
-            // drag used
-            if (!handleType) {
-              const selectedRegion = Object.values(wavesurfer.regions.list).find(
-                (region) =>
-                  (mouseInRegionStart as number) >= region.start &&
-                  (mouseInRegionStart as number) < region.end
-              )
+            updateRegion({
+              startTime: selectedRegion.start,
+              endTime: region.end - Math.abs(mouseInRegionStart - selectedRegion.start)
+            })
 
-              if (!selectedRegion) {
-                region.update({
-                  start: leftHandleLastVal,
-                  end: rightHandleLastVal
-                })
-                return clearInternals()
-              }
+            region.update({
+              start: selectedRegion.start,
+              end: region.end - Math.abs(mouseInRegionStart - selectedRegion.start)
+            })
+            return clearInternals()
+          }
 
+          // left handle
+          if (handleType === "left" && mouseInRegionStart) {
+            /* @ts-ignore */
+            const selectedRegion = Object.values(wavesurfer.regions.list).find(
+              (region) =>
+                (mouseInRegionStart as number) >= region.start &&
+                (mouseInRegionStart as number) < region.end
+            )
+
+            if (!selectedRegion) {
               region.update({
-                start: selectedRegion.start,
-                end: region.end - Math.abs(mouseInRegionStart - selectedRegion.start)
+                start: leftHandleLastVal,
+                end: rightHandleLastVal
               })
               return clearInternals()
             }
 
-            // left handle
-            if (handleType === "left" && mouseInRegionStart) {
-              const selectedRegion = Object.values(wavesurfer.regions.list).find(
-                (region) =>
-                  (mouseInRegionStart as number) >= region.start &&
-                  (mouseInRegionStart as number) < region.end
-              )
+            if (Math.abs(region.end - selectedRegion.start) >= beatInterval) {
+              updateRegion({
+                startTime: selectedRegion.start
+              })
 
-              if (!selectedRegion) {
-                region.update({
-                  start: leftHandleLastVal,
-                  end: rightHandleLastVal
-                })
-                return clearInternals()
-              }
+              region.update({
+                start: selectedRegion.start
+              })
+            } else {
+              updateRegion({
+                startTime: leftHandleLastVal
+              })
 
-              if (Math.abs(region.end - selectedRegion.start) >= beatInterval) {
-                region.update({
-                  start: selectedRegion.start
-                })
-              } else {
-                console.log("Hiba", leftHandleLastVal)
-                region.update({
-                  start: leftHandleLastVal
-                })
-              }
+              region.update({
+                start: leftHandleLastVal
+              })
+            }
 
+            return clearInternals()
+          }
+
+          // right handle
+          if (handleType === "right" && mouseInRegionEnd) {
+            /* @ts-ignore */
+            const selectedRegion = Object.values(wavesurfer.regions.list).find(
+              (region) =>
+                (mouseInRegionEnd as number) >= region.start &&
+                (mouseInRegionEnd as number) < region.end
+            )
+
+            if (!selectedRegion) {
+              updateRegion({
+                startTime: leftHandleLastVal,
+                endTime: rightHandleLastVal
+              })
+              region.update({
+                start: leftHandleLastVal,
+                end: rightHandleLastVal
+              })
               return clearInternals()
             }
 
-            // right handle
-            if (handleType === "right" && mouseInRegionEnd) {
-              const selectedRegion = Object.values(wavesurfer.regions.list).find(
-                (region) =>
-                  (mouseInRegionEnd as number) >= region.start &&
-                  (mouseInRegionEnd as number) < region.end
-              )
+            if (Math.abs(region.start - selectedRegion.end) >= beatInterval) {
+              updateRegion({
+                endTime: selectedRegion.end
+              })
 
-              if (!selectedRegion) {
-                region.update({
-                  start: leftHandleLastVal,
-                  end: rightHandleLastVal
-                })
-                return clearInternals()
-              }
-
-              if (Math.abs(region.start - selectedRegion.end) >= beatInterval) {
-                region.update({
-                  end: selectedRegion.end
-                })
-              } else {
-                region.update({
-                  end: rightHandleLastVal
-                })
-              }
-
-              return clearInternals()
+              region.update({
+                end: selectedRegion.end
+              })
+            } else {
+              updateRegion({
+                endTime: rightHandleLastVal
+              })
+              region.update({
+                end: rightHandleLastVal
+              })
             }
-          })
+
+            return clearInternals()
+          }
         })
-
-        wavesurferRef.current = wavesurfer
       })
 
     return () => {
-      wavesurferRef.current?.destroy()
-      setAudioPlaying(false)
+      wavesurfer.unAll()
+      wavesurfer.destroy()
     }
   }, [])
 
   useEffect(() => {
-    wavesurferRef.current?.zoom(zoomLevel)
-  }, [zoomLevel])
+    const handleRegionClick = (region: Region) => {
+      if (region.element.getAttribute("data-rangetype") === "effect-range") {
+        wavesurfer.setCurrentTime(region.start)
+        const regionId = parseInt(region.id)
+        if (regionId !== selectedRegion) {
+          selectRegion(regionId)
+        }
+      }
+    }
 
-  const handleZoomIn = () => {
-    setZoomLevel((prevZoomLevel) => prevZoomLevel + 100)
-  }
-  const handleZoomOut = () => {
-    setZoomLevel((prevZoomLevel) => prevZoomLevel - 100)
-  }
+    if (wavesurferReady) {
+      wavesurfer.on("region-click", handleRegionClick)
+    }
 
-  const handleZoomReset = () => {
-    setZoomLevel((prevZoomLevel) => 200)
-  }
+    return () => wavesurfer.un("region-click", handleRegionClick)
+  }, [wavesurferReady, selectedRegion])
+
+  // useEffect(() => {
+  //
+  //     wavesurfer.current?.zoom(zoomLevel)
+  //
+  // }, [zoomLevel])
+
+  // const handleZoomIn = () => {
+  //   setZoomLevel((prevZoomLevel) => prevZoomLevel + 100)
+  // }
+  // const handleZoomOut = () => {
+  //   setZoomLevel((prevZoomLevel) => prevZoomLevel - 100)
+  // }
+
+  // const handleZoomReset = () => {
+  //   setZoomLevel((prevZoomLevel) => 200)
+  // }
 
   const handlePlayPause = async () => {
-    await wavesurferRef.current?.playPause()
-    setAudioPlaying((prevState) => !prevState)
+    await wavesurfer.playPause()
+    setWavesurferPlayPause()
   }
   return (
     <>
       <div ref={wavesurferContainerRef}></div>
       <div style={{ height: "20px" }} id="wave-timeline"></div>
       <div>
-        <button onClick={handlePlayPause}>{audioPlaying ? "Resume" : "Play"}</button>
-        <button onClick={handleZoomIn}>Zoom in</button>
+        <button onClick={handlePlayPause}>{wavesurferPlayPause ? "Resume" : "Play"}</button>
+        {/* <button onClick={handleZoomIn}>Zoom in</button>
         <button onClick={handleZoomOut}>Zoom Out</button>
-        <button onClick={handleZoomReset}>Reset Zoom</button>
+        <button onClick={handleZoomReset}>Reset Zoom</button> */}
         <div>Time: {musicCurrentTime ? musicCurrentTime.toPrecision(5) : 0}</div>
       </div>
     </>
