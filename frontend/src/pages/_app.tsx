@@ -4,6 +4,8 @@ import { CacheProvider, EmotionCache } from "@emotion/react"
 import { createEmotionCache } from "@utils/createEmtionCache"
 import "../styles/customhandle.css"
 import "../styles/effectBuilder.css"
+import "../styles/editorContainer.css"
+import "../styles/preview.css"
 
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache

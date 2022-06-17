@@ -9,6 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer
 } from "@nestjs/websockets"
+import { Region } from "@type/socketData"
 import { Server, Socket } from "socket.io"
 import { ApiService } from "./api.service"
 
@@ -19,13 +20,14 @@ import { ApiService } from "./api.service"
 })
 export class ApiGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server
+  socket: Server
 
   constructor(private readonly appService: ApiService, private readonly ledService: LedService) {}
 
   private logger: Logger = new Logger("ApiGateway")
 
   afterInit() {
+    this.ledService.handleSocketAfterInit(this.socket)
     this.logger.log("Socket Initialized")
   }
 
@@ -39,7 +41,7 @@ export class ApiGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
   @SubscribeMessage("start")
   start(@MessageBody() time: number) {
-    this.ledService.start(time)
+    this.ledService.start(time, this.socket)
   }
 
   @SubscribeMessage("stop")
@@ -49,7 +51,7 @@ export class ApiGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
   @SubscribeMessage("seek")
   seek(@MessageBody() time: number) {
-    this.ledService.seek(time)
+    this.ledService.seek(time, this.socket)
   }
 
   @SubscribeMessage("timeupdate")
@@ -60,5 +62,10 @@ export class ApiGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   @SubscribeMessage("reset")
   reset() {
     this.ledService.reset()
+  }
+
+  @SubscribeMessage("update-regions")
+  updateRegions(@MessageBody() regions: Region[]) {
+    this.ledService.updateRegions(regions)
   }
 }

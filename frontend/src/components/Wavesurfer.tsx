@@ -12,24 +12,15 @@ import {
 } from "@utils/wavesurfer"
 import { number } from "yup"
 import { useStore } from "@utils/store"
+import { sendSeek, sendStart, sendStop, sendTimeupdate } from "@utils/socket"
+import Konva from "konva"
+import { Stage } from "konva/lib/Stage"
 
-interface WaveSurferProps {
-  sendStart: (time: number) => void
-  sendStop: () => void
-  sendSeek: (time: number) => void
-  sendTimeupdate: (time: number) => void
-  sendReset: () => void
-}
+interface WaveSurferProps {}
 
 let wavesurfer: Wavesurfer
 
-const WaveSurfer: FC<WaveSurferProps> = ({
-  sendReset,
-  sendSeek,
-  sendStart,
-  sendStop,
-  sendTimeupdate
-}) => {
+const WaveSurfer: FC<WaveSurferProps> = (props) => {
   const wavesurferContainerRef = useRef<WaveSurfer | any>(null)
   // const [zoomLevel, setZoomLevel] = useState(200)
   const [musicCurrentTime, setMusicCurrentTime] = useState<undefined | number>()
@@ -338,7 +329,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({
       }
     }
 
-    if (wavesurferReady) {
+    if (wavesurferReady && wavesurfer) {
       wavesurfer.on("region-click", handleRegionClick)
     }
 

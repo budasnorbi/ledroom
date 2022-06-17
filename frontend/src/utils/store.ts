@@ -1,4 +1,5 @@
 import { Store, Region } from "@type/store"
+import { updateRegions } from "./socket"
 
 import create from "zustand"
 import { devtools } from "zustand/middleware"
@@ -43,9 +44,13 @@ export const useStore = create<Store>()(
     },
     createRegion(region: Region) {
       set(
-        (state) => ({
-          regions: [...state.regions, region]
-        }),
+        (state) => {
+          const newRegions = [...state.regions, region]
+          updateRegions(newRegions)
+          return {
+            regions: newRegions
+          }
+        },
         false,
         "createRegion"
       )
@@ -66,7 +71,7 @@ export const useStore = create<Store>()(
           }
 
           state.regions[selectedRegionIndex] = modifiedRegion
-
+          updateRegions(state.regions)
           return {
             regions: state.regions
           }

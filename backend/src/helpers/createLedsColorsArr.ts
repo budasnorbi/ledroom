@@ -4,7 +4,6 @@ export const createLedsColorsArr = (
 ): number[] => {
   const [startLed, endLed] = range ?? [0, 826]
 
-  // [826, 75]
   const array = []
   for (let i = 0; i < 900; i++) {
     if (startLed < endLed) {

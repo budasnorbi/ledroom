@@ -1,7 +1,10 @@
 import { createLedsColorsArr } from "@helpers/createLedsColorsArr"
 import { EffectService } from "@modules/Effect/effect.service"
 import { Injectable } from "@nestjs/common"
+import { Region } from "@type/socketData"
 import { UdpService } from "../Udp/udp.service"
+import { Server } from "socket.io"
+import { fixColorOrder } from "@helpers/fixLedColorOrder"
 
 @Injectable()
 export class LedService {
@@ -13,6 +16,15 @@ export class LedService {
   private greenBuffer = createLedsColorsArr([0, 255, 0])
   private blueBuffer = createLedsColorsArr([0, 0, 255])
   private whiteBuffer = createLedsColorsArr([255, 255, 255])
+  private regions: Region[] = []
+
+  private agyFalRange: [number, number] = [75, 306]
+  private ablakFalRange: [number, number] = [307, 493]
+  private kanapeFalRange: [number, number] = [494, 681]
+  private butonFalRange: [number, number] = [682, 780]
+  private butorKilogasFalRange: [number, number] = [780, 815]
+  private ajtoFalRange: [number, number] = [816, 74]
+  private currentFrame: number[]
 
   constructor(private udpService: UdpService, private effectService: EffectService) {
     // const ledColors = this.effectService.step({
@@ -24,45 +36,55 @@ export class LedService {
     //   speed: 1000 / 60,
     //   range: this.w1
     // })
-    this.udpService.sendData(this.blackBuffer)
+  }
+
+  handleSocketAfterInit(socket: Server) {
+    // Itt valamiért nem megy ki a kliensek az init állapot
+    const colors = createLedsColorsArr([0, 0, 255], this.agyFalRange)
+    const fixedColors = fixColorOrder(colors)
+
+    socket.emit("frame", colors)
+    this.udpService.sendData(fixedColors)
   }
 
   updateTime(time: number) {
     this.musicTime = time
   }
 
-  start(time: number) {
+  start(time: number, socket: Server) {
     this.updateTime(time)
 
     if (!this.ledFrameIntervalID) {
       const fpsTick = () => {
-        const frameBuffer = this.songEffect(this.musicTime)
-        this.udpService.sendData(frameBuffer)
+        const colors = this.songEffect(this.musicTime)
+        const fixedColors = fixColorOrder(colors)
+
+        socket.emit("frame", colors)
+        this.udpService.sendData(fixedColors)
       }
 
       this.ledFrameIntervalID = setInterval(fpsTick, 1000 / this.fps)
     }
   }
 
-  private w1: [number, number] = [682, 74]
-  private w2: [number, number] = [75, 305]
-  private w3: [number, number] = [306, 493]
-  private w4: [number, number] = [494, 681]
-
   private x = 0
 
   songEffect(time: number) {
-    const ledColors = this.effectService.starlight({ ledColors: this.blackBuffer })
-    console.log(time % 20)
-    // const ledColors = this.effectService.step({
-    //   ledColor: this.blackBuffer,
-    //   barColor: [0, 0, 255],
-    //   clipLed: [0, 0, 0],
-    //   barCount: 50,
-    //   direction: "right",
-    //   speed: 1000 / 60,
-    //   range: this.w1
-    // })
+    const ledColors = this.blackBuffer
+
+    // for (let i = 0; i < this.regions.length; i++) {
+    //   if (time >= this.regions[i].startTime && time <= this.regions[i].endTime) {
+    //     // Current effect region
+    //     // ledColors = this.effectService.step({
+    //     //   ledColors: this.blackBuffer,
+    //     //   barColor: [0, 0, 255],
+    //     //   clipLed: [0, 0, 0],
+    //     //   barCount: 50,
+    //     //   direction: "right",
+    //     //   speed: 1000 / 60
+    //     // })
+    //   }
+    // }
 
     // ledColors = this.effectService.step({
     //   ledColor: ledColors,
@@ -101,64 +123,55 @@ export class LedService {
     //   duration: 1
     // })
 
+    if (time >= 38.26771653543307 && time < 52.91338582677165) {
+      return this.effectService.blink({
+        ledColors: this.blackBuffer,
+        toColor: [0, 255, 0],
+        duration: 1 / (127 / 60)
+      })
+    } else if (time >= 52.91338582677165 && time < 60.47244094488189) {
+      return this.effectService.blink({
+        ledColors: this.blackBuffer,
+        toColor: [0, 255, 0],
+        duration: 1 / (127 / 60) / 2
+      })
+    } else if (time >= 60.47244094488189 && time < 64.25196850393701) {
+      return this.effectService.blink({
+        ledColors: this.blackBuffer,
+        toColor: [0, 255, 0],
+        duration: 1 / (127 / 60) / 4
+      })
+    } else if (time >= 64.25196850393701) {
+      return this.effectService.step({
+        ledColors: this.blackBuffer,
+        barColor: [0, 0, 255],
+        clipLed: [0, 0, 0],
+        barCount: 50,
+        direction: "right",
+        speed: 1000 / 60
+      })
+    }
     return ledColors
-
-    // if (time >= 38.26771653543307 && time < 52.91338582677165) {
-    //   return this.effectService.blink({
-    //     currentColor: this.t1Colors[1],
-    //     toColor: this.t1Colors[0],
-    //     duration: 1 / (127 / 60)
-    //   })
-    // } else if (time >= 52.91338582677165 && time < 60.47244094488189) {
-    //   return this.effectService.blink({
-    //     currentColor: this.t1Colors[1],
-    //     toColor: this.t1Colors[0],
-    //     duration: 1 / (127 / 60) / 2
-    //   })
-    // } else if (time >= 60.47244094488189 && time < 64.25196850393701) {
-    //   return this.effectService.blink({
-    //     currentColor: this.t3Colors[1],
-    //     toColor: this.t3Colors[0],
-    //     duration: 1 / (127 / 60) / 4
-    //   })
-    // } else if (time >= 64.25196850393701 && time < 68.03149606299212) {
-    //   return this.effectService
-    //     .step({
-    //       barColor: [0, 255, 0],
-    //       clipColor: [0, 0, 0],
-    //       barCount: 200,
-    //       speed: 1000 / 60
-    //     })
-    //     .blink({
-    //       currentColor: "chain",
-    //       toColor: this.t5Colors[0],
-    //       duration: 1 / (127 / 60) / 8
-    //     })
-    // } else if (time >= 68.03149606299212) {
-    //   return this.effectService.blink({
-    //     toColor: this.t5Colors[0],
-    //     currentColor: this.t5Colors[1],
-    //     duration: 1 / (127 / 60) / 0.5
-    //   })
-    // } else {
-    //   return this.blackBuffer
-    // }
   }
 
   stop() {
     this.clearIntervals()
   }
 
-  seek(time: number) {
+  seek(time: number, socket: Server) {
     this.updateTime(time)
     this.clearIntervals()
     this.effectService.clearInternals()
 
-    const frameBuffer = this.songEffect(this.musicTime)
-    this.udpService.sendData(frameBuffer)
+    const colors = this.songEffect(this.musicTime)
+    const fixedColors = fixColorOrder(colors)
+
+    socket.emit("frame", colors)
+    this.udpService.sendData(fixedColors)
   }
 
   reset() {
+    this.regions = []
     this.clearIntervals()
     this.musicTime = 0
   }
@@ -166,5 +179,9 @@ export class LedService {
   private clearIntervals() {
     clearInterval(this.ledFrameIntervalID)
     this.ledFrameIntervalID = undefined
+  }
+
+  public updateRegions(regions: Region[]) {
+    this.regions = regions
   }
 }
