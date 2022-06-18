@@ -1,13 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import { sendReset, socket } from "@utils/socket"
-import Konva from "konva"
+import { sendReset } from "@utils/socket"
 
 import dynamic from "next/dynamic"
 import { useStore } from "@utils/store"
 import { BezierCurveEditor } from "react-bezier-curve-editor"
 import { Region } from "@type/store"
-import { Shape } from "konva/lib/Shape"
 
 const Preview = dynamic(() => import("../components/Preview"), {
   ssr: false
@@ -22,7 +20,6 @@ let bezierChangeTimeout: any
 function Dashboard(props: any) {
   const updateRegion = useStore(useCallback((state) => state.updateRegion, []))
   const resetStore = useStore(useCallback((state) => state.resetStore, []))
-  const previewRef = useRef<Konva.Stage | null>(null)
 
   const selectedRegion: Region | null = useStore((state) => {
     return state.regions.filter((region) => region.id === state.selectedRegion)[0] ?? null
@@ -36,10 +33,6 @@ function Dashboard(props: any) {
       sendReset()
     }
   }, [])
-
-  // useEffect(() => {
-  //   console.log(previewRef.current)
-  // }, [previewRef.current])
 
   useEffect(() => {
     if (selectedRegion?.id) {

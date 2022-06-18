@@ -18,6 +18,7 @@ export class LedService {
   private whiteBuffer = createLedsColorsArr([255, 255, 255])
   private regions: Region[] = []
 
+  private wholeRange: [number, number] = [0, 826]
   private agyFalRange: [number, number] = [75, 306]
   private ablakFalRange: [number, number] = [307, 493]
   private kanapeFalRange: [number, number] = [494, 681]
@@ -39,9 +40,15 @@ export class LedService {
   }
 
   handleSocketAfterInit(socket: Server) {
-    // Itt valamiért nem megy ki a kliensek az init állapot
-    const colors = createLedsColorsArr([0, 0, 255], this.agyFalRange)
+    const colors = createLedsColorsArr([0, 0, 255], this.wholeRange)
     const fixedColors = fixColorOrder(colors)
+
+    /*     setTimeout(() => {
+      const colors = createLedsColorsArr([0, 0, 0], this.wholeRange)
+      const fixedColors = fixColorOrder(colors)
+      socket.emit("frame", colors)
+      this.udpService.sendData(fixedColors)
+    }, 1500) */
 
     socket.emit("frame", colors)
     this.udpService.sendData(fixedColors)
@@ -127,19 +134,22 @@ export class LedService {
       return this.effectService.blink({
         ledColors: this.blackBuffer,
         toColor: [0, 255, 0],
-        duration: 1 / (127 / 60)
+        duration: 1,
+        bezierPoints: [1, 0, 1, 0]
       })
     } else if (time >= 52.91338582677165 && time < 60.47244094488189) {
       return this.effectService.blink({
         ledColors: this.blackBuffer,
         toColor: [0, 255, 0],
-        duration: 1 / (127 / 60) / 2
+        duration: 1 / (127 / 60) / 2,
+        bezierPoints: [0, 1, 0, 1]
       })
     } else if (time >= 60.47244094488189 && time < 64.25196850393701) {
       return this.effectService.blink({
         ledColors: this.blackBuffer,
         toColor: [0, 255, 0],
-        duration: 1 / (127 / 60) / 4
+        duration: 1 / (127 / 60) / 4,
+        bezierPoints: [0, 1, 0, 1]
       })
     } else if (time >= 64.25196850393701) {
       return this.effectService.step({

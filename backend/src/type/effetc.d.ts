@@ -1,5 +1,5 @@
 export interface Blink {
-  yGenerator?: (mappedX: number) => number
+  bezierPoints: [number, number, number, number]
   ledColors: number[]
   fromColor?: [number, number, number]
   toColor: number[]

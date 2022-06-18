@@ -2,7 +2,8 @@ import { Injectable } from "@nestjs/common"
 import { map } from "@helpers/map"
 import * as g from "g.js"
 import { cloneArray } from "@helpers/cloneArray"
-import { Blink, Starlight, Step } from "@type/effetc"
+import { Blink, Step } from "@type/effetc"
+import { getBezierCurveY } from "@helpers/bezierCaluclator"
 
 @Injectable()
 export class EffectService {
@@ -12,14 +13,6 @@ export class EffectService {
   avgMessurmentTime: undefined | number
 
   private blinkStart: undefined | number
-  private startList: any = []
-
-  starlight(config: Starlight): number[] {
-    const { ledColors } = config
-    const frame = cloneArray(ledColors)
-
-    return frame
-  }
 
   public step(config: Step): number[] {
     const { ledColors, barCount, clipLed, speed, direction, barColor } = config
@@ -127,7 +120,7 @@ export class EffectService {
   }
 
   public blink(config: Blink) {
-    const { duration, toColor, ledColors, yGenerator, watchOnlyColored, fromColor } = config
+    const { duration, toColor, ledColors, watchOnlyColored, fromColor, bezierPoints } = config
 
     if (!this.blinkStart) {
       this.blinkStart = Date.now()
@@ -141,16 +134,18 @@ export class EffectService {
 
     const frame = cloneArray(ledColors)
 
-    const mappedX = map(Date.now(), this.blinkStart, this.blinkStart + duration * 1000, 0, Math.PI)
-    const y = yGenerator ? yGenerator(mappedX) : Math.sin(mappedX - Math.PI / 2) + 1
-    const transitionPct = map(y, 0, 2, 0, 100)
+    const mappedX = map(Date.now(), this.blinkStart, this.blinkStart + duration * 1000, 0, 1)
+    const y = getBezierCurveY(mappedX, bezierPoints)
+    console.log(bezierPoints)
+
+    const transitionPct = map(y, 0, 1, 0, 100)
 
     for (let i = 0; i < this.ledCount; i++) {
-      const actualIndex = i * 3
+      const rgbIndex = i * 3
 
-      const frameRed = fromColor ? fromColor[0] : frame[actualIndex]
-      const frameGreen = fromColor ? fromColor[1] : frame[actualIndex + 1]
-      const frameBlue = fromColor ? fromColor[2] : frame[actualIndex + 2]
+      const frameRed = fromColor ? fromColor[0] : frame[rgbIndex]
+      const frameGreen = fromColor ? fromColor[1] : frame[rgbIndex + 1]
+      const frameBlue = fromColor ? fromColor[2] : frame[rgbIndex + 2]
 
       if (watchOnlyColored && frameRed === 0 && frameGreen === 0 && frameBlue === 0) {
         continue
@@ -167,11 +162,11 @@ export class EffectService {
       }
 
       // Red
-      frame[actualIndex] = Math.floor(map(transitionPct, 0, 100, frameRed, toColor[0]))
+      frame[rgbIndex] = Math.floor(map(transitionPct, 0, 100, frameRed, toColor[0]))
       // Green
-      frame[actualIndex + 1] = Math.floor(map(transitionPct, 0, 100, frameGreen, toColor[1]))
+      frame[rgbIndex + 1] = Math.floor(map(transitionPct, 0, 100, frameGreen, toColor[1]))
       // Blue
-      frame[actualIndex + 2] = Math.floor(map(transitionPct, 0, 100, frameBlue, toColor[2]))
+      frame[rgbIndex + 2] = Math.floor(map(transitionPct, 0, 100, frameBlue, toColor[2]))
     }
 
     return frame
