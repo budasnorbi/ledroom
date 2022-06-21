@@ -2,7 +2,6 @@ import { useRef, useEffect, useState, FC, useCallback } from "react"
 import Wavesurfer from "wavesurfer.js"
 import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
 import RegionsPlugin, { Region } from "wavesurfer.js/src/plugin/regions"
-import MinimapPlugin from "wavesurfer.js/src/plugin/minimap"
 
 import {
   formatTimeCallback,
@@ -10,25 +9,26 @@ import {
   secondaryLabelInterval,
   timeInterval
 } from "@utils/wavesurfer"
-import { number } from "yup"
 import { useStore } from "@utils/store"
 import { sendSeek, sendStart, sendStop, sendTimeupdate } from "@utils/socket"
-import Konva from "konva"
-import { Stage } from "konva/lib/Stage"
 
-interface WaveSurferProps {}
+interface WaveSurferProps {
+  wavesurferRef: React.MutableRefObject<WaveSurfer | null>
+  setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
+}
 
 let wavesurfer: Wavesurfer
 
 const WaveSurfer: FC<WaveSurferProps> = (props) => {
   const wavesurferContainerRef = useRef<WaveSurfer | any>(null)
   // const [zoomLevel, setZoomLevel] = useState(200)
-  const [musicCurrentTime, setMusicCurrentTime] = useState<undefined | number>()
 
-  const setWavesurferPlayPause = useStore(useCallback((state) => state.setWavesurferPlayPause, []))
+  const toggleWavesurferIsPlaying = useStore(
+    useCallback((state) => state.toggleWavesurferIsPlaying, [])
+  )
   const setWavesurferReady = useStore(useCallback((state) => state.setWavesurferReady, []))
   const createRegion = useStore(useCallback((state) => state.createRegion, []))
-  const updateRegion = useStore(useCallback((state) => state.updateRegion, []))
+  const updateRegionTime = useStore(useCallback((state) => state.updateRegionTime, []))
   const setDuration = useStore(useCallback((state) => state.setDuration, []))
   const selectRegion = useStore(useCallback((state) => state.selectRegion, []))
 
@@ -36,9 +36,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
   const selectedRegion = useStore((state) => state.selectedRegion)
   const beatEndTime = useStore(useCallback((state) => state.beatEndTime, []))
   const beatOffset = useStore(useCallback((state) => state.beatOffset, []))
-  const duration = useStore(useCallback((state) => state.duration, []))
   const wavesurferReady = useStore(useCallback((state) => state.wavesurferReady, []))
-  const wavesurferPlayPause = useStore(useCallback((state) => state.wavesurferPlayPause, []))
 
   useEffect(() => {
     fetch("/music.mp3")
@@ -69,30 +67,37 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
 
         wavesurfer.on("play", () => {
           const currTime = wavesurfer.getCurrentTime()
-          setMusicCurrentTime(currTime)
+          props.setMusicCurrentTime(currTime)
+          toggleWavesurferIsPlaying()
           sendStart(currTime)
         })
 
         wavesurfer.on("pause", () => {
+          toggleWavesurferIsPlaying()
           sendStop()
+        })
+
+        wavesurfer.on("finish", () => {
+          toggleWavesurferIsPlaying()
         })
 
         wavesurfer.on("seek", () => {
           const currTime = wavesurfer.getCurrentTime()
-          setMusicCurrentTime(currTime)
+          props.setMusicCurrentTime(currTime)
           sendSeek(currTime)
         })
 
         wavesurfer.on("audioprocess", (time: number) => {
-          setMusicCurrentTime(time)
+          props.setMusicCurrentTime(time)
           sendTimeupdate(time)
         })
 
         wavesurfer.once("ready", () => {
+          props.wavesurferRef.current = wavesurfer
           setWavesurferReady(true)
           setDuration(wavesurfer.getDuration())
 
-          setMusicCurrentTime(wavesurfer.getCurrentTime())
+          props.setMusicCurrentTime(wavesurfer.getCurrentTime())
           wavesurfer.zoom(200)
           wavesurfer.setVolume(0.15)
 
@@ -150,8 +155,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
           createRegion({
             id,
             startTime: region.start,
-            endTime: region.end,
-            bezierValues: [0.2, 0.2, 0.8, 0.8]
+            endTime: region.end
           })
           selectRegion(id)
 
@@ -219,7 +223,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
               return clearInternals()
             }
 
-            updateRegion({
+            updateRegionTime({
               startTime: selectedRegion.start,
               endTime: region.end - Math.abs(mouseInRegionStart - selectedRegion.start)
             })
@@ -249,7 +253,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             }
 
             if (Math.abs(region.end - selectedRegion.start) >= beatInterval) {
-              updateRegion({
+              updateRegionTime({
                 startTime: selectedRegion.start
               })
 
@@ -257,7 +261,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
                 start: selectedRegion.start
               })
             } else {
-              updateRegion({
+              updateRegionTime({
                 startTime: leftHandleLastVal
               })
 
@@ -279,7 +283,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             )
 
             if (!selectedRegion) {
-              updateRegion({
+              updateRegionTime({
                 startTime: leftHandleLastVal,
                 endTime: rightHandleLastVal
               })
@@ -291,7 +295,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
             }
 
             if (Math.abs(region.start - selectedRegion.end) >= beatInterval) {
-              updateRegion({
+              updateRegionTime({
                 endTime: selectedRegion.end
               })
 
@@ -299,7 +303,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
                 end: selectedRegion.end
               })
             } else {
-              updateRegion({
+              updateRegionTime({
                 endTime: rightHandleLastVal
               })
               region.update({
@@ -353,20 +357,14 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
   //   setZoomLevel((prevZoomLevel) => 200)
   // }
 
-  const handlePlayPause = async () => {
-    await wavesurfer.playPause()
-    setWavesurferPlayPause()
-  }
   return (
     <>
       <div ref={wavesurferContainerRef}></div>
       <div style={{ height: "20px" }} id="wave-timeline"></div>
       <div>
-        <button onClick={handlePlayPause}>{wavesurferPlayPause ? "Resume" : "Play"}</button>
         {/* <button onClick={handleZoomIn}>Zoom in</button>
         <button onClick={handleZoomOut}>Zoom Out</button>
         <button onClick={handleZoomReset}>Reset Zoom</button> */}
-        <div>Time: {musicCurrentTime ? musicCurrentTime.toPrecision(5) : 0}</div>
       </div>
     </>
   )
