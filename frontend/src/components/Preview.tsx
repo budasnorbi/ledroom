@@ -24,7 +24,6 @@ const Preview = () => {
 
       if (ctx) {
         socket.on("frame", (data) => {
-          console.log("data")
           for (let i = 0; i < ledCoordinatesX.length; i++) {
             const red = data[i * 3]
             const green = data[i * 3 + 1]

@@ -30,10 +30,11 @@ export interface Region {
 type Effects = "blink" | "step"
 
 export interface Store {
+  bpmRegionsIsCalculated: boolean
   wavesurferReady: boolean
   wavesurferIsPlaying: boolean
   regions: Region[]
-  beatInterval: number
+  bpm: number
   beatEndTime: number
   beatOffset: number
   duration: number
@@ -45,4 +46,7 @@ export interface Store {
   updateRegionTime: (options: Partial<Pick<Region, "endTime" | "startTime">>) => void
   selectRegion: (id: number) => void
   addEffectToRegion: (effectName: Effects) => void
+  setBPM: (bpm: number) => void
+  setBeatOffset: (beatOffset: number) => void
+  setBeatEndTime: (time: number) => void
 }

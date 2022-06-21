@@ -23,14 +23,21 @@ function Dashboard(props: any) {
   const [selectedEffect, setSelectedEffect] = useState<Effects>("blink")
 
   const addEffectToRegion = useStore(useCallback((state) => state.addEffectToRegion, []))
+
+  const setBPM = useStore(useCallback((state) => state.setBPM, []))
+  const setBeatOffset = useStore(useCallback((state) => state.setBeatOffset, []))
+  const setBeatEndTime = useStore(useCallback((state) => state.setBeatEndTime, []))
+
+  const bpm = useStore((state) => state.bpm)
+  const beatOffset = useStore((state) => state.beatOffset)
+  const beatEndTime = useStore((state) => state.beatEndTime)
+
   const wavesurferIsPlaying = useStore((state) => state.wavesurferIsPlaying)
   const wavesurferReady = useStore((state) => state.wavesurferReady)
 
   const selectedRegion: Region | null = useStore((state) => {
     return state.regions.filter((region) => region.id === state.selectedRegion)[0] ?? null
   })
-
-  // const [bezierValues, setBezierValues] = useState<any>(selectedRegion?.bezierValues)
 
   /*   useEffect(() => {
     if (wavesurferReady) {
@@ -60,6 +67,61 @@ function Dashboard(props: any) {
     addEffectToRegion(selectedEffect)
   }, [selectedEffect])
 
+  const handleBPM = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.valueAsNumber
+    if (!isNaN(value)) {
+      setBPM(event.target.valueAsNumber)
+    }
+  }
+
+  const handleBeatOffset = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.valueAsNumber
+    if (!isNaN(value)) {
+      setBeatOffset(value)
+    } else {
+      setBeatOffset(0)
+    }
+  }
+
+  const handleBeatEndTime = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.valueAsNumber
+    if (!isNaN(value)) {
+      setBeatEndTime(event.target.valueAsNumber)
+    }
+  }
+
+  const handleBeatRender = () => {
+    const wavesurfer = wavesurferRef.current
+    if (wavesurfer) {
+      wavesurfer.regions.destroy()
+      const beatInterval = 1 / (bpm / 60)
+      const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
+
+      for (let i = 0; i < beatOccurences; i++) {
+        if (beatInterval * i + beatOffset > beatEndTime && i % 4 === 0) {
+          break
+        }
+        const region = wavesurfer.regions.add({
+          id: i.toString(),
+          start: i * beatInterval + beatOffset,
+          end: i * beatInterval + beatInterval + beatOffset,
+          drag: false,
+          color: "rgba(0,0,0,0)",
+          resize: false
+        })
+
+        region.element.setAttribute("data-rangetype", "bpm-range")
+
+        const tempoDiv = document.createElement("div")
+        tempoDiv.id = `tempoDiv-${i}`
+        tempoDiv.textContent = `${(i + 1) % 4 === 0 ? 4 : (i + 1) % 4}`
+        tempoDiv.className = "bpm-range"
+
+        wavesurfer.regions.list[i].element.appendChild(tempoDiv)
+      }
+    }
+  }
+
   /*   useEffect(() => {
     if (selectedRegion?.id) {
       setBezierValues(selectedRegion.bezierValues)
@@ -84,15 +146,37 @@ function Dashboard(props: any) {
         <button onClick={handleWavesurferPlaypause} disabled={!wavesurferReady}>
           {wavesurferIsPlaying ? "Pause" : "Play"}
         </button>
-        <div>Current Time: {musicCurrentTime ? musicCurrentTime.toPrecision(5) : 0}</div>
+
+        <div style={{ display: "flex" }}>
+          <div style={{ marginRight: "15px" }}>
+            Current Time: {musicCurrentTime ? musicCurrentTime.toPrecision(5) : 0}
+          </div>
+          <div>
+            <span>BPM:</span>
+            <input type="number" value={bpm} onChange={handleBPM} />
+          </div>
+          <div>
+            <span>Beat offset:</span>
+            <input type="number" value={beatOffset} onChange={handleBeatOffset} />
+          </div>
+          <div>
+            <span>Beat around end:</span>
+            <input type="number" value={beatEndTime} onChange={handleBeatEndTime} />
+          </div>
+          <button disabled={bpm <= 0 || beatEndTime <= 0} onClick={handleBeatRender}>
+            Render Beat Regions
+          </button>
+        </div>
       </div>
       <div className="editorContainer">
         <div className="editorPanel">
           {selectedRegion && (
             <>
-              <div>
-                Time range: {selectedRegion.startTime.toPrecision(5)} -{" "}
-                {selectedRegion.endTime.toPrecision(5)}
+              <div style={{ display: "flex" }}>
+                <div>
+                  Time range: {selectedRegion.startTime.toPrecision(5)} -{" "}
+                  {selectedRegion.endTime.toPrecision(5)}
+                </div>
               </div>
               <div style={{ marginTop: "15px" }}>
                 <div>

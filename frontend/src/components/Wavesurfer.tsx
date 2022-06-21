@@ -32,7 +32,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
   const setDuration = useStore(useCallback((state) => state.setDuration, []))
   const selectRegion = useStore(useCallback((state) => state.selectRegion, []))
 
-  const beatInterval = useStore(useCallback((state) => state.beatInterval, []))
+  const bpm = useStore(useCallback((state) => state.bpm, []))
   const selectedRegion = useStore((state) => state.selectedRegion)
   const beatEndTime = useStore(useCallback((state) => state.beatEndTime, []))
   const beatOffset = useStore(useCallback((state) => state.beatOffset, []))
@@ -100,31 +100,6 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
           props.setMusicCurrentTime(wavesurfer.getCurrentTime())
           wavesurfer.zoom(200)
           wavesurfer.setVolume(0.15)
-
-          const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
-
-          for (let i = 0; i < beatOccurences; i++) {
-            if (beatInterval * i + beatOffset > beatEndTime && i % 4 === 0) {
-              break
-            }
-            const region = wavesurfer.regions.add({
-              id: i.toString(),
-              start: i * beatInterval + beatOffset,
-              end: i * beatInterval + beatInterval + beatOffset,
-              drag: false,
-              color: "rgba(0,0,0,0)",
-              resize: false
-            })
-
-            region.element.setAttribute("data-rangetype", "bpm-range")
-
-            const tempoDiv = document.createElement("div")
-            tempoDiv.id = `tempoDiv-${i}`
-            tempoDiv.textContent = `${(i + 1) % 4 === 0 ? 4 : (i + 1) % 4}`
-            tempoDiv.className = "bpm-range"
-
-            wavesurfer.regions.list[i].element.appendChild(tempoDiv)
-          }
         })
 
         let handleType: undefined | "left" | "right"
@@ -252,7 +227,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
               return clearInternals()
             }
 
-            if (Math.abs(region.end - selectedRegion.start) >= beatInterval) {
+            if (Math.abs(region.end - selectedRegion.start) >= bpm) {
               updateRegionTime({
                 startTime: selectedRegion.start
               })
@@ -294,7 +269,7 @@ const WaveSurfer: FC<WaveSurferProps> = (props) => {
               return clearInternals()
             }
 
-            if (Math.abs(region.start - selectedRegion.end) >= beatInterval) {
+            if (Math.abs(region.start - selectedRegion.end) >= bpm) {
               updateRegionTime({
                 endTime: selectedRegion.end
               })

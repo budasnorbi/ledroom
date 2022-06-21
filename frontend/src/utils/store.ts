@@ -7,13 +7,13 @@ import { devtools } from "zustand/middleware"
 export const useStore = create<Store>()(
   devtools((set) => {
     return {
-      /* @ts-ignore */
+      bpmRegionsIsCalculated: false,
       wavesurferIsPlaying: false,
       wavesurferReady: false,
       duration: 0,
-      beatOffset: 0.15054,
-      beatEndTime: 195.5,
-      beatInterval: 1 / (127 / 60),
+      beatOffset: 0,
+      beatEndTime: 0,
+      bpm: 0,
       regions: [],
       selectedRegion: -1,
       setDuration(duration) {
@@ -22,7 +22,6 @@ export const useStore = create<Store>()(
       toggleWavesurferIsPlaying() {
         set(
           (state) => ({
-            /* @ts-ignore */
             wavesurferIsPlaying: !state.wavesurferIsPlaying
           }),
           false,
@@ -140,6 +139,21 @@ export const useStore = create<Store>()(
           false,
           "addEffectToRegion"
         )
+      },
+      setBPM(bpm) {
+        set(() => ({
+          bpm
+        }))
+      },
+      setBeatOffset(beatOffset) {
+        set(() => ({
+          beatOffset
+        }))
+      },
+      setBeatEndTime(beatEndTime) {
+        set(() => ({
+          beatEndTime
+        }))
       }
     }
   })

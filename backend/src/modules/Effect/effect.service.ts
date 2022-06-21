@@ -136,7 +136,6 @@ export class EffectService {
 
     const mappedX = map(Date.now(), this.blinkStart, this.blinkStart + duration * 1000, 0, 1)
     const y = getBezierCurveY(mappedX, bezierPoints)
-    console.log(bezierPoints)
 
     const transitionPct = map(y, 0, 1, 0, 100)
 
