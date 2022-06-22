@@ -1,4 +1,4 @@
-import { Store, Region, Blink, Step } from "@type/store"
+import { Store, EffectRegion, Blink, Step } from "@type/store"
 import { updateRegions } from "./socket"
 
 import create from "zustand"
@@ -11,9 +11,9 @@ export const useStore = create<Store>()(
       wavesurferIsPlaying: false,
       wavesurferReady: false,
       duration: 0,
-      beatOffset: 0,
-      beatEndTime: 0,
-      bpm: 0,
+      beatOffset: 0.15,
+      beatEndTime: 195.5,
+      bpm: 127,
       regions: [],
       selectedRegion: -1,
       setDuration(duration) {
@@ -38,7 +38,7 @@ export const useStore = create<Store>()(
         )
       },
       createRegion(config) {
-        const region: Region = {
+        const region: EffectRegion = {
           ...config,
           effects: []
         }
@@ -124,7 +124,8 @@ export const useStore = create<Store>()(
 
             const newRegions = state.regions.map((region) => {
               const effectIsNotExists =
-                region.effects.findIndex((effect) => effect.type === effectName) === -1
+                region.effects.findIndex((effect: Step | Blink) => effect.type === effectName) ===
+                -1
 
               if (region.id === state.selectedRegion && effectIsNotExists) {
                 region.effects.push(effect)

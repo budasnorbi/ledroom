@@ -5,7 +5,9 @@ import { sendReset } from "@utils/socket"
 import dynamic from "next/dynamic"
 import { useStore } from "@utils/store"
 import { BezierCurveEditor } from "react-bezier-curve-editor"
-import { Effects, Region } from "@type/store"
+import { EffectRegion, Effects } from "@type/store"
+import { Region } from "wavesurfer.js/src/plugin/regions"
+import { clamp } from "@utils/clamp"
 
 const Preview = dynamic(() => import("../components/Preview"), {
   ssr: false
@@ -27,6 +29,9 @@ function Dashboard(props: any) {
   const setBPM = useStore(useCallback((state) => state.setBPM, []))
   const setBeatOffset = useStore(useCallback((state) => state.setBeatOffset, []))
   const setBeatEndTime = useStore(useCallback((state) => state.setBeatEndTime, []))
+  const createRegion = useStore(useCallback((state) => state.createRegion, []))
+  const updateRegionTime = useStore(useCallback((state) => state.updateRegionTime, []))
+  const selectRegion = useStore(useCallback((state) => state.selectRegion, []))
 
   const bpm = useStore((state) => state.bpm)
   const beatOffset = useStore((state) => state.beatOffset)
@@ -35,15 +40,9 @@ function Dashboard(props: any) {
   const wavesurferIsPlaying = useStore((state) => state.wavesurferIsPlaying)
   const wavesurferReady = useStore((state) => state.wavesurferReady)
 
-  const selectedRegion: Region | null = useStore((state) => {
+  const selectedRegion: EffectRegion | null = useStore((state) => {
     return state.regions.filter((region) => region.id === state.selectedRegion)[0] ?? null
   })
-
-  /*   useEffect(() => {
-    if (wavesurferReady) {
-      const wavesurfer = wavesurferRef.current as WaveSurfer
-    }
-  }, [wavesurferReady]) */
 
   const handleWavesurferPlaypause = useCallback(async () => {
     if (wavesurferReady) {
@@ -92,13 +91,16 @@ function Dashboard(props: any) {
 
   const handleBeatRender = () => {
     const wavesurfer = wavesurferRef.current
+
     if (wavesurfer) {
       wavesurfer.regions.destroy()
       const beatInterval = 1 / (bpm / 60)
       const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
+      let lastRegionEndTime: number
 
       for (let i = 0; i < beatOccurences; i++) {
         if (beatInterval * i + beatOffset > beatEndTime && i % 4 === 0) {
+          lastRegionEndTime = (i - 1) * beatInterval + beatInterval + beatOffset
           break
         }
         const region = wavesurfer.regions.add({
@@ -119,6 +121,105 @@ function Dashboard(props: any) {
 
         wavesurfer.regions.list[i].element.appendChild(tempoDiv)
       }
+
+      let handleType: undefined | "both" | "left" | "right"
+      let leftHandleInitValue: number
+      let rightHandleInitValue: number
+      let effectRegionIndex = 0
+
+      const regiondblClick = (region: Region) => {
+        if (region.element.getAttribute("data-rangetype") === "effect-range") {
+          return
+        }
+
+        const lastIntervalRangeId = (lastRegionEndTime - beatOffset) / beatInterval
+        const id = lastIntervalRangeId + effectRegionIndex
+        effectRegionIndex++
+
+        createRegion({
+          id,
+          startTime: region.start,
+          endTime: region.end
+        })
+        selectRegion(id)
+
+        /* @ts-ignore */
+        const effectRegion = wavesurfer.regions.add({
+          id: id.toString(),
+          start: region.start,
+          end: region.end,
+          drag: true,
+          color: "rgba(0,0,255,.15)",
+          resize: true
+        })
+
+        effectRegion.element.setAttribute("data-rangetype", "effect-range")
+
+        effectRegion.element.addEventListener("mousedown", () => {
+          leftHandleInitValue = effectRegion.start
+          rightHandleInitValue = effectRegion.end
+          if (!handleType) {
+            handleType = "both"
+          }
+        })
+
+        effectRegion.handleLeftEl?.addEventListener("mousedown", () => {
+          if (!handleType) {
+            handleType = "left"
+          }
+        })
+
+        effectRegion.handleRightEl?.addEventListener("mousedown", () => {
+          if (!handleType) {
+            handleType = "right"
+          }
+        })
+      }
+
+      const regionUpdateEnd = (region: Region) => {
+        if (handleType === "both") {
+          const regionWidth = rightHandleInitValue - leftHandleInitValue
+          const start = clamp(
+            Math.round((region.start - beatOffset) / beatInterval) * beatInterval + beatOffset,
+            beatOffset,
+            lastRegionEndTime - regionWidth
+          )
+
+          let end = start + regionWidth
+
+          region.update({
+            start,
+            end
+          })
+        }
+
+        if (handleType === "left") {
+          const start = clamp(
+            Math.round((region.start - beatOffset) / beatInterval) * beatInterval + beatOffset,
+            beatOffset,
+            region.end - beatInterval
+          )
+          region.update({
+            start
+          })
+        }
+
+        if (handleType === "right") {
+          const end = clamp(
+            Math.round((region.end - beatOffset) / beatInterval) * beatInterval + beatOffset,
+            region.start + beatInterval,
+            lastRegionEndTime
+          )
+          region.update({
+            end
+          })
+        }
+
+        handleType = undefined
+      }
+
+      wavesurfer.on("region-dblclick", regiondblClick)
+      wavesurfer.on("region-update-end", regionUpdateEnd)
     }
   }
 

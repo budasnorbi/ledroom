@@ -20,7 +20,7 @@ export interface Step {
   range?: [number, number]
 }
 
-export interface Region {
+export interface EffectRegion {
   id: number
   startTime: number
   endTime: number
