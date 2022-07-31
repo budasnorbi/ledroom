@@ -14,16 +14,17 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl":"./",
+    "baseUrl": "./",
     "paths": {
-      "@forms/*":["src/components/forms/*"],
-      "@components/*":["src/components/*"],
-      "@api":["src/api/instance"],
-      "@config/*":["src/config/*"],
-      "@styles/*":["src/styles/*"],
-      "@type/*":["src/types/*"],
-      "@utils/*":["src/utils/*"],
-      "@validation/*":["src/validation/*"]
+      "@forms/*": ["src/components/forms/*"],
+      "@components/*": ["src/components/*"],
+      "@api": ["src/api/api"],
+      "@config/*": ["src/config/*"],
+      "@styles/*": ["src/styles/*"],
+      "@type/*": ["src/types/*"],
+      "@utils/*": ["src/utils/*"],
+      "@validation/*": ["src/validation/*"],
+      "@store": ["src/store/store.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

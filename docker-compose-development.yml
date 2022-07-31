@@ -28,12 +28,11 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./backend/src:/usr/backend/src
+      - ./backend/songs:/usr/backend/songs
     env_file:
       - ./env/.env.development
     ports:
       - ${BACKEND_PORT_PUBLIC}:${BACKEND_PORT_CONTAINER}
-    depends_on:
-      - db
 
   db:
     image: mysql:8.0.28

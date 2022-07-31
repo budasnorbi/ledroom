@@ -9,7 +9,6 @@ import axios, { AxiosError } from "axios"
 //   UnauthorizedException,
 //   UnprocessableEntityException
 // } from "@type/api"
-
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC,
   withCredentials: true,

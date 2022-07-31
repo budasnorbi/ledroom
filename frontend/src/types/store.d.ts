@@ -6,7 +6,7 @@ export interface Blink {
   toColor: number[]
   watchOnlyColored?: boolean
   duration: number
-  range?: [number, number]
+  range: [number, number]
 }
 
 export interface Step {
@@ -17,7 +17,7 @@ export interface Step {
   speed: number
   barCount: number
   direction: "left" | "right"
-  range?: [number, number]
+  range: [number, number]
 }
 
 export interface EffectRegion {
@@ -29,16 +29,22 @@ export interface EffectRegion {
 
 type Effects = "blink" | "step"
 
+interface Song {
+  id: number
+  name: string
+}
+
 export interface Store {
-  bpmRegionsIsCalculated: boolean
-  wavesurferReady: boolean
-  wavesurferIsPlaying: boolean
-  regions: Region[]
+  wavesurferReady: boolean | any
+  wavesurferIsPlaying: boolean | any
+  regions: EffectRegion[]
   bpm: number
   beatEndTime: number
   beatOffset: number
   duration: number
   selectedRegion: number
+  songs: Song[]
+  selectedSongId: number
   setDuration: (duration: number) => void
   setWavesurferReady: (ready: boolean) => void
   toggleWavesurferIsPlaying: () => void
@@ -49,4 +55,9 @@ export interface Store {
   setBPM: (bpm: number) => void
   setBeatOffset: (beatOffset: number) => void
   setBeatEndTime: (time: number) => void
+  setEffectDuration: (type: "blink", duration: number) => void
+  setEffectRange: (type: Effects, range: [number, number]) => void
+  addSongs: (songs: Song[]) => void
+  removeSong: (id: number) => void
+  updateSelectedSongId: (id: number) => void
 }

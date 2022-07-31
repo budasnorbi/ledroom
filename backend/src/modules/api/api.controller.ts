@@ -1,12 +1,54 @@
-import { Controller, Post, Body, Get, UsePipes } from "@nestjs/common"
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UsePipes,
+  UploadedFile,
+  UseInterceptors,
+  Query,
+  Res,
+  StreamableFile,
+  Delete,
+  InternalServerErrorException
+} from "@nestjs/common"
+import { FileInterceptor } from "@nestjs/platform-express"
+import * as fs from "fs"
 import { YupValidationPipe } from "src/pipes/yupValidation.pipe"
 
 import { ApiService } from "./api.service"
 
 @Controller("api")
 export class ApiController {
-  constructor(private readonly appService: ApiService) {}
+  constructor(private readonly apiService: ApiService) {}
 
+  @Post("upload-song")
+  @UseInterceptors(FileInterceptor("file"))
+  uploadSong(@UploadedFile() file: Express.Multer.File) {
+    return this.apiService.uploadSong(file)
+  }
+
+  @Get("all-song-name")
+  songNames() {
+    return this.apiService.getAllSongName()
+  }
+
+  @Get("song")
+  async getSong(@Query("id") id: number, @Res({ passthrough: true }) res): Promise<StreamableFile> {
+    const song = await this.apiService.getSongPath(id)
+
+    const file = fs.createReadStream(song.path)
+    res.set({
+      "Content-Type": "audio/mpeg",
+      "Content-Disposition": `attachment; filename="${song.name}"`
+    })
+    return new StreamableFile(file)
+  }
+
+  @Delete("song")
+  async deleteSong(@Query("id") id: number) {
+    return this.apiService.removeSong(id)
+  }
   // @Post("play")
   // @UsePipes(new YupValidationPipe(playSchema))
   // play(@Body() body: PlaySchema) {
