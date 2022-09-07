@@ -3,9 +3,9 @@ USE ledroom;
 
 CREATE TABLE songs(
   id INT NOT NULL AUTO_INCREMENT,
-  bpm INT,
-  beat_offset DECIMAL,
-  beat_around_end DECIMAL,
+  bpm INT DEFAULT 0,
+  beat_offset DECIMAL DEFAULT 0,
+  beat_around_end DECIMAL DEFAULT 0,
   path TEXT NOT NULL,
   name TINYTEXT NOT NULL,
   PRIMARY KEY(id)

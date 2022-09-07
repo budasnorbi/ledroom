@@ -5,3 +5,4 @@ db/data
 .env.development
 .env.production
 backend/dist
+backend/songs/*

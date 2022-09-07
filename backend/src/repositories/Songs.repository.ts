@@ -4,10 +4,12 @@ import { InternalServerErrorException } from "@nestjs/common"
 
 @EntityRepository(Songs)
 export class SongsRepository extends Repository<Songs> {
-  getAllSongName() {
-    return this.find({ select: ["name", "id"] }).catch((err) => {
-      console.log(err)
-      throw new InternalServerErrorException()
-    })
+  getSongs() {
+    return this.find({ select: ["beatAroundEnd", "beatOffset", "bpm", "id", "name"] }).catch(
+      (err) => {
+        console.log(err)
+        throw new InternalServerErrorException()
+      }
+    )
   }
 }

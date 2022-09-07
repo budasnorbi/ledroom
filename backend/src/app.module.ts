@@ -14,7 +14,10 @@ import { TypeOrmModule } from "@nestjs/typeorm"
       password: process.env.DB_ROOT_PASS,
       database: process.env.DB_NAME_BACKEND,
       synchronize: false,
-      autoLoadEntities: true
+      autoLoadEntities: true,
+      extra: {
+        decimalNumbers: true
+      }
     }),
     LedModule,
     ApiModule

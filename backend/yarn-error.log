@@ -1,8 +1,8 @@
 Arguments: 
-  E:\Applications\Node\node.exe C:\Users\budas\.node\corepack\yarn\1.22.15\bin\yarn.js add -D @types/g.js
+  E:\Applications\Node\node.exe C:\Users\budas\.node\corepack\yarn\1.22.15\bin\yarn.js add -D @types/mp3-duration
 
 PATH: 
-  C:\Python310\Scripts\;C:\Python310\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;E:\Applications\Git\cmd;E:\Applications\PowerShell\7\;E:\Applications\Node\;C:\ProgramData\chocolatey\bin;;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;E:\Applications\CMake\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Users\budas\AppData\Local\Microsoft\WindowsApps;;E:\Applications\Microsoft VS Code\bin;C:\Users\budas\AppData\Roaming\npm
+  C:\Program Files\PowerShell\7;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Python310\Scripts\;C:\Python310\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;E:\Applications\Git\cmd;E:\Applications\Node\;C:\ProgramData\chocolatey\bin;;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;E:\Applications\CMake\bin;C:\Program Files\dotnet\;C:\Program Files (x86)\dotnet\;C:\Program Files\PowerShell\7\;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Users\budas\AppData\Local\Microsoft\WindowsApps;;E:\Applications\Microsoft VS Code\bin;C:\Users\budas\AppData\Roaming\npm;C:\Users\budas\.dotnet\tools
 
 Yarn version: 
   1.22.15
@@ -14,7 +14,7 @@ Platform:
   win32 x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@types%2fg.js: Not found
+  Error: https://registry.yarnpkg.com/@types%2fmp3-duration: Not found
       at Request.params.callback [as _callback] (C:\Users\budas\.node\corepack\yarn\1.22.15\lib\cli.js:66140:18)
       at Request.self.callback (C:\Users\budas\.node\corepack\yarn\1.22.15\lib\cli.js:140885:22)
       at Request.emit (node:events:527:28)
@@ -60,6 +60,7 @@ npm manifest:
       "cookie-parser": "^1.4.6",
       "g.js": "^0.1.17",
       "lodash": "^4.17.21",
+      "mp3-duration": "^1.1.0",
       "mysql2": "^2.3.3",
       "reflect-metadata": "^0.1.13",
       "rimraf": "^3.0.2",
@@ -74,6 +75,7 @@ npm manifest:
       "@nestjs/testing": "^8.0.0",
       "@types/express": "^4.17.13",
       "@types/jest": "^27.0.1",
+      "@types/multer": "^1.4.7",
       "@types/node": "^16.0.0",
       "@types/supertest": "^2.0.11",
       "@types/yup": "^0.29.13",
@@ -1029,7 +1031,7 @@ Lockfile:
       "@types/qs" "*"
       "@types/range-parser" "*"
   
-  "@types/express@^4.17.13":
+  "@types/express@*", "@types/express@^4.17.13":
     version "4.17.13"
     resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.13.tgz#a76e2995728999bab51a33fabce1d705a3709034"
     integrity sha512-6bSZTPaTIACxn48l50SR+axgrqm6qXFIxrdAKaG6PaJk3+zuUr35hBlgT7vOmJcum+OEaIBLtHV/qloEAFITeA==
@@ -1092,6 +1094,13 @@ Lockfile:
     version "1.3.2"
     resolved "https://registry.yarnpkg.com/@types/mime/-/mime-1.3.2.tgz#93e25bf9ee75fe0fd80b594bc4feb0e862111b5a"
     integrity sha512-YATxVxgRqNH6nHEIsvg6k2Boc1JHI9ZbH5iWFFv/MTkchz3b1ieGDa5T0a9RznNdI0KhVbdbWSN+KWWrQZRxTw==
+  
+  "@types/multer@^1.4.7":
+    version "1.4.7"
+    resolved "https://registry.yarnpkg.com/@types/multer/-/multer-1.4.7.tgz#89cf03547c28c7bbcc726f029e2a76a7232cc79e"
+    integrity sha512-/SNsDidUFCvqqcWDwxv2feww/yqhNeTRL5CVoL3jU4Goc4kKEL10T7Eye65ZqPNi4HRx8sAEX59pV1aEH7drNA==
+    dependencies:
+      "@types/express" "*"
   
   "@types/node@*", "@types/node@>=10.0.0":
     version "17.0.35"
@@ -1718,6 +1727,16 @@ Lockfile:
       buffer "^5.5.0"
       inherits "^2.0.4"
       readable-stream "^3.4.0"
+  
+  bluebird-co@^2.2.0:
+    version "2.2.0"
+    resolved "https://registry.yarnpkg.com/bluebird-co/-/bluebird-co-2.2.0.tgz#e0a49e63b6b17e34c91f48b3934b769a377fbed7"
+    integrity sha512-p8EZTlGgWO6lUZkWbtmK90zhKNGy4CY9rLUUlI6aApZH0U7lAaJTb/KxkH2nHjKNpktN+iWtikXzAM+Z2dQJ5g==
+  
+  bluebird@^3.5.1:
+    version "3.7.2"
+    resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
+    integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
   
   body-parser@1.20.0:
     version "1.20.0"
@@ -4564,6 +4583,14 @@ Lockfile:
     version "0.5.1"
     resolved "https://registry.yarnpkg.com/moo/-/moo-0.5.1.tgz#7aae7f384b9b09f620b6abf6f74ebbcd1b65dbc4"
     integrity sha512-I1mnb5xn4fO80BH9BLcF0yLypy2UKl+Cb01Fu0hJRkJjlCRtxZMWkTdAtDd5ZqCOxtCkhmRwyI57vWT+1iZ67w==
+  
+  mp3-duration@^1.1.0:
+    version "1.1.0"
+    resolved "https://registry.yarnpkg.com/mp3-duration/-/mp3-duration-1.1.0.tgz#c002e4e454448060873660abb4da7d10118d0e9c"
+    integrity sha512-5zO6ZLEHEPb1Da5p+et7zsMQ0pt0x2YCZLyUPayBqLMhLPQt3fFAXxvCyznZZQnhXCeIX99tXhvQocm8+VmpvA==
+    dependencies:
+      bluebird "^3.5.1"
+      bluebird-co "^2.2.0"
   
   ms@2.0.0:
     version "2.0.0"

@@ -1,11 +1,12 @@
-import { Songs } from "@entities/Songs"
 import { Injectable, InternalServerErrorException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
-import { SongsRepository } from "@repositories/Songs.repository"
-import { LedService } from "../Led/led.service"
+import { dirname } from "path"
 import * as asyncFs from "fs/promises"
 
-import { dirname } from "path"
+import { Songs } from "@entities/Songs"
+import { SongsRepository } from "@repositories/Songs.repository"
+import { LedService } from "../Led/led.service"
+import { UpdateBeatsSchema } from "@dto/updateBeats"
 const appDir = dirname(require.main.filename)
 
 @Injectable()
@@ -14,7 +15,6 @@ export class ApiService {
   @InjectRepository(SongsRepository) private songRepository: SongsRepository
 
   async uploadSong(file: Express.Multer.File) {
-    console.log(file)
     const filePath = `${appDir}/../songs/${file.originalname}`
     await asyncFs.writeFile(filePath, file.buffer).catch((error) => {
       console.log(error)
@@ -33,8 +33,8 @@ export class ApiService {
     return { id: insertedSong.id }
   }
 
-  getAllSongName() {
-    return this.songRepository.getAllSongName()
+  getSongs() {
+    return this.songRepository.getSongs()
   }
 
   async getSongPath(id: number) {
@@ -58,5 +58,13 @@ export class ApiService {
     })
 
     return { status: "OK" }
+  }
+
+  async updateBeats(body: UpdateBeatsSchema) {
+    const { id, ...beatOptions } = body
+    await this.songRepository.update({ id }, beatOptions).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
   }
 }

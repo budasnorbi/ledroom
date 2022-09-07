@@ -23,8 +23,8 @@ interface Props {}
 export const RegionEffectEditor: FC<Props> = (props) => {
   const [selectedEffect, setSelectedEffect] = useState<Effects>("blink")
 
-  const addEffectToRegion = useStore(useCallback((state) => state.addEffectToRegion, []))
-  const selectedRegionId = useStore((state) => state.selectedRegion)
+  const addEffectToRegion = useStore.use.addEffectToRegion()
+  const selectedRegionId = useStore.use.selectedRegion()
 
   const selectedRegionTimeRange: [number, number] | undefined = useStore(
     useCallback(

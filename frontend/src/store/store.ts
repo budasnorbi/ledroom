@@ -1,230 +1,105 @@
-import { Store, EffectRegion, Blink, Step } from "@type/store"
-import { updateRegions } from "@utils/socket"
+import create, { State, StoreApi, UseBoundStore } from "zustand"
 import produce from "immer"
-
-import create from "zustand"
 import { devtools } from "zustand/middleware"
 
-export const useStore = create<Store>()(
-  devtools((set) => {
-    return {
-      wavesurferIsPlaying: false,
-      wavesurferReady: false,
-      duration: 0,
-      beatOffset: 0.15,
-      beatEndTime: 195.5,
-      bpm: 127,
-      regions: [],
-      selectedRegion: -1,
-      songs: [],
-      selectedSongId: -1,
-      setDuration(duration) {
-        set(
-          produce((state) => {
-            state.duration = duration
-          }),
-          false,
-          "setDuration"
-        )
-      },
-      setWavesurferReady(ready) {
-        set(
-          () => ({
-            wavesurferReady: ready
-          }),
-          false,
-          "setWavesurferReady"
-        )
-      },
-      toggleWavesurferIsPlaying() {
-        set(
-          produce((state: Store) => {
-            /* @ts-ignore */
-            //state.wavesurferIsPlaying = !state.wavesurferIsPlaying
-          }),
-          false,
-          "toggleWavesurferIsPlaying"
-        )
-      },
-      createRegion(config) {
-        const region: EffectRegion = {
-          ...config,
-          effects: []
-        }
+import { Store, EffectRegion, Blink, Step, Song } from "@type/store"
+import { updateRegions } from "@utils/socket"
+import { api } from "../api/instance"
 
-        set(
-          produce((state: Store) => {
-            state.regions.push(region)
-          }),
-          false,
-          "createRegion"
-        )
-      },
-      updateRegionTime(options) {
-        set(
-          produce((state: Store) => {
-            const region = state.regions.find((region) => region.id === state.selectedRegion)
+type WithSelectors<S> = S extends { getState: () => infer T }
+  ? S & { use: { [K in keyof T]: () => T[K] } }
+  : never
 
-            if (region) {
-              region.startTime = options.startTime ?? region.startTime
-              region.endTime = options.endTime ?? region.endTime
+const createSelectors = <S extends UseBoundStore<StoreApi<State>>>(_store: S) => {
+  let store = _store as WithSelectors<typeof _store>
+  store.use = {}
+  for (let k of Object.keys(store.getState())) {
+    ;(store.use as any)[k] = () => store((s) => s[k as keyof typeof s])
+  }
 
-              updateRegions(state.regions)
-            }
-          }),
-          false,
-          "updateRegionTime"
-        )
-      },
-      selectRegion(id: number) {
-        set(
-          produce((state: Store) => {
-            const selectedRegion = state.regions.find((region) => region.id === id)
-            if (selectedRegion) {
-              state.selectedRegion = selectedRegion.id
-            }
-          }),
-          false,
-          "selectRegion"
-        )
-      },
-      addEffectToRegion(effectName) {
-        set(
-          produce((state: Store) => {
-            let effect: Step | Blink
-            switch (effectName) {
-              case "step": {
-                const stepEffect: Step = {
-                  type: "step",
-                  barCount: 50,
-                  clipLed: [0, 0, 0],
-                  direction: "left",
-                  ledColors: [],
-                  speed: 1,
-                  range: [0, 826],
-                  barColor: [255, 255, 255]
+  return store
+}
+
+export const useStore = createSelectors(
+  create<Store>()(
+    devtools((set, get) => {
+      const setState = (fn: (state: Store) => void, actionName?: string) => {
+        return set(produce(get(), fn), false, actionName)
+      }
+
+      return {
+        wavesurferIsPlaying: false,
+        wavesurferReady: false,
+        songs: [] as Song[],
+        selectedSongId: -1,
+
+        setDuration(duration) {
+          set(
+            produce((state: Store) => {
+              for (const song of state.songs) {
+                if (song.id === state.selectedSongId) {
+                  song.duration = duration
+                  return
                 }
-                effect = stepEffect
-                break
               }
-              case "blink": {
-                const blinkEffect: Blink = {
-                  type: "blink",
-                  bezierPoints: [0, 1, 0, 1],
-                  duration: 1,
-                  ledColors: [],
-                  toColor: [255, 255, 255],
-                  fromColor: [0, 0, 0],
-                  watchOnlyColored: false,
-                  range: [0, 826]
-                }
-                effect = blinkEffect
-                break
-              }
+            }),
+            false,
+            "setDuration"
+          )
+        },
+
+        setWavesurferReady(ready) {
+          setState((state) => {
+            state.wavesurferReady = ready
+          }, "setWavesurferReady")
+        },
+
+        toggleWavesurferIsPlaying() {
+          setState((state) => {
+            state.wavesurferIsPlaying = !state.wavesurferIsPlaying
+          }, "toggleWavesurferIsPlaying")
+        },
+
+        async fetchSongs() {
+          const songs: Song[] = await api
+            .get("/songs")
+            .then((res) => res.data)
+            .catch((error) => {
+              console.log(error)
+              return null
+            })
+
+          if (songs && songs.length !== 0) {
+            setState((state) => {
+              const songsWithAdditionalProps = songs.map((song) => ({
+                ...song,
+                regions: [],
+                selectedRegionId: -1,
+                duration: 0
+              }))
+
+              state.songs.push(...songsWithAdditionalProps)
+              state.selectedSongId = songs[0].id
+            }, "addSongs")
+          }
+        },
+
+        addSong(song) {
+          setState((state) => {
+            const songsWithAdditionalProps = {
+              ...song,
+              regions: [],
+              selectedRegionId: -1,
+              duration: 0
             }
 
-            const region = state.regions.find((region) => region.id === state.selectedRegion)
+            state.songs.push(songsWithAdditionalProps)
+            state.selectedSongId === song.id
+          }, "addSong")
+        },
 
-            const effectIsExsists =
-              region?.effects.findIndex((effect) => effect.type === effectName) === -1
-
-            if (region && !effectIsExsists) {
-              region.effects.push(effect)
-            }
-          }),
-          false,
-          "addEffectToRegion"
-        )
-      },
-      setBPM(bpm) {
-        set(
-          produce((state: Store) => {
-            state.bpm = bpm
-          }),
-          false,
-          "setBPM"
-        )
-      },
-      setBeatOffset(beatOffset) {
-        set(
-          produce((state: Store) => {
-            state.beatOffset = beatOffset
-          }),
-          false,
-          "setBeatOffset"
-        )
-      },
-      setBeatEndTime(beatEndTime) {
-        set(
-          produce((state: Store) => {
-            state.beatEndTime = beatEndTime
-          }),
-          false,
-          "setBeatEndTime"
-        )
-      },
-      setEffectDuration(type, duration) {
-        set(
-          produce((state: Store) => {
-            const { regions, selectedRegion } = state
-
-            for (let i = 0; i < regions.length; i++) {
-              const region = regions[i]
-
-              if (region.id === selectedRegion) {
-                for (let k = 0; k < regions[i].effects.length; k++) {
-                  const effect = regions[i].effects[k]
-
-                  if (effect.type === type) {
-                    effect.duration = duration
-                    break
-                  }
-                }
-                break
-              }
-            }
-          }),
-          false,
-          "setEffectDuration"
-        )
-      },
-      setEffectRange(type, range) {
-        set(
-          produce((state: Store) => {
-            const { regions, selectedRegion } = state
-
-            for (let i = 0; i < regions.length; i++) {
-              const region = regions[i]
-
-              if (region.id === selectedRegion) {
-                for (let k = 0; k < regions[i].effects.length; k++) {
-                  const effect = regions[i].effects[k]
-
-                  if (effect.type === type) {
-                    effect.range = range
-                    break
-                  }
-                }
-                break
-              }
-            }
-          }),
-          false,
-          "setEffectRange"
-        )
-      },
-      addSongs(song) {
-        set(
-          produce((state: Store) => {
-            state.songs.push(...song)
-          }),
-          false,
-          "addSong"
-        )
-      },
-      removeSong(id) {
-        set(
-          produce((state: Store) => {
+        removeSong(id) {
+          setState((state) => {
             state.songs = state.songs.filter((song) => song.id !== id)
 
             if (state.songs.length === 0) {
@@ -232,20 +107,187 @@ export const useStore = create<Store>()(
             } else {
               state.selectedSongId = state.songs[state.songs.length - 1].id
             }
-          }),
-          false,
-          "removeSong"
-        )
-      },
-      updateSelectedSongId(id) {
-        set(
-          produce((state: Store) => {
+          }, "removeSong")
+        },
+
+        updateSelectedSongId(id) {
+          setState((state) => {
             state.selectedSongId = id
-          }),
-          false,
-          "updateSelectedSongId"
-        )
+          }, "updateSelectedSongId")
+        },
+
+        updateSongBeatConfig(bpm, beatOffset, beatAroundEnd) {
+          api
+            .put("/beat-config", {
+              id: get().selectedSongId,
+              bpm: bpm,
+              beatOffset: beatOffset,
+              beatAroundEnd: beatAroundEnd
+            })
+            .then(() => {
+              setState((state) => {
+                for (const song of state.songs) {
+                  if (song.id === state.selectedSongId) {
+                    song.bpm = bpm
+                    song.beatOffset = beatOffset
+                    song.beatAroundEnd = beatAroundEnd
+
+                    return
+                  }
+                }
+              }, "updateSongBeatsConfig")
+            })
+        },
+
+        createRegion(config) {
+          const region: EffectRegion = {
+            ...config,
+            effects: []
+          }
+
+          setState((state) => {
+            for (const song of state.songs) {
+              if (song.id === state.selectedSongId) {
+                song.regions.push(region)
+                return
+              }
+            }
+          }, "createRegion")
+        },
+
+        updateRegionTime(options) {
+          setState((state) => {
+            for (const song of state.songs) {
+              if (song.id === state.selectedSongId) {
+                const region = song.regions.find((region) => region.id === song.selectedRegionId)
+
+                if (region) {
+                  region.startTime = options.startTime ?? region.startTime
+                  region.endTime = options.endTime ?? region.endTime
+
+                  updateRegions(song.regions)
+                }
+
+                return
+              }
+            }
+          }, "updateRegionTime")
+        },
+
+        selectRegion(id: number) {
+          setState((state) => {
+            for (const song of state.songs) {
+              if (song.id === state.selectedSongId) {
+                const region = song.regions.find((region) => region.id === song.selectedRegionId)
+
+                if (region) {
+                  song.selectedRegionId = region.id
+                }
+
+                return
+              }
+            }
+          }, "selectRegion")
+        },
+
+        addEffectToRegion(effectName) {
+          let effect: Step | Blink
+          switch (effectName) {
+            case "step": {
+              const stepEffect: Step = {
+                type: "step",
+                barCount: 50,
+                clipLed: [0, 0, 0],
+                direction: "left",
+                ledColors: [],
+                speed: 1,
+                range: [0, 826],
+                barColor: [255, 255, 255]
+              }
+              effect = stepEffect
+              break
+            }
+            case "blink": {
+              const blinkEffect: Blink = {
+                type: "blink",
+                bezierPoints: [0, 1, 0, 1],
+                duration: 1,
+                ledColors: [],
+                toColor: [255, 255, 255],
+                fromColor: [0, 0, 0],
+                watchOnlyColored: false,
+                range: [0, 826]
+              }
+              effect = blinkEffect
+              break
+            }
+          }
+
+          setState((state) => {
+            // for (const song in state.songs) {
+            //   const region = song.regions.find((region) => region.id === song.selectedRegionId)
+            //   const effectIsExsists =
+            //     region?.effects.findIndex((effect) => effect === effectName) === -1
+            //   if (region) {
+            //   }
+            //   return
+            // }
+            // if (region && !effectIsExsists) {
+            //   region.effects.push(effect)
+            // }
+          }, "addEffectToRegion")
+        },
+
+        setEffectDuration(type, duration) {
+          // set(
+          //   produce((state: Store) => {
+          //     for (const song of state.songs) {
+          //       if (song.id === state.selectedSongId) {
+          //         for (let i = 0; i < song.regions.length; i++) {
+          //           const region = song.regions[i]
+          //           if (region.id === song.selectedRegionId) {
+          //             for (let k = 0; k < song.regions[i].effects.length; k++) {
+          //               const effect = song.regions[i].effects[k]
+          //               if (effect.type === type) {
+          //                 effect.duration = duration
+          //                 break
+          //               }
+          //             }
+          //             break
+          //           }
+          //         }
+          //         return
+          //       }
+          //     }
+          //   }),
+          //   false,
+          //   "setEffectDuration"
+          // )
+        },
+
+        setEffectRange(type, range) {
+          // set(
+          //   produce((state: Store) => {
+          //     const { regions, selectedRegion } = state
+          //     for (let i = 0; i < regions.length; i++) {
+          //       const region = regions[i]
+          //       if (region.id === selectedRegion) {
+          //         for (let k = 0; k < regions[i].effects.length; k++) {
+          //           const effect = regions[i].effects[k]
+          //           if (effect.type === type) {
+          //             effect.range = range
+          //             break
+          //           }
+          //         }
+          //         break
+          //       }
+          //     }
+          //   }),
+          //   false,
+          //   "setEffectRange"
+          // )
+        }
       }
-    }
-  })
+    })
+  )
 )

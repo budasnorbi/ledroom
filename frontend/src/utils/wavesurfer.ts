@@ -1,4 +1,11 @@
-export function formatTimeCallback(seconds: number, pxPerSec: number) {
+import Wavesurfer from "wavesurfer.js"
+import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
+import RegionsPlugin, { Region } from "wavesurfer.js/src/plugin/regions"
+import { sendSeek, sendStart, sendStop, sendTimeupdate } from "./socket"
+
+export let wavesurfer: Wavesurfer
+
+function formatTimeCallback(seconds: number, pxPerSec: number) {
   seconds = Number(seconds)
   var minutes = Math.floor(seconds / 60)
   seconds = seconds % 60
@@ -20,7 +27,7 @@ export function formatTimeCallback(seconds: number, pxPerSec: number) {
   return secondsStr
 }
 
-export function timeInterval(pxPerSec: number) {
+function timeInterval(pxPerSec: number) {
   var retval = 1
   if (pxPerSec >= 25 * 100) {
     retval = 0.01
@@ -42,7 +49,7 @@ export function timeInterval(pxPerSec: number) {
   return retval
 }
 
-export function primaryLabelInterval(pxPerSec: number) {
+function primaryLabelInterval(pxPerSec: number) {
   var retval = 1
   if (pxPerSec >= 25 * 100) {
     retval = 10
@@ -64,7 +71,94 @@ export function primaryLabelInterval(pxPerSec: number) {
   return retval
 }
 
-export function secondaryLabelInterval(pxPerSec: number) {
+function secondaryLabelInterval(pxPerSec: number) {
   // draw one every 10s as an example
   return Math.floor(10 / timeInterval(pxPerSec))
+}
+
+interface InitFunctions {
+  wavesurferRef: React.MutableRefObject<WaveSurfer | null>
+  containerRef: React.MutableRefObject<WaveSurfer | null>
+  setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
+  toggleWavesurferIsPlaying: () => void
+  setDuration: (duration: number) => void
+  setWavesurferReady: (ready: boolean) => void
+}
+
+export const initWavesurfer = (
+  songUrl: string,
+  {
+    wavesurferRef,
+    containerRef,
+    setDuration,
+    setMusicCurrentTime,
+    toggleWavesurferIsPlaying,
+    setWavesurferReady
+  }: InitFunctions
+) => {
+  if (wavesurfer) {
+    wavesurfer.destroy()
+  }
+
+  wavesurfer = Wavesurfer.create({
+    container: containerRef.current as any,
+    barWidth: 1,
+    partialRender: true,
+    normalize: true,
+    pixelRatio: 1,
+    responsive: true,
+    plugins: [
+      TimelinePlugin.create({
+        container: "#wave-timeline",
+        formatTimeCallback: formatTimeCallback,
+        timeInterval: timeInterval,
+        primaryLabelInterval: primaryLabelInterval,
+        secondaryLabelInterval: secondaryLabelInterval,
+        primaryColor: "blue",
+        secondaryColor: "red",
+        primaryFontColor: "blue",
+        secondaryFontColor: "red"
+      }),
+      RegionsPlugin.create({})
+    ]
+  })
+
+  wavesurfer.load(songUrl)
+
+  wavesurfer.on("play", () => {
+    const currTime = wavesurfer.getCurrentTime()
+    setMusicCurrentTime(currTime)
+    sendStart(currTime)
+    toggleWavesurferIsPlaying()
+  })
+
+  wavesurfer.on("pause", () => {
+    toggleWavesurferIsPlaying()
+    sendStop()
+  })
+
+  // wavesurfer.on("finish", () => {
+  //   toggleWavesurferIsPlaying()
+  // })
+
+  wavesurfer.on("seek", () => {
+    const currTime = wavesurfer.getCurrentTime()
+    setMusicCurrentTime(currTime)
+    sendSeek(currTime)
+  })
+
+  wavesurfer.on("audioprocess", (time: number) => {
+    setMusicCurrentTime(time)
+    sendTimeupdate(time)
+  })
+
+  wavesurfer.once("ready", () => {
+    wavesurferRef.current = wavesurfer
+    setWavesurferReady(true)
+    setDuration(wavesurfer.getDuration())
+
+    setMusicCurrentTime(wavesurfer.getCurrentTime())
+    wavesurfer.zoom(200)
+    wavesurfer.setVolume(0.15)
+  })
 }

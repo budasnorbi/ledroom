@@ -1,6 +1,6 @@
 import { Blink, Effects } from "@type/store"
 import { ChangeEvent, useState, useCallback, FC } from "react"
-import { useStore } from "@store/"
+import { useStore } from "@store"
 
 export const BlinkEffect: FC<{
   /*   duration: number
@@ -8,8 +8,8 @@ export const BlinkEffect: FC<{
   range: [number, number]
   setRange: (type: Effects, range: [number, number]) => void */
 }> = (props) => {
-  const setEffectDuration = useStore(useCallback((state) => state.setEffectDuration, []))
-  console.log(setEffectDuration)
+  const setEffectDuration = useStore.use.setEffectDuration()
+
   return (
     <div>asd</div>
     /* <div style={{ display: "flex", border: "solid 1px black", padding: "10px" }}>

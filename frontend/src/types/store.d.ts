@@ -24,40 +24,39 @@ export interface EffectRegion {
   id: number
   startTime: number
   endTime: number
-  effects: (Step | Blink)[]
+  effects: Blink | Step[]
 }
 
 type Effects = "blink" | "step"
 
-interface Song {
+type Song = {
+  beatOffset: number
+  beatAroundEnd: number
+  bpm: number
   id: number
   name: string
+  regions: EffectRegion[]
+  selectedRegionId: number
+  duration: number
 }
 
 export interface Store {
   wavesurferReady: boolean | any
   wavesurferIsPlaying: boolean | any
-  regions: EffectRegion[]
-  bpm: number
-  beatEndTime: number
-  beatOffset: number
-  duration: number
-  selectedRegion: number
   songs: Song[]
   selectedSongId: number
   setDuration: (duration: number) => void
   setWavesurferReady: (ready: boolean) => void
   toggleWavesurferIsPlaying: () => void
+  fetchSongs: () => Promise<void>
+  addSong: (songs: Exclude<Song, "selectedRegionId" | "regions">) => void
   createRegion: (config: Pick<Region, "id" | "startTime" | "endTime">) => void
   updateRegionTime: (options: Partial<Pick<Region, "endTime" | "startTime">>) => void
   selectRegion: (id: number) => void
   addEffectToRegion: (effectName: Effects) => void
-  setBPM: (bpm: number) => void
-  setBeatOffset: (beatOffset: number) => void
-  setBeatEndTime: (time: number) => void
   setEffectDuration: (type: "blink", duration: number) => void
   setEffectRange: (type: Effects, range: [number, number]) => void
-  addSongs: (songs: Song[]) => void
   removeSong: (id: number) => void
-  updateSelectedSongId: (id: number) => void
+  updateSelectedSongId: (id: number) => any
+  updateSongBeatConfig: (bpm: number, beatOffset: number, beatAroundEnd: number) => any
 }

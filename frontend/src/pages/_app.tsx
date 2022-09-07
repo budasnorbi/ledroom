@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { AppProps } from "next/app"
 import { CacheProvider, EmotionCache } from "@emotion/react"
 import { createEmotionCache } from "@utils/createEmtionCache"
 import "../styles/customhandle.css"
-import "../styles/effectBuilder.css"
 import "../styles/editorContainer.css"
 import "../styles/preview.css"
 
