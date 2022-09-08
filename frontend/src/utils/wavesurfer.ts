@@ -144,12 +144,14 @@ export const initWavesurfer = (
   wavesurfer.on("pause", () => {
     toggleWavesurferIsPlaying()
     sendStop()
-    updateLastTimePosition(wavesurfer.getCurrentTime())
-  })
 
-  wavesurfer.on("finish", () => {
-    toggleWavesurferIsPlaying()
-    updateLastTimePosition(wavesurfer.getCurrentTime())
+    // When the songs ends need to reset the last saved time
+    if (wavesurfer.getCurrentTime() === wavesurfer.getDuration()) {
+      updateLastTimePosition(0)
+      wavesurfer.seekAndCenter(0)
+    } else {
+      updateLastTimePosition(wavesurfer.getCurrentTime())
+    }
   })
 
   wavesurfer.on("seek", () => {

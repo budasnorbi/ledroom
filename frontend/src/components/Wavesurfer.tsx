@@ -65,6 +65,10 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
         }
       )
     }
+
+    return () => {
+      wavesurfer?.destroy()
+    }
   }, [
     selectedSong?.id,
     setDuration,
