@@ -11,7 +11,6 @@ interface Props {
 export const WavesurferController: FC<Props> = (props) => {
   const wavesurferIsPlaying = useStore.use.wavesurferIsPlaying()
   const wavesurferReady = useStore.use.wavesurferReady()
-
   const wavesurfer = props.wavesurferRef.current as WaveSurfer
 
   if (!wavesurferReady || !wavesurfer) {
@@ -25,6 +24,7 @@ export const WavesurferController: FC<Props> = (props) => {
   const setVolumeUp = () => {
     wavesurfer.setVolume(wavesurfer.getVolume() + 0.1)
   }
+
   const setVolumeDown = () => {
     wavesurfer.setVolume(wavesurfer.getVolume() - 0.1)
   }

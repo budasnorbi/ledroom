@@ -83,7 +83,12 @@ interface InitFunctions {
   setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
   toggleWavesurferIsPlaying: () => void
   setDuration: (duration: number) => void
-  setWavesurferReady: (ready: boolean, wavesurferRef: MutableRefObject<WaveSurfer | null>) => void
+  toggleWavesurferReady: (
+    ready: boolean,
+    wavesurferRef: MutableRefObject<WaveSurfer | null>
+  ) => void
+  updateLastTimePosition: (time: number) => void
+  lastTimePosition: number
 }
 
 export const initWavesurfer = (
@@ -94,7 +99,9 @@ export const initWavesurfer = (
     setDuration,
     setMusicCurrentTime,
     toggleWavesurferIsPlaying,
-    setWavesurferReady
+    toggleWavesurferReady,
+    lastTimePosition,
+    updateLastTimePosition
   }: InitFunctions
 ) => {
   if (wavesurfer) {
@@ -131,21 +138,25 @@ export const initWavesurfer = (
     setMusicCurrentTime(currTime)
     sendStart(currTime)
     toggleWavesurferIsPlaying()
+    updateLastTimePosition(wavesurfer.getCurrentTime())
   })
 
   wavesurfer.on("pause", () => {
     toggleWavesurferIsPlaying()
     sendStop()
+    updateLastTimePosition(wavesurfer.getCurrentTime())
   })
 
-  // wavesurfer.on("finish", () => {
-  //   toggleWavesurferIsPlaying()
-  // })
+  wavesurfer.on("finish", () => {
+    toggleWavesurferIsPlaying()
+    updateLastTimePosition(wavesurfer.getCurrentTime())
+  })
 
   wavesurfer.on("seek", () => {
     const currTime = wavesurfer.getCurrentTime()
     setMusicCurrentTime(currTime)
     sendSeek(currTime)
+    updateLastTimePosition(wavesurfer.getCurrentTime())
   })
 
   wavesurfer.on("audioprocess", (time: number) => {
@@ -155,11 +166,14 @@ export const initWavesurfer = (
 
   wavesurfer.once("ready", () => {
     wavesurferRef.current = wavesurfer
-    setWavesurferReady(true, wavesurferRef)
+    toggleWavesurferReady(true, wavesurferRef)
     setDuration(wavesurfer.getDuration())
 
     setMusicCurrentTime(wavesurfer.getCurrentTime())
     wavesurfer.zoom(200)
     wavesurfer.setVolume(0.15)
+
+    const progress = lastTimePosition / wavesurfer.getDuration()
+    wavesurfer.seekAndCenter(progress)
   })
 }

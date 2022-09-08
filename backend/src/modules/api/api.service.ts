@@ -6,7 +6,8 @@ import * as asyncFs from "fs/promises"
 import { Songs } from "@entities/Songs"
 import { SongsRepository } from "@repositories/Songs.repository"
 import { LedService } from "../Led/led.service"
-import { UpdateBeatsSchema } from "@dto/updateBeats"
+import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
+import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
 const appDir = dirname(require.main.filename)
 
 @Injectable()
@@ -15,8 +16,13 @@ export class ApiService {
   @InjectRepository(SongsRepository) private songRepository: SongsRepository
 
   async uploadSong(file: Express.Multer.File) {
+    const songBuffer = file.buffer
+    const fileSize = file.size
+    const avgBytePerSec = songBuffer.readInt32LE(28)
+    const duration = fileSize / avgBytePerSec
+
     const filePath = `${appDir}/../songs/${file.originalname}`
-    await asyncFs.writeFile(filePath, file.buffer).catch((error) => {
+    await asyncFs.writeFile(filePath, songBuffer).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })
@@ -24,13 +30,16 @@ export class ApiService {
     const newSong = new Songs()
     newSong.name = file.originalname
     newSong.path = filePath
+    newSong.duration = duration
 
-    const insertedSong = await this.songRepository.save(newSong, {}).catch((error) => {
+    const insertedSong = await this.songRepository.save(newSong).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })
 
-    return { id: insertedSong.id }
+    const { path, ...restSongData } = insertedSong
+
+    return restSongData
   }
 
   getSongs() {
@@ -63,6 +72,14 @@ export class ApiService {
   async updateBeats(body: UpdateBeatsSchema) {
     const { id, ...beatOptions } = body
     await this.songRepository.update({ id }, beatOptions).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
+  }
+
+  async updateLastTimePosition(body: LastTimePositionSchema) {
+    const { time, id } = body
+    await this.songRepository.update({ id }, { lastTimePosition: time }).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })

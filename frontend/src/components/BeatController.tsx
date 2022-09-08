@@ -15,8 +15,6 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
     state.songs.find((song) => song.id === state.selectedSongId)
   )
   const updateSongBeatConfig = useStore.use.updateSongBeatConfig()
-  const setWavesurferReady = useStore.use.setWavesurferReady()
-
   const wavesurferReady = useStore.use.wavesurferReady()
 
   useEffect(() => {
@@ -29,7 +27,7 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
     }
   }, [selectedSong?.id, wavesurferReady])
 
-  if (!selectedSong) {
+  if (!selectedSong || !wavesurferReady) {
     return null
   }
 

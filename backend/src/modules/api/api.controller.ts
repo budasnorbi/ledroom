@@ -16,10 +16,11 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express"
 import * as fs from "fs"
 
-import { UpdateBeatsSchema, updateBeatsSchema } from "@dto/updateBeats"
+import { UpdateBeatsSchema, updateBeatsSchema } from "@dto/updateBeats.yup"
 import { YupValidationPipe } from "../../pipes/yupValidation.pipe"
 
 import { ApiService } from "./api.service"
+import { LastTimePositionSchema, lastTimePositionSchema } from "@dto/lastTimePosition.yup"
 
 @Controller("api")
 export class ApiController {
@@ -58,6 +59,12 @@ export class ApiController {
   @UsePipes(new YupValidationPipe(updateBeatsSchema))
   updateSongBeats(@Body() body: UpdateBeatsSchema) {
     return this.apiService.updateBeats(body)
+  }
+
+  @Put("last-time-position")
+  @UsePipes(new YupValidationPipe(lastTimePositionSchema))
+  updateLastTimePosition(@Body() body: LastTimePositionSchema) {
+    return this.apiService.updateLastTimePosition(body)
   }
 
   // @Post("play")

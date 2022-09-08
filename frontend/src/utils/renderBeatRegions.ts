@@ -41,11 +41,11 @@ export const renderBeatRegions = (
   wavesurferRef: MutableRefObject<WaveSurfer | null>,
   { bpm, beatOffset, beatAroundEnd }: { bpm: number; beatOffset: number; beatAroundEnd: number },
   {
-    createRegion,
+    addRegion,
     selectRegion,
     updateRegionTime
   }: {
-    createRegion: (config: any) => void
+    addRegion: (config: any) => void
     selectRegion: (id: number) => void
     updateRegionTime: (options: any) => void
   }
@@ -79,7 +79,7 @@ export const renderBeatRegions = (
       const id = lastIntervalRangeId + effectRegionIndex
       effectRegionIndex++
 
-      createRegion({
+      addRegion({
         id,
         startTime: region.start,
         endTime: region.end

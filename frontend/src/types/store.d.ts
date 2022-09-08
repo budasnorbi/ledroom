@@ -1,3 +1,13 @@
+export type WithSelectors<S> = S extends { getState: () => infer T }
+  ? S & { use: { [K in keyof T]: () => T[K] } }
+  : never
+
+type StateFromFunctions<T extends [...any]> = T extends [infer F, ...infer R]
+  ? F extends (...args: any) => object
+    ? StateFromFunctions<R> & ReturnType<F>
+    : unknown
+  : unknown
+
 export interface Blink {
   type: "blink"
   bezierPoints: [number, number, number, number]
@@ -29,7 +39,7 @@ export interface EffectRegion {
 
 type Effects = "blink" | "step"
 
-type Song = {
+interface Song {
   beatOffset: number
   beatAroundEnd: number
   bpm: number
@@ -38,30 +48,45 @@ type Song = {
   regions: EffectRegion[]
   selectedRegionId: number
   duration: number
+  lastTimePosition: number
+  volume: number
 }
 
-export interface Store {
-  wavesurferReady: boolean | any
-  wavesurferIsPlaying: boolean | any
-  songs: Song[]
-  selectedSongId: number
-  setDuration: (duration: number) => void
-  setWavesurferReady: (ready: boolean, wavesurferRef: MutableRefObject<WaveSurfer | null>) => void
+interface DbSong extends Exclude<Song, "regions"> {}
+
+interface _Store {
+  // selectRegion: (id: number) => void
+  // addEffectToRegion: (effectName: Effects) => void
+  // setEffectDuration: (type: "blink", duration: number) => void
+  // setEffectRange: (type: Effects, range: [number, number]) => void
+}
+
+export interface WavesurferSlice {
+  wavesurferReady: boolean
+  wavesurferIsPlaying: boolean
+  toggleWavesurferReady: (wavesurferRef: MutableRefObject<WaveSurfer | null>) => void
   toggleWavesurferIsPlaying: () => void
+}
+
+export interface SongsSlice {
+  selectedSongId: number
+  songs: Song[]
   fetchSongs: () => Promise<void>
-  addSong: (songs: Exclude<Song, "selectedRegionId" | "regions">) => void
-  createRegion: (config: Pick<Region, "id" | "startTime" | "endTime">) => void
-  updateRegionTime: (options: Partial<Pick<Region, "endTime" | "startTime">>) => void
-  selectRegion: (id: number) => void
-  addEffectToRegion: (effectName: Effects) => void
-  setEffectDuration: (type: "blink", duration: number) => void
-  setEffectRange: (type: Effects, range: [number, number]) => void
+  addSongs: (songs: DbSong[]) => void
   removeSong: (id: number) => void
-  updateSelectedSongId: (id: number) => any
+  setDuration: (duration: number) => void
+  selectSong: (id: number) => void
   updateSongBeatConfig: (
     bpm: number,
     beatOffset: number,
     beatAroundEnd: number,
     wavesurferRef: MutableRefObject<WaveSurfer | null>
-  ) => any
+  ) => void
+  addRegion: (config: Pick<Region, "id" | "startTime" | "endTime">) => void
+  selectRegion: (id: number) => void
+  removeRegion: () => void
+  updateRegionTime: (options: Partial<Pick<Region, "endTime" | "startTime">>) => void
+  updateLastTimePosition: (time: number) => void
 }
+
+export type Store = SongsSlice & WavesurferSlice

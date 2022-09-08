@@ -11,17 +11,17 @@ export const SongLoadController = () => {
   const selectedSongId = useStore.use.selectedSongId()
 
   const removeSong = useStore.use.removeSong()
-  const updateSelectedSongId = useStore.use.updateSelectedSongId()
-  const addSong = useStore.use.addSong()
+  const selectSong = useStore.use.selectSong()
+  const addSongs = useStore.use.addSongs()
 
   const handleSongChoose = useCallback(
     async (event: ChangeEvent<HTMLSelectElement>) => {
       if (event.target.value !== "") {
         const id = parseInt(event.target.value)
-        updateSelectedSongId(id)
+        selectSong(id)
       }
     },
-    [updateSelectedSongId]
+    [selectSong]
   )
 
   const handleSongRemove = useCallback(
@@ -57,10 +57,10 @@ export const SongLoadController = () => {
       })
 
       if (uploadRes.data.id) {
-        addSong(uploadRes.data)
+        addSongs([uploadRes.data])
       }
     },
-    [addSong]
+    [addSongs]
   )
 
   return (
