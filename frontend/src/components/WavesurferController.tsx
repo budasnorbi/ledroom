@@ -9,11 +9,12 @@ interface Props {
 }
 
 export const WavesurferController: FC<Props> = (props) => {
+  const selectedSongId = useStore((state) => state.selectedSongId)
   const wavesurferIsPlaying = useStore.use.wavesurferIsPlaying()
   const wavesurferReady = useStore.use.wavesurferReady()
   const wavesurfer = props.wavesurferRef.current as WaveSurfer
 
-  if (!wavesurferReady || !wavesurfer) {
+  if (!wavesurferReady || !wavesurfer || selectedSongId === -1) {
     return null
   }
 
