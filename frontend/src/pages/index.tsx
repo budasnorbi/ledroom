@@ -1,11 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
+import { css } from "@emotion/react"
+
 import { BeatController } from "@components/BeatController"
 import { WavesurferController } from "@components/WavesurferController"
 import { RegionEffectEditor } from "@components/RegionEffectEditor"
 import { SongLoadController } from "@components/SongLoadController"
 import { useStore } from "@store"
+import * as style from "@styles/shared"
 
 const Preview = dynamic(() => import("../components/Preview"), {
   ssr: false
@@ -43,16 +46,14 @@ function Dashboard(props: any) {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap" }}>
+      <div css={[style.dFlex, style.flexJustifyBetween, style.flexWrap]}>
         <SongLoadController />
         <BeatController wavesurferRef={wavesurferRef} />
       </div>
 
       {/* @ts-ignore */}
       <WaveSurfer wavesurferRef={wavesurferRef} setMusicCurrentTime={setMusicCurrentTime} />
-      {selectedSong && (
-        <WavesurferController wavesurferRef={wavesurferRef} musicCurrentTime={musicCurrentTime} />
-      )}
+      <WavesurferController wavesurferRef={wavesurferRef} musicCurrentTime={musicCurrentTime} />
       <div className="editorContainer">
         {/* <RegionEffectEditor /> */}
         <div>

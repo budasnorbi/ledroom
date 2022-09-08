@@ -1,6 +1,10 @@
-import { api } from "../api/instance"
 import { useCallback, ChangeEvent, PointerEvent } from "react"
+import { css } from "@emotion/react"
+
+import { api } from "../api/instance"
 import { useStore } from "@store"
+import * as style from "@styles/shared"
+import * as btnStyle from "@styles/buttons"
 
 export const SongLoadController = () => {
   const songs = useStore.use.songs()
@@ -60,25 +64,10 @@ export const SongLoadController = () => {
   )
 
   return (
-    <div
-      style={{
-        display: "flex"
-      }}
-    >
+    <div css={[style.dFlex]}>
       <div>
-        <input type="file" id="songFile" style={{ display: "none" }} onChange={handleSongLoad} />
-        <label
-          style={{
-            display: "block",
-            backgroundColor: "buttonface",
-            border: "solid 1.1px rgba(0,0,0,.5)",
-            fontSize: "13.3px",
-            fontFamily: "Arial",
-            padding: "1.1px",
-            borderRadius: "2px"
-          }}
-          htmlFor="songFile"
-        >
+        <input type="file" id="songFile" css={[style.dNone]} onChange={handleSongLoad} />
+        <label css={[btnStyle.defaultButton]} htmlFor="songFile">
           upload
         </label>
       </div>

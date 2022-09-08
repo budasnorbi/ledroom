@@ -1,11 +1,8 @@
-import { clamp } from "@utils/clamp"
-import { renderBeatRegions } from "@utils/renderBeatRegions"
-import { sendReset } from "@utils/socket"
+import { ChangeEvent, FC, useEffect, useState } from "react"
+import { css } from "@emotion/react"
+
+import * as style from "@styles/shared"
 import { useStore } from "@store"
-import { ChangeEvent, FC, useCallback, useEffect, useState } from "react"
-import { Region } from "wavesurfer.js/src/plugin/regions"
-import { api } from "../api/instance"
-import { wavesurfer } from "@utils/wavesurfer"
 
 interface Props {
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>
@@ -18,10 +15,9 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
     state.songs.find((song) => song.id === state.selectedSongId)
   )
   const updateSongBeatConfig = useStore.use.updateSongBeatConfig()
+  const setWavesurferReady = useStore.use.setWavesurferReady()
+
   const wavesurferReady = useStore.use.wavesurferReady()
-  const updateRegionTime = useStore.use.updateRegionTime()
-  const createRegion = useStore.use.createRegion()
-  const selectRegion = useStore.use.selectRegion()
 
   useEffect(() => {
     if ((selectedSong?.id || selectedSong?.id === 0) && wavesurferReady) {
@@ -60,21 +56,7 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
 
   const handleRenderBeats = () => {
     const { bpm, beatAroundEnd, beatOffset } = songBeatConfig
-    updateSongBeatConfig(bpm, beatOffset, beatAroundEnd)
-
-    renderBeatRegions(
-      wavesurferRef,
-      {
-        bpm,
-        beatOffset,
-        beatAroundEnd
-      },
-      {
-        createRegion,
-        selectRegion,
-        updateRegionTime
-      }
-    )
+    updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef)
   }
 
   const isRenderButtonDisabled =
@@ -86,7 +68,7 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
       songBeatConfig.beatOffset === selectedSong.beatOffset)
 
   return (
-    <div style={{ display: "flex" }}>
+    <div css={[style.dFlex]}>
       <div>
         <span>BPM:</span>
         <input type="number" value={songBeatConfig.bpm} onChange={handleBPM} />

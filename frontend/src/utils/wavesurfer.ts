@@ -2,6 +2,7 @@ import Wavesurfer from "wavesurfer.js"
 import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
 import RegionsPlugin, { Region } from "wavesurfer.js/src/plugin/regions"
 import { sendSeek, sendStart, sendStop, sendTimeupdate } from "./socket"
+import { MutableRefObject } from "react"
 
 export let wavesurfer: Wavesurfer
 
@@ -82,7 +83,7 @@ interface InitFunctions {
   setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
   toggleWavesurferIsPlaying: () => void
   setDuration: (duration: number) => void
-  setWavesurferReady: (ready: boolean) => void
+  setWavesurferReady: (ready: boolean, wavesurferRef: MutableRefObject<WaveSurfer | null>) => void
 }
 
 export const initWavesurfer = (
@@ -154,7 +155,7 @@ export const initWavesurfer = (
 
   wavesurfer.once("ready", () => {
     wavesurferRef.current = wavesurfer
-    setWavesurferReady(true)
+    setWavesurferReady(true, wavesurferRef)
     setDuration(wavesurfer.getDuration())
 
     setMusicCurrentTime(wavesurfer.getCurrentTime())

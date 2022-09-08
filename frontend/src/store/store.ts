@@ -5,6 +5,7 @@ import { devtools } from "zustand/middleware"
 import { Store, EffectRegion, Blink, Step, Song } from "@type/store"
 import { updateRegions } from "@utils/socket"
 import { api } from "../api/instance"
+import { renderBeatRegions } from "@utils/renderBeatRegions"
 
 type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -48,10 +49,30 @@ export const useStore = createSelectors(
           )
         },
 
-        setWavesurferReady(ready) {
+        setWavesurferReady(ready, wavesurferRef) {
           setState((state) => {
             state.wavesurferReady = ready
           }, "setWavesurferReady")
+
+          const { songs, selectedSongId, createRegion, selectRegion, updateRegionTime } = get()
+
+          for (const song of songs) {
+            if (song.id === selectedSongId) {
+              renderBeatRegions(
+                wavesurferRef,
+                {
+                  bpm: song.bpm,
+                  beatOffset: song.beatOffset,
+                  beatAroundEnd: song.beatAroundEnd
+                },
+                {
+                  createRegion,
+                  selectRegion,
+                  updateRegionTime
+                }
+              )
+            }
+          }
         },
 
         toggleWavesurferIsPlaying() {
@@ -116,7 +137,7 @@ export const useStore = createSelectors(
           }, "updateSelectedSongId")
         },
 
-        updateSongBeatConfig(bpm, beatOffset, beatAroundEnd) {
+        updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
           api
             .put("/beat-config", {
               id: get().selectedSongId,
@@ -136,6 +157,22 @@ export const useStore = createSelectors(
                   }
                 }
               }, "updateSongBeatsConfig")
+
+              const { createRegion, selectRegion, updateRegionTime } = get()
+
+              renderBeatRegions(
+                wavesurferRef,
+                {
+                  bpm,
+                  beatOffset,
+                  beatAroundEnd
+                },
+                {
+                  createRegion,
+                  selectRegion,
+                  updateRegionTime
+                }
+              )
             })
         },
 

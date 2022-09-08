@@ -21,9 +21,6 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   const selectRegion = useStore.use.selectRegion()
   const fetchSongs = useStore.use.fetchSongs()
   const toggleWavesurferIsPlaying = useStore.use.toggleWavesurferIsPlaying()
-  const updateRegionTime = useStore.use.updateRegionTime()
-  const createRegion = useStore.use.createRegion()
-  const setEffectRange = useStore.use.setEffectRange()
 
   /*   useEffect(() => {
     const handleRegionClick = (region: Region) => {
@@ -64,21 +61,6 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
           toggleWavesurferIsPlaying
         }
       )
-      wavesurfer.on("ready", () => {
-        renderBeatRegions(
-          wavesurferRef,
-          {
-            bpm: selectedSong.bpm,
-            beatOffset: selectedSong.beatOffset,
-            beatAroundEnd: selectedSong.beatAroundEnd
-          },
-          {
-            createRegion,
-            selectRegion,
-            updateRegionTime
-          }
-        )
-      })
     }
   }, [
     selectedSong?.id,
@@ -92,7 +74,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   return (
     <div>
       <div ref={wavesurferContainerRef}></div>
-      <div style={{ height: "20px" }} id="wave-timeline"></div>
+      <div css={{ height: "20px" }} id="wave-timeline"></div>
     </div>
   )
 }

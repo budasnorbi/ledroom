@@ -46,7 +46,7 @@ export interface Store {
   songs: Song[]
   selectedSongId: number
   setDuration: (duration: number) => void
-  setWavesurferReady: (ready: boolean) => void
+  setWavesurferReady: (ready: boolean, wavesurferRef: MutableRefObject<WaveSurfer | null>) => void
   toggleWavesurferIsPlaying: () => void
   fetchSongs: () => Promise<void>
   addSong: (songs: Exclude<Song, "selectedRegionId" | "regions">) => void
@@ -58,5 +58,10 @@ export interface Store {
   setEffectRange: (type: Effects, range: [number, number]) => void
   removeSong: (id: number) => void
   updateSelectedSongId: (id: number) => any
-  updateSongBeatConfig: (bpm: number, beatOffset: number, beatAroundEnd: number) => any
+  updateSongBeatConfig: (
+    bpm: number,
+    beatOffset: number,
+    beatAroundEnd: number,
+    wavesurferRef: MutableRefObject<WaveSurfer | null>
+  ) => any
 }
