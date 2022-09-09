@@ -1,4 +1,4 @@
-FROM node:17-alpine as deps
+FROM node:18.0.0-alpine as deps
 RUN apk update 
 WORKDIR /usr/backend
 COPY package.json yarn.lock ./

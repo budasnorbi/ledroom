@@ -10,8 +10,7 @@ import {
   Res,
   StreamableFile,
   Delete,
-  Put,
-  Param
+  Put
 } from "@nestjs/common"
 import { FileInterceptor } from "@nestjs/platform-express"
 import * as fs from "fs"

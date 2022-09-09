@@ -51,7 +51,7 @@ export const songSlice = (
       const songsWithAdditionalProps: Song[] = songs.map((song) => ({ ...song, regions: [] }))
 
       state.songs.push(...songsWithAdditionalProps)
-      state.selectedSongId === songsWithAdditionalProps[0].id
+      state.selectedSongId = songsWithAdditionalProps[0].id
     }, "addSong")
   },
 

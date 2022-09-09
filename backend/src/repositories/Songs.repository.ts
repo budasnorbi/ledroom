@@ -1,9 +1,16 @@
-import { Repository, EntityRepository } from "typeorm"
+import { Repository } from "typeorm"
 import { Songs } from "@entities/Songs"
-import { InternalServerErrorException } from "@nestjs/common"
+import { Injectable, InternalServerErrorException } from "@nestjs/common"
+import { DataSource } from "typeorm/data-source/DataSource"
 
-@EntityRepository(Songs)
+@Injectable()
 export class SongsRepository extends Repository<Songs> {
+  constructor(dataSource: DataSource) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    /* @ts-ignore */
+    super(Songs, dataSource.createEntityManager())
+  }
+
   getSongs() {
     return (
       this.find()

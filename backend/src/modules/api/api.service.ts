@@ -8,12 +8,12 @@ import { SongsRepository } from "@repositories/Songs.repository"
 import { LedService } from "../Led/led.service"
 import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
 import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
+import { Repository } from "typeorm"
 const appDir = dirname(require.main.filename)
 
 @Injectable()
 export class ApiService {
-  constructor(private ledService: LedService) {}
-  @InjectRepository(SongsRepository) private songRepository: SongsRepository
+  constructor(private ledService: LedService, private songRepository: SongsRepository) {}
 
   async uploadSong(file: Express.Multer.File) {
     const songBuffer = file.buffer
@@ -47,7 +47,7 @@ export class ApiService {
   }
 
   async getSongPath(id: number) {
-    return this.songRepository.findOne({ id }).catch((error) => {
+    return this.songRepository.findOne({ where: { id } }).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })
