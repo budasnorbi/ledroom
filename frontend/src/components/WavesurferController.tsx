@@ -1,5 +1,5 @@
 import { useStore } from "@store"
-import { FC, useCallback } from "react"
+import { FC, useCallback, useEffect } from "react"
 import { css } from "@emotion/react"
 import * as styles from "@styles/shared"
 
@@ -9,12 +9,17 @@ interface Props {
 }
 
 export const WavesurferController: FC<Props> = (props) => {
-  const selectedSongId = useStore((state) => state.selectedSongId)
+  const selectedSong = useStore((state) =>
+    state.songs.find((song) => song.id === state.selectedSongId)
+  )
   const wavesurferIsPlaying = useStore.use.wavesurferIsPlaying()
   const wavesurferReady = useStore.use.wavesurferReady()
+
+  const updateSongVolume = useStore.use.updateSongVolume()
+
   const wavesurfer = props.wavesurferRef.current as WaveSurfer
 
-  if (!wavesurferReady || !wavesurfer || selectedSongId === -1) {
+  if (!wavesurferReady || !selectedSong) {
     return null
   }
 
@@ -23,11 +28,15 @@ export const WavesurferController: FC<Props> = (props) => {
   }
 
   const setVolumeUp = () => {
-    wavesurfer.setVolume(wavesurfer.getVolume() + 0.1)
+    const newVolume = parseFloat((selectedSong.volume + 0.05).toFixed(2))
+    updateSongVolume(newVolume)
+    wavesurfer.setVolume(newVolume)
   }
 
   const setVolumeDown = () => {
-    wavesurfer.setVolume(wavesurfer.getVolume() - 0.1)
+    const newVolume = parseFloat((selectedSong.volume - 0.05).toFixed(2))
+    updateSongVolume(newVolume)
+    wavesurfer.setVolume(newVolume)
   }
 
   return (
@@ -38,9 +47,13 @@ export const WavesurferController: FC<Props> = (props) => {
       <div css={{ marginRight: "15px" }}>
         Current Time: {props.musicCurrentTime ? props.musicCurrentTime.toPrecision(5) : 0}
       </div>
-      <button>Volume up</button>
-      <button>Volume down</button>
-      <span>Volume {wavesurfer.getVolume()}</span>
+      <button onClick={setVolumeUp} disabled={selectedSong.volume === 1}>
+        Volume +
+      </button>
+      <button onClick={setVolumeDown} disabled={selectedSong.volume === 0}>
+        Volume -
+      </button>
+      <span>Volume {((selectedSong.volume / 1) * 100).toFixed(0)}%</span>
     </div>
   )
 }

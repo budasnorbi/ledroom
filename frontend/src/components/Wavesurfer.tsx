@@ -16,7 +16,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   const selectedSong = useStore((state) =>
     state.songs.find((song) => song.id === state.selectedSongId)
   )
-  const toggleWavesurferReady = useStore.use.toggleWavesurferReady()
+  const updateWavesurferReady = useStore.use.updateWavesurferReady()
   const setDuration = useStore.use.setDuration()
   // const selectRegion = useStore.use.selectRegion()
   const fetchSongs = useStore.use.fetchSongs()
@@ -58,10 +58,11 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
           containerRef: wavesurferContainerRef,
           setDuration,
           setMusicCurrentTime,
-          toggleWavesurferReady,
+          updateWavesurferReady,
           toggleWavesurferIsPlaying,
           updateLastTimePosition,
-          lastTimePosition: selectedSong.lastTimePosition
+          lastTimePosition: selectedSong.lastTimePosition,
+          volume: selectedSong.volume
         }
       )
     }
@@ -73,7 +74,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
     selectedSong?.id,
     setDuration,
     setMusicCurrentTime,
-    toggleWavesurferReady,
+    updateWavesurferReady,
     toggleWavesurferIsPlaying,
     updateLastTimePosition,
     wavesurferRef

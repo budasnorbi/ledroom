@@ -83,12 +83,13 @@ interface InitFunctions {
   setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
   toggleWavesurferIsPlaying: () => void
   setDuration: (duration: number) => void
-  toggleWavesurferReady: (
-    ready: boolean,
+  updateWavesurferReady: (
+    isReady: boolean,
     wavesurferRef: MutableRefObject<WaveSurfer | null>
   ) => void
   updateLastTimePosition: (time: number) => void
   lastTimePosition: number
+  volume: number
 }
 
 export const initWavesurfer = (
@@ -99,9 +100,10 @@ export const initWavesurfer = (
     setDuration,
     setMusicCurrentTime,
     toggleWavesurferIsPlaying,
-    toggleWavesurferReady,
+    updateWavesurferReady,
     lastTimePosition,
-    updateLastTimePosition
+    updateLastTimePosition,
+    volume
   }: InitFunctions
 ) => {
   if (wavesurfer) {
@@ -131,6 +133,7 @@ export const initWavesurfer = (
     ]
   })
 
+  updateWavesurferReady(false, wavesurferRef)
   wavesurfer.load(songUrl)
 
   wavesurfer.on("play", () => {
@@ -168,14 +171,15 @@ export const initWavesurfer = (
 
   wavesurfer.once("ready", () => {
     wavesurferRef.current = wavesurfer
-    toggleWavesurferReady(true, wavesurferRef)
+    updateWavesurferReady(true, wavesurferRef)
     setDuration(wavesurfer.getDuration())
 
     setMusicCurrentTime(wavesurfer.getCurrentTime())
     wavesurfer.zoom(200)
-    wavesurfer.setVolume(0.15)
 
     const progress = lastTimePosition / wavesurfer.getDuration()
     wavesurfer.seekAndCenter(progress)
+
+    wavesurfer.setVolume(volume)
   })
 }

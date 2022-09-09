@@ -15,10 +15,14 @@ export const wavesurferSlice = (
     }, "toggleWavesurferIsPlaying")
   },
 
-  toggleWavesurferReady(wavesurferRef) {
+  updateWavesurferReady(isReady, wavesurferRef) {
     setState((state) => {
-      state.wavesurferReady = !state.wavesurferReady
-    }, "toggleWavesurferReady")
+      state.wavesurferReady = isReady
+    }, "updateWavesurferReady")
+
+    if (!isReady) {
+      return
+    }
 
     const { songs, selectedSongId, addRegion, selectRegion, updateRegionTime } = get()
 

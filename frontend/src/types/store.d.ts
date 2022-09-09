@@ -64,7 +64,10 @@ interface _Store {
 export interface WavesurferSlice {
   wavesurferReady: boolean
   wavesurferIsPlaying: boolean
-  toggleWavesurferReady: (wavesurferRef: MutableRefObject<WaveSurfer | null>) => void
+  updateWavesurferReady: (
+    isReady: boolean,
+    wavesurferRef: MutableRefObject<WaveSurfer | null>
+  ) => void
   toggleWavesurferIsPlaying: () => void
 }
 
@@ -87,6 +90,7 @@ export interface SongsSlice {
   removeRegion: () => void
   updateRegionTime: (options: Partial<Pick<Region, "endTime" | "startTime">>) => void
   updateLastTimePosition: (time: number) => void
+  updateSongVolume: (volume: number) => void
 }
 
 export type Store = SongsSlice & WavesurferSlice

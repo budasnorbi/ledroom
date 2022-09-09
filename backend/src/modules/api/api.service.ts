@@ -9,6 +9,7 @@ import { LedService } from "../Led/led.service"
 import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
 import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
 import { Repository } from "typeorm"
+import { VolumeSchema } from "@dto/volume.yup"
 const appDir = dirname(require.main.filename)
 
 @Injectable()
@@ -80,6 +81,14 @@ export class ApiService {
   async updateLastTimePosition(body: LastTimePositionSchema) {
     const { time, id } = body
     await this.songRepository.update({ id }, { lastTimePosition: time }).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
+  }
+
+  async updateVolume(body: VolumeSchema) {
+    const { id, volume } = body
+    await this.songRepository.update({ id }, { volume }).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })

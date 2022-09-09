@@ -188,6 +188,26 @@ export const songSlice = (
         }
       }, "updateLastTimePosition")
     })
+  },
+
+  updateSongVolume(volume) {
+    const { selectedSongId, songs } = get()
+
+    const song = songs.find((song) => song.id === selectedSongId)
+
+    if (!song) {
+      return
+    }
+
+    api.put("/volume", { volume, id: selectedSongId }).then(() => {
+      setState((state) => {
+        const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+        if (song) {
+          song.volume = volume
+        }
+      }, "updateSongVolume")
+    })
   }
 })
 

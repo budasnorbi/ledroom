@@ -17,9 +17,9 @@ import * as fs from "fs"
 
 import { UpdateBeatsSchema, updateBeatsSchema } from "@dto/updateBeats.yup"
 import { YupValidationPipe } from "../../pipes/yupValidation.pipe"
-
 import { ApiService } from "./api.service"
 import { LastTimePositionSchema, lastTimePositionSchema } from "@dto/lastTimePosition.yup"
+import { VolumeSchema, volumeSchema } from "@dto/volume.yup"
 
 @Controller("api")
 export class ApiController {
@@ -64,6 +64,12 @@ export class ApiController {
   @UsePipes(new YupValidationPipe(lastTimePositionSchema))
   updateLastTimePosition(@Body() body: LastTimePositionSchema) {
     return this.apiService.updateLastTimePosition(body)
+  }
+
+  @Put("volume")
+  @UsePipes(new YupValidationPipe(volumeSchema))
+  updateVolume(@Body() body: VolumeSchema) {
+    return this.apiService.updateVolume(body)
   }
 
   // @Post("play")
