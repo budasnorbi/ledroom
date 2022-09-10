@@ -1,5 +1,4 @@
 import { Store, WavesurferSlice } from "@type/store"
-import { renderBeatRegions } from "@utils/renderBeatRegions"
 import { GetState } from "zustand"
 
 export const wavesurferSlice = (

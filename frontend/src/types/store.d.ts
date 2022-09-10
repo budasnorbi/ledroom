@@ -88,7 +88,7 @@ export interface SongsSlice {
   addRegion: (config: EffectRegion) => void
   selectRegion: (id: string) => void
   removeRegion: () => void
-  updateRegionTime: (options: { startTime?: number; endTime?: number }) => void
+  updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
   updateLastTimePosition: (time: number) => void
   updateSongVolume: (volume: number) => void
 }

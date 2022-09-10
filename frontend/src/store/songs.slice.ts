@@ -2,6 +2,7 @@ import { Store, SongsSlice, Song, EffectRegion } from "@type/store"
 import { api } from "../api/instance"
 import { GetState } from "zustand"
 import { updateRegions } from "@utils/socket"
+import { renderBeatRegions } from "@utils/renderBeatRegions"
 
 export const songSlice = (
   setState: (fn: (state: Store) => void, actionName?: string) => void,
@@ -69,7 +70,7 @@ export const songSlice = (
     }, "selectSong")
   },
 
-  updateSongBeatConfig(bpm, beatOffset, beatAroundEnd) {
+  updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
     api
       .put("/beat-config", {
         id: get().selectedSongId,
@@ -88,6 +89,22 @@ export const songSlice = (
           song.bpm = bpm
           song.beatOffset = beatOffset
           song.beatAroundEnd = beatAroundEnd
+
+          const { addRegion, updateRegionTime } = get()
+
+          renderBeatRegions(
+            wavesurferRef,
+            {
+              beatAroundEnd,
+              beatOffset,
+              bpm
+            },
+            {
+              addRegion,
+              updateRegionTime
+            },
+            song.regions
+          )
         }, "updateSongBeatsConfig")
       })
   },
@@ -150,7 +167,7 @@ export const songSlice = (
       return
     }
 
-    const region = song.regions.find((region) => region.id === song.selectedRegionId)
+    const region = song.regions.find((region) => region.id === options.id)
 
     if (!region) {
       return
@@ -159,7 +176,7 @@ export const songSlice = (
     api
       .put("region", {
         songId: selectedSongId,
-        regionId: song.selectedRegionId,
+        id: options.id,
         startTime: options.startTime ?? region.startTime,
         endTime: options.endTime ?? region.endTime
       })

@@ -127,7 +127,7 @@ export class ApiService {
   updateRegion(body: UpdateRegionSchema) {
     const { endTime, id, songId, startTime } = body
 
-    return this.regionsRepository.update({ id, songId }, { endTime, startTime }).catch((error) => {
+    this.regionsRepository.update({ id, songId }, { endTime, startTime }).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })

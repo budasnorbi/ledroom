@@ -13,7 +13,7 @@ export const renderBeatRegions = (
     updateRegionTime
   }: {
     addRegion: (config: EffectRegion) => void
-    updateRegionTime: (options: { startTime?: number; endTime?: number }) => void
+    updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
   },
   regions: EffectRegion[]
 ) => {
@@ -96,7 +96,7 @@ export const renderBeatRegions = (
           end
         })
 
-        updateRegionTime({ startTime: start, endTime: end })
+        updateRegionTime({ startTime: start, endTime: end, id: region.id })
       }
 
       if (handleType === "left") {
@@ -110,7 +110,7 @@ export const renderBeatRegions = (
           start
         })
 
-        updateRegionTime({ startTime: start })
+        updateRegionTime({ startTime: start, id: region.id })
       }
       if (handleType === "right") {
         const end = clamp(
@@ -118,11 +118,12 @@ export const renderBeatRegions = (
           region.start + beatInterval,
           lastRegionEndTime
         )
+
         region.update({
           end
         })
 
-        updateRegionTime({ endTime: end })
+        updateRegionTime({ endTime: end, id: region.id })
       }
 
       handleType = undefined
