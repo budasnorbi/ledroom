@@ -15,33 +15,9 @@ export const wavesurferSlice = (
     }, "toggleWavesurferIsPlaying")
   },
 
-  updateWavesurferReady(isReady, wavesurferRef) {
+  updateWavesurferReady(isReady) {
     setState((state) => {
       state.wavesurferReady = isReady
     }, "updateWavesurferReady")
-
-    if (!isReady) {
-      return
-    }
-
-    const { songs, selectedSongId, addRegion, selectRegion, updateRegionTime } = get()
-
-    for (const song of songs) {
-      if (song.id === selectedSongId) {
-        renderBeatRegions(
-          wavesurferRef,
-          {
-            bpm: song.bpm,
-            beatOffset: song.beatOffset,
-            beatAroundEnd: song.beatAroundEnd
-          },
-          {
-            addRegion,
-            selectRegion,
-            updateRegionTime
-          }
-        )
-      }
-    }
   }
 })

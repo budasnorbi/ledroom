@@ -20,6 +20,8 @@ import { YupValidationPipe } from "../../pipes/yupValidation.pipe"
 import { ApiService } from "./api.service"
 import { LastTimePositionSchema, lastTimePositionSchema } from "@dto/lastTimePosition.yup"
 import { VolumeSchema, volumeSchema } from "@dto/volume.yup"
+import { AddRegionSchema, addRegionSchema } from "@dto/addRegion.yup"
+import { UpdateRegionSchema, updateRegionSchema } from "@dto/updateRegion.yup"
 
 @Controller("api")
 export class ApiController {
@@ -70,6 +72,18 @@ export class ApiController {
   @UsePipes(new YupValidationPipe(volumeSchema))
   updateVolume(@Body() body: VolumeSchema) {
     return this.apiService.updateVolume(body)
+  }
+
+  @Post("region")
+  @UsePipes(new YupValidationPipe(addRegionSchema))
+  addRegion(@Body() body: AddRegionSchema) {
+    return this.apiService.addRegion(body)
+  }
+
+  @Put("region")
+  @UsePipes(new YupValidationPipe(updateRegionSchema))
+  updateRegion(@Body() body: UpdateRegionSchema) {
+    return this.apiService.updateRegion(body)
   }
 
   // @Post("play")

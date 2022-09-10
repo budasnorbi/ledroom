@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
 import { dirname } from "path"
 import * as asyncFs from "fs/promises"
 
@@ -8,13 +7,21 @@ import { SongsRepository } from "@repositories/Songs.repository"
 import { LedService } from "../Led/led.service"
 import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
 import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
-import { Repository } from "typeorm"
 import { VolumeSchema } from "@dto/volume.yup"
+import { AddRegionSchema } from "@dto/addRegion.yup"
+import { RegionsRepository } from "@repositories/Regions.repository"
+import { Regions } from "@entities/Regions"
+import { Song } from "@type/song"
+import { UpdateRegionSchema } from "@dto/updateRegion.yup"
 const appDir = dirname(require.main.filename)
 
 @Injectable()
 export class ApiService {
-  constructor(private ledService: LedService, private songRepository: SongsRepository) {}
+  constructor(
+    private ledService: LedService,
+    private songRepository: SongsRepository,
+    private regionsRepository: RegionsRepository
+  ) {}
 
   async uploadSong(file: Express.Multer.File) {
     const songBuffer = file.buffer
@@ -43,8 +50,16 @@ export class ApiService {
     return restSongData
   }
 
-  getSongs() {
-    return this.songRepository.getSongs()
+  async getSongs() {
+    const data: Song[] = []
+    const songs = await this.songRepository.getSongs()
+
+    for (const song of songs) {
+      const regions = await this.regionsRepository.getRegionsBySongId(song.id)
+      data.push({ ...song, regions })
+    }
+
+    return data
   }
 
   async getSongPath(id: number) {
@@ -89,6 +104,30 @@ export class ApiService {
   async updateVolume(body: VolumeSchema) {
     const { id, volume } = body
     await this.songRepository.update({ id }, { volume }).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
+  }
+
+  async addRegion(body: AddRegionSchema) {
+    const { endTime, songId, startTime, id } = body
+    const newRegion = new Regions()
+
+    newRegion.id = id
+    newRegion.startTime = startTime
+    newRegion.endTime = endTime
+    newRegion.songId = songId
+
+    await this.regionsRepository.save(newRegion).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
+  }
+
+  updateRegion(body: UpdateRegionSchema) {
+    const { endTime, id, songId, startTime } = body
+
+    return this.regionsRepository.update({ id, songId }, { endTime, startTime }).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })

@@ -11,7 +11,7 @@ export class SongsRepository extends Repository<Songs> {
     super(Songs, dataSource.createEntityManager())
   }
 
-  getSongs() {
+  async getSongs() {
     return (
       this.find()
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

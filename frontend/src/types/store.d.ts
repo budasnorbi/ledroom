@@ -31,10 +31,10 @@ export interface Step {
 }
 
 export interface EffectRegion {
-  id: number
+  id: string
   startTime: number
   endTime: number
-  effects: Blink | Step[]
+  //effects: Blink | Step[]
 }
 
 type Effects = "blink" | "step"
@@ -46,7 +46,7 @@ interface Song {
   id: number
   name: string
   regions: EffectRegion[]
-  selectedRegionId: number
+  selectedRegionId: string
   duration: number
   lastTimePosition: number
   volume: number
@@ -85,10 +85,10 @@ export interface SongsSlice {
     beatAroundEnd: number,
     wavesurferRef: MutableRefObject<WaveSurfer | null>
   ) => void
-  addRegion: (config: Pick<Region, "id" | "startTime" | "endTime">) => void
-  selectRegion: (id: number) => void
+  addRegion: (config: EffectRegion) => void
+  selectRegion: (id: string) => void
   removeRegion: () => void
-  updateRegionTime: (options: Partial<Pick<Region, "endTime" | "startTime">>) => void
+  updateRegionTime: (options: { startTime?: number; endTime?: number }) => void
   updateLastTimePosition: (time: number) => void
   updateSongVolume: (volume: number) => void
 }

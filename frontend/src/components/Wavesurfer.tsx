@@ -2,7 +2,6 @@ import { useRef, useEffect, FC } from "react"
 
 import { useStore } from "@store"
 import { initWavesurfer, wavesurfer } from "@utils/wavesurfer"
-import { renderBeatRegions } from "@utils/renderBeatRegions"
 
 interface WaveSurferProps {
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>
@@ -22,6 +21,8 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   const fetchSongs = useStore.use.fetchSongs()
   const toggleWavesurferIsPlaying = useStore.use.toggleWavesurferIsPlaying()
   const updateLastTimePosition = useStore.use.updateLastTimePosition()
+  const updateRegionTime = useStore.use.updateRegionTime()
+  const addRegion = useStore.use.addRegion()
 
   /*   useEffect(() => {
     const handleRegionClick = (region: Region) => {
@@ -61,8 +62,9 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
           updateWavesurferReady,
           toggleWavesurferIsPlaying,
           updateLastTimePosition,
-          lastTimePosition: selectedSong.lastTimePosition,
-          volume: selectedSong.volume
+          selectedSong,
+          updateRegionTime,
+          addRegion
         }
       )
     }

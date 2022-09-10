@@ -1,4 +1,3 @@
-import { Songs } from "@entities/Songs"
 import { ApiModule } from "@modules/api/api.module"
 import { LedModule } from "@modules/Led/led.module"
 import { Module } from "@nestjs/common"
@@ -16,7 +15,6 @@ import { TypeOrmModule } from "@nestjs/typeorm"
       database: process.env.DB_NAME_BACKEND,
       synchronize: true,
       autoLoadEntities: true,
-      entities: [Songs],
       extra: {
         decimalNumbers: true
       }

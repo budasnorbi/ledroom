@@ -3,6 +3,8 @@ import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
 import RegionsPlugin, { Region } from "wavesurfer.js/src/plugin/regions"
 import { sendSeek, sendStart, sendStop, sendTimeupdate } from "./socket"
 import { MutableRefObject } from "react"
+import { EffectRegion, Song } from "@type/store"
+import { renderBeatRegions } from "./renderBeatRegions"
 
 export let wavesurfer: Wavesurfer
 
@@ -88,8 +90,9 @@ interface InitFunctions {
     wavesurferRef: MutableRefObject<WaveSurfer | null>
   ) => void
   updateLastTimePosition: (time: number) => void
-  lastTimePosition: number
-  volume: number
+  selectedSong: Song
+  updateRegionTime: (options: { startTime?: number; endTime?: number }) => void
+  addRegion: (config: EffectRegion) => void
 }
 
 export const initWavesurfer = (
@@ -101,9 +104,10 @@ export const initWavesurfer = (
     setMusicCurrentTime,
     toggleWavesurferIsPlaying,
     updateWavesurferReady,
-    lastTimePosition,
     updateLastTimePosition,
-    volume
+    selectedSong,
+    updateRegionTime,
+    addRegion
   }: InitFunctions
 ) => {
   if (wavesurfer) {
@@ -170,6 +174,7 @@ export const initWavesurfer = (
   })
 
   wavesurfer.once("ready", () => {
+    const { volume, lastTimePosition, regions, beatAroundEnd, beatOffset, bpm } = selectedSong
     wavesurferRef.current = wavesurfer
     updateWavesurferReady(true, wavesurferRef)
     setDuration(wavesurfer.getDuration())
@@ -181,5 +186,19 @@ export const initWavesurfer = (
     wavesurfer.seekAndCenter(progress)
 
     wavesurfer.setVolume(volume)
+
+    renderBeatRegions(
+      wavesurferRef,
+      {
+        beatAroundEnd,
+        beatOffset,
+        bpm
+      },
+      {
+        addRegion,
+        updateRegionTime
+      },
+      regions
+    )
   })
 }

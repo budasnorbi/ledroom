@@ -1,7 +1,6 @@
 import { Store, SongsSlice, Song, EffectRegion } from "@type/store"
 import { api } from "../api/instance"
 import { GetState } from "zustand"
-import { renderBeatRegions } from "@utils/renderBeatRegions"
 import { updateRegions } from "@utils/socket"
 
 export const songSlice = (
@@ -34,10 +33,7 @@ export const songSlice = (
     if (songs && songs.length !== 0) {
       setState((state) => {
         const songsWithAdditionalProps = songs.map((song) => ({
-          ...song,
-          regions: [],
-          selectedRegionId: -1,
-          duration: 0
+          ...song
         }))
 
         state.songs.push(...songsWithAdditionalProps)
@@ -73,7 +69,7 @@ export const songSlice = (
     }, "selectSong")
   },
 
-  updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
+  updateSongBeatConfig(bpm, beatOffset, beatAroundEnd) {
     api
       .put("/beat-config", {
         id: get().selectedSongId,
@@ -83,49 +79,44 @@ export const songSlice = (
       })
       .then(() => {
         setState((state) => {
-          for (const song of state.songs) {
-            if (song.id === state.selectedSongId) {
-              song.bpm = bpm
-              song.beatOffset = beatOffset
-              song.beatAroundEnd = beatAroundEnd
+          const song = state.songs.find((song) => song.id === state.selectedSongId)
 
-              return
-            }
+          if (!song) {
+            return
           }
+
+          song.bpm = bpm
+          song.beatOffset = beatOffset
+          song.beatAroundEnd = beatAroundEnd
         }, "updateSongBeatsConfig")
-
-        const { addRegion, selectRegion, updateRegionTime } = get()
-
-        renderBeatRegions(
-          wavesurferRef,
-          {
-            bpm,
-            beatOffset,
-            beatAroundEnd
-          },
-          {
-            addRegion,
-            selectRegion,
-            updateRegionTime
-          }
-        )
       })
   },
 
-  addRegion(config) {
-    const region: EffectRegion = {
-      ...config,
-      effects: []
-    }
-
-    setState((state) => {
-      for (const song of state.songs) {
-        if (song.id === state.selectedSongId) {
-          song.regions.push(region)
-          return
+  async addRegion(config) {
+    const { selectedSongId } = get()
+    api
+      .post("region", {
+        id: config.id,
+        songId: selectedSongId,
+        startTime: config.startTime,
+        endTime: config.endTime
+      })
+      .then((res) => res.data)
+      .then((data) => {
+        const region: EffectRegion = {
+          ...config
+          //effects: []
         }
-      }
-    }, "addRegion")
+
+        setState((state) => {
+          const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+          if (song) {
+            song.regions.push(region)
+            state.selectRegion(config.id)
+          }
+        }, "addRegion")
+      })
   },
 
   selectRegion(id) {
@@ -151,23 +142,45 @@ export const songSlice = (
     })
   },
 
-  updateRegionTime(options) {
-    setState((state) => {
-      for (const song of state.songs) {
-        if (song.id === state.selectedSongId) {
-          const region = song.regions.find((region) => region.id === song.selectedRegionId)
+  async updateRegionTime(options) {
+    const { selectedSongId, songs } = get()
+    const song = songs.find((song) => song.id === selectedSongId)
 
-          if (region) {
-            region.startTime = options.startTime ?? region.startTime
-            region.endTime = options.endTime ?? region.endTime
+    if (!song) {
+      return
+    }
 
-            updateRegions(song.regions)
+    const region = song.regions.find((region) => region.id === song.selectedRegionId)
+
+    if (!region) {
+      return
+    }
+
+    api
+      .put("region", {
+        songId: selectedSongId,
+        regionId: song.selectedRegionId,
+        startTime: options.startTime ?? region.startTime,
+        endTime: options.endTime ?? region.endTime
+      })
+      .then(() => {
+        setState((state) => {
+          for (const song of state.songs) {
+            if (song.id === state.selectedSongId) {
+              const region = song.regions.find((region) => region.id === song.selectedRegionId)
+
+              if (region) {
+                region.startTime = options.startTime ?? region.startTime
+                region.endTime = options.endTime ?? region.endTime
+
+                updateRegions(song.regions)
+              }
+
+              return
+            }
           }
-
-          return
-        }
-      }
-    }, "updateRegionTime")
+        }, "updateRegionTime")
+      })
   },
 
   async updateLastTimePosition(time) {
