@@ -1,9 +1,9 @@
 import { Store, WavesurferSlice } from "@type/store"
-import { GetState } from "zustand"
+import { StoreApi } from "zustand"
 
 export const wavesurferSlice = (
   setState: (fn: (state: Store) => void, actionName?: string) => void,
-  get: GetState<Store>
+  get: StoreApi<Store>["getState"]
 ): WavesurferSlice => ({
   wavesurferReady: false,
   wavesurferIsPlaying: false,

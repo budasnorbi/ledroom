@@ -10,8 +10,7 @@ export interface Song {
   beatOffset: number
   beatAroundEnd: number
   name: string
-  selectedRegionId: number
-  duration: number
+  selectedRegionId: string
   lastTimePosition: number
   volume: number
   regions: Region[]

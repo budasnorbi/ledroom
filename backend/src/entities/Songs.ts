@@ -30,16 +30,8 @@ export class Songs {
   @Column("tinytext", { name: "name" })
   name: string
 
-  @Column("int", { name: "selected_region_id", default: () => "'-1'" })
-  selectedRegionId: number
-
-  @Column("float", {
-    name: "duration",
-    nullable: true,
-    precision: 12,
-    default: () => "'0'"
-  })
-  duration: number | null
+  @Column("varchar", { name: "selected_region_id", length: 36, default: null })
+  selectedRegionId: string | null
 
   @Column("float", {
     name: "last_time_position",

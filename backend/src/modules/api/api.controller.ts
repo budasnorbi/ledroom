@@ -22,6 +22,7 @@ import { LastTimePositionSchema, lastTimePositionSchema } from "@dto/lastTimePos
 import { VolumeSchema, volumeSchema } from "@dto/volume.yup"
 import { AddRegionSchema, addRegionSchema } from "@dto/addRegion.yup"
 import { UpdateRegionSchema, updateRegionSchema } from "@dto/updateRegion.yup"
+import { SelectRegionSchema, selectRegionSchema } from "@dto/selectRegion"
 
 @Controller("api")
 export class ApiController {
@@ -84,6 +85,12 @@ export class ApiController {
   @UsePipes(new YupValidationPipe(updateRegionSchema))
   updateRegion(@Body() body: UpdateRegionSchema) {
     return this.apiService.updateRegion(body)
+  }
+
+  @Put("select-region")
+  @UsePipes(new YupValidationPipe(selectRegionSchema))
+  selectRegion(@Body() body: SelectRegionSchema) {
+    return this.apiService.selectRegion(body)
   }
 
   // @Post("play")

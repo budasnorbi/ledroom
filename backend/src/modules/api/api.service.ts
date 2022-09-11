@@ -13,6 +13,7 @@ import { RegionsRepository } from "@repositories/Regions.repository"
 import { Regions } from "@entities/Regions"
 import { Song } from "@type/song"
 import { UpdateRegionSchema } from "@dto/updateRegion.yup"
+import { SelectRegionSchema } from "@dto/selectRegion"
 const appDir = dirname(require.main.filename)
 
 @Injectable()
@@ -25,9 +26,6 @@ export class ApiService {
 
   async uploadSong(file: Express.Multer.File) {
     const songBuffer = file.buffer
-    const fileSize = file.size
-    const avgBytePerSec = songBuffer.readInt32LE(28)
-    const duration = fileSize / avgBytePerSec
 
     const filePath = `${appDir}/../songs/${file.originalname}`
     await asyncFs.writeFile(filePath, songBuffer).catch((error) => {
@@ -38,13 +36,13 @@ export class ApiService {
     const newSong = new Songs()
     newSong.name = file.originalname
     newSong.path = filePath
-    newSong.duration = duration
 
     const insertedSong = await this.songRepository.save(newSong).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { path, ...restSongData } = insertedSong
 
     return restSongData
@@ -71,6 +69,11 @@ export class ApiService {
 
   async removeSong(id: number) {
     const song = await this.getSongPath(id)
+
+    await this.regionsRepository.delete({ songId: id }).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
 
     await this.songRepository.delete({ id }).catch((error) => {
       console.log(error)
@@ -128,6 +131,15 @@ export class ApiService {
     const { endTime, id, songId, startTime } = body
 
     this.regionsRepository.update({ id, songId }, { endTime, startTime }).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
+  }
+
+  selectRegion(body: SelectRegionSchema) {
+    const { regionId, songId } = body
+
+    this.songRepository.update({ id: songId }, { selectedRegionId: regionId }).catch((error) => {
       console.log(error)
       throw new InternalServerErrorException()
     })

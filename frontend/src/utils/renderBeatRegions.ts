@@ -10,10 +10,12 @@ export const renderBeatRegions = (
   { bpm, beatOffset, beatAroundEnd }: { bpm: number; beatOffset: number; beatAroundEnd: number },
   {
     addRegion,
-    updateRegionTime
+    updateRegionTime,
+    selectRegion
   }: {
     addRegion: (config: EffectRegion) => void
     updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
+    selectRegion: (id: string) => void
   },
   regions: EffectRegion[]
 ) => {
@@ -37,6 +39,7 @@ export const renderBeatRegions = (
     let rightHandleInitValue: number
 
     const regiondblClick = (region: Region) => {
+      console.log(region)
       if (region.element.getAttribute("data-rangetype") === "effect-range") {
         return
       }
@@ -130,7 +133,6 @@ export const renderBeatRegions = (
     }
 
     for (const region of regions) {
-      console.log(region)
       const effectRegion = wavesurfer.regions.add({
         id: region.id,
         start: region.startTime,
@@ -162,9 +164,18 @@ export const renderBeatRegions = (
       })
     }
 
+    const regionClick = (region: Region) => {
+      if (region.element.getAttribute("data-rangetype") === "effect-range") {
+        selectRegion(region.id)
+      }
+    }
+
     wavesurfer.un("region-dblclick", regiondblClick)
     wavesurfer.un("region-update-end", regionUpdateEnd)
+    wavesurfer.un("region-click", regionClick)
+
     wavesurfer.on("region-dblclick", regiondblClick)
     wavesurfer.on("region-update-end", regionUpdateEnd)
+    wavesurfer.on("region-click", regionClick)
   }
 }

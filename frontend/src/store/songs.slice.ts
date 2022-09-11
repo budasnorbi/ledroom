@@ -1,26 +1,15 @@
 import { Store, SongsSlice, Song, EffectRegion } from "@type/store"
 import { api } from "../api/instance"
-import { GetState } from "zustand"
+import { StoreApi } from "zustand"
 import { updateRegions } from "@utils/socket"
 import { renderBeatRegions } from "@utils/renderBeatRegions"
 
 export const songSlice = (
   setState: (fn: (state: Store) => void, actionName?: string) => void,
-  get: GetState<Store>
+  get: StoreApi<Store>["getState"]
 ): SongsSlice => ({
   songs: [] as Song[],
-  selectedSongId: -1,
-
-  setDuration(duration) {
-    setState((state) => {
-      for (const song of state.songs) {
-        if (song.id === state.selectedSongId) {
-          song.duration = duration
-          return
-        }
-      }
-    }, "setDuration")
-  },
+  selectedSongId: null,
 
   async fetchSongs() {
     const songs: Song[] = await api
@@ -54,10 +43,13 @@ export const songSlice = (
 
   removeSong(id) {
     setState((state) => {
+      console.log(id)
       state.songs = state.songs.filter((song) => song.id !== id)
+      state.wavesurferReady = false
+      state.wavesurferIsPlaying = false
 
       if (state.songs.length === 0) {
-        state.selectedSongId = -1
+        state.selectedSongId = null
       } else {
         state.selectedSongId = state.songs[state.songs.length - 1].id
       }
@@ -90,7 +82,7 @@ export const songSlice = (
           song.beatOffset = beatOffset
           song.beatAroundEnd = beatAroundEnd
 
-          const { addRegion, updateRegionTime } = get()
+          const { addRegion, updateRegionTime, selectRegion } = get()
 
           renderBeatRegions(
             wavesurferRef,
@@ -101,7 +93,8 @@ export const songSlice = (
             },
             {
               addRegion,
-              updateRegionTime
+              updateRegionTime,
+              selectRegion
             },
             song.regions
           )
@@ -137,15 +130,25 @@ export const songSlice = (
   },
 
   selectRegion(id) {
-    setState((state) => {
-      for (const song of state.songs) {
-        if (song.id === state.selectedSongId) {
-          song.selectedRegionId = id
+    const { selectedSongId, songs } = get()
 
+    const song = songs.find((song) => song.id === selectedSongId)
+
+    if (!song || song.selectedRegionId === id) {
+      return
+    }
+
+    api.put("/select-region", { songId: selectedSongId, regionId: id }).then(() => {
+      setState((state) => {
+        const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+        if (!song) {
           return
         }
-      }
-    }, "selectRegion")
+
+        song.selectedRegionId = id
+      }, "selectRegion")
+    })
   },
 
   removeRegion() {
@@ -171,6 +174,24 @@ export const songSlice = (
 
     if (!region) {
       return
+    }
+
+    if (options.startTime !== undefined && options.endTime === undefined) {
+      if (options.startTime === region.startTime) {
+        return
+      }
+    }
+
+    if (options.endTime !== undefined && options.startTime === undefined) {
+      if (options.endTime === region.endTime) {
+        return
+      }
+    }
+
+    if (options.startTime !== undefined && options.endTime !== undefined) {
+      if (options.startTime === region.startTime && options.endTime === region.endTime) {
+        return
+      }
     }
 
     api
@@ -278,7 +299,7 @@ export const songSlice = (
 //       // for (const song in state.songs) {
 //       //   const region = song.regions.find((region) => region.id === song.selectedRegionId)
 //       //   const effectIsExsists =
-//       //     region?.effects.findIndex((effect) => effect === effectName) === -1
+//       //     region?.effects.findIndex((effect) => effect === effectName) === null
 //       //   if (region) {
 //       //   }
 //       //   return

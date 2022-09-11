@@ -8,8 +8,7 @@ CREATE TABLE songs(
   beat_around_end FLOAT DEFAULT 0,
   path TEXT NOT NULL,
   name TINYTEXT NOT NULL,
-  selected_region_id INT NOT NULL DEFAULT -1,
-  duration FLOAT DEFAULT 0,
+  selected_region_id VARCHAR(36) DEFAULT NULL,
   last_time_position FLOAT DEFAULT 0,
   volume FLOAT DEFAULT 0.1,
   PRIMARY KEY(id)

@@ -84,15 +84,12 @@ interface InitFunctions {
   containerRef: React.MutableRefObject<WaveSurfer | null>
   setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
   toggleWavesurferIsPlaying: () => void
-  setDuration: (duration: number) => void
-  updateWavesurferReady: (
-    isReady: boolean,
-    wavesurferRef: MutableRefObject<WaveSurfer | null>
-  ) => void
+  updateWavesurferReady: (isReady: boolean) => void
   updateLastTimePosition: (time: number) => void
   selectedSong: Song
-  updateRegionTime: (options: { startTime?: number; endTime?: number }) => void
+  updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
   addRegion: (config: EffectRegion) => void
+  selectRegion: (id: string) => void
 }
 
 export const initWavesurfer = (
@@ -100,14 +97,14 @@ export const initWavesurfer = (
   {
     wavesurferRef,
     containerRef,
-    setDuration,
     setMusicCurrentTime,
     toggleWavesurferIsPlaying,
     updateWavesurferReady,
     updateLastTimePosition,
     selectedSong,
     updateRegionTime,
-    addRegion
+    addRegion,
+    selectRegion
   }: InitFunctions
 ) => {
   if (wavesurfer) {
@@ -137,7 +134,6 @@ export const initWavesurfer = (
     ]
   })
 
-  updateWavesurferReady(false, wavesurferRef)
   wavesurfer.load(songUrl)
 
   wavesurfer.on("play", () => {
@@ -176,8 +172,7 @@ export const initWavesurfer = (
   wavesurfer.once("ready", () => {
     const { volume, lastTimePosition, regions, beatAroundEnd, beatOffset, bpm } = selectedSong
     wavesurferRef.current = wavesurfer
-    updateWavesurferReady(true, wavesurferRef)
-    setDuration(wavesurfer.getDuration())
+    updateWavesurferReady(true)
 
     setMusicCurrentTime(wavesurfer.getCurrentTime())
     wavesurfer.zoom(200)
@@ -196,7 +191,8 @@ export const initWavesurfer = (
       },
       {
         addRegion,
-        updateRegionTime
+        updateRegionTime,
+        selectRegion
       },
       regions
     )

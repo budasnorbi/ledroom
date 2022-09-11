@@ -47,7 +47,6 @@ interface Song {
   name: string
   regions: EffectRegion[]
   selectedRegionId: string
-  duration: number
   lastTimePosition: number
   volume: number
 }
@@ -64,20 +63,16 @@ interface _Store {
 export interface WavesurferSlice {
   wavesurferReady: boolean
   wavesurferIsPlaying: boolean
-  updateWavesurferReady: (
-    isReady: boolean,
-    wavesurferRef: MutableRefObject<WaveSurfer | null>
-  ) => void
+  updateWavesurferReady: (isReady: boolean) => void
   toggleWavesurferIsPlaying: () => void
 }
 
 export interface SongsSlice {
-  selectedSongId: number
+  selectedSongId: number | null
   songs: Song[]
   fetchSongs: () => Promise<void>
   addSongs: (songs: DbSong[]) => void
   removeSong: (id: number) => void
-  setDuration: (duration: number) => void
   selectSong: (id: number) => void
   updateSongBeatConfig: (
     bpm: number,

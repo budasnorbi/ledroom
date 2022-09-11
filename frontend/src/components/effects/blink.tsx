@@ -8,7 +8,7 @@ export const BlinkEffect: FC<{
   range: [number, number]
   setRange: (type: Effects, range: [number, number]) => void */
 }> = (props) => {
-  const setEffectDuration = useStore.use.setEffectDuration()
+  //const setEffectDuration = useStore.use.setEffectDuration()
 
   return (
     <div>asd</div>

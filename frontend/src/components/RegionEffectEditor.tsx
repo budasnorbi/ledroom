@@ -23,7 +23,7 @@ interface Props {}
 export const RegionEffectEditor: FC<Props> = (props) => {
   const [selectedEffect, setSelectedEffect] = useState<Effects>("blink")
 
-  const addEffectToRegion = useStore.use.addEffectToRegion()
+  //const addEffectToRegion = useStore.use.addEffectToRegion()
   //const selectedRegionId = useStore.use.sele()
 
   // const selectedRegionTimeRange: [number, number] | undefined = useStore(
@@ -47,7 +47,7 @@ export const RegionEffectEditor: FC<Props> = (props) => {
   }
 
   const handleEffectAdd = useCallback(() => {
-    addEffectToRegion(selectedEffect)
+    //addEffectToRegion(selectedEffect)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEffect])
 

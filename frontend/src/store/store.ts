@@ -9,7 +9,9 @@ import { wavesurferSlice } from "./wavesurfer.slice"
 const createSelectors = <S extends UseBoundStore<StoreApi<State>>>(_store: S) => {
   let store = _store as WithSelectors<typeof _store>
   store.use = {}
+  /* @ts-ignore */
   for (let k of Object.keys(store.getState())) {
+    /* @ts-ignore */
     ;(store.use as any)[k] = () => store((s) => s[k as keyof typeof s])
   }
 
