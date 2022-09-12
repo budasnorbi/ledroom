@@ -43,7 +43,6 @@ export const songSlice = (
 
   removeSong(id) {
     setState((state) => {
-      console.log(id)
       state.songs = state.songs.filter((song) => song.id !== id)
       state.wavesurferReady = false
       state.wavesurferIsPlaying = false
@@ -63,12 +62,16 @@ export const songSlice = (
   },
 
   updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
+    const { selectedSongId } = get()
     api
       .put("/beat-config", {
-        id: get().selectedSongId,
+        id: selectedSongId,
         bpm: bpm,
         beatOffset: beatOffset,
         beatAroundEnd: beatAroundEnd
+      })
+      .then(() => {
+        return api.delete(`/regions/${selectedSongId}`)
       })
       .then(() => {
         setState((state) => {
@@ -81,6 +84,7 @@ export const songSlice = (
           song.bpm = bpm
           song.beatOffset = beatOffset
           song.beatAroundEnd = beatAroundEnd
+          song.regions = []
 
           const { addRegion, updateRegionTime, selectRegion } = get()
 

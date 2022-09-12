@@ -10,7 +10,8 @@ import {
   Res,
   StreamableFile,
   Delete,
-  Put
+  Put,
+  Param
 } from "@nestjs/common"
 import { FileInterceptor } from "@nestjs/platform-express"
 import * as fs from "fs"
@@ -91,6 +92,11 @@ export class ApiController {
   @UsePipes(new YupValidationPipe(selectRegionSchema))
   selectRegion(@Body() body: SelectRegionSchema) {
     return this.apiService.selectRegion(body)
+  }
+
+  @Delete("regions/:songId")
+  deleteRegions(@Param("songId") songId: number) {
+    return this.apiService.deleteRegions(songId)
   }
 
   // @Post("play")

@@ -144,4 +144,11 @@ export class ApiService {
       throw new InternalServerErrorException()
     })
   }
+
+  deleteRegions(songId: number) {
+    this.regionsRepository.delete({ songId }).catch((error) => {
+      console.log(error)
+      throw new InternalServerErrorException()
+    })
+  }
 }
