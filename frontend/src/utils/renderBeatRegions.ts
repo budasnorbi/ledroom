@@ -1,13 +1,17 @@
 import { EffectRegion } from "@type/store"
 import { MutableRefObject } from "react"
-import { Region } from "wavesurfer.js/src/plugin/regions"
 import { clamp } from "./clamp"
 import { v4 as uuid } from "uuid"
-import { renderIntervalRegions } from "./renderIntervalRegions"
+import { api } from "../api/instance"
 
 export const renderBeatRegions = (
   wavesurferRef: MutableRefObject<WaveSurfer | null>,
-  { bpm, beatOffset, beatAroundEnd }: { bpm: number; beatOffset: number; beatAroundEnd: number },
+  {
+    bpm,
+    beatOffset,
+    beatAroundEnd,
+    songId
+  }: { bpm: number; beatOffset: number; beatAroundEnd: number; songId: number },
   {
     addRegion,
     updateRegionTime,
@@ -21,49 +25,106 @@ export const renderBeatRegions = (
 ) => {
   const wavesurfer = wavesurferRef.current as WaveSurfer
 
-  if (wavesurfer) {
-    wavesurfer.regions.destroy()
-    const beatInterval = 1 / (bpm / 60)
-    const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
+  if (!wavesurfer) {
+    return
+  }
 
-    const lastRegionEndTime = renderIntervalRegions(
-      wavesurfer,
-      beatOccurences,
-      beatInterval,
-      beatOffset,
-      beatAroundEnd
-    )
+  wavesurfer.regions.clear()
+
+  const beatInterval = 1 / (bpm / 60)
+  const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
+
+  let lastRegionEndTime: number = 0
+
+  for (let i = 0; i < beatOccurences; i++) {
+    if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
+      lastRegionEndTime = (i - 1) * beatInterval + beatInterval + beatOffset
+      break
+    }
+  }
+
+  // Generating beat ranges
+  for (let i = 0; i < beatOccurences; i++) {
+    if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
+      break
+    }
+
+    const regionId = i.toString()
+    const startTime = i * beatInterval + beatOffset
+    const endTime = i * beatInterval + beatInterval + beatOffset
+
+    const bpmRegion = wavesurfer.regions.add({
+      id: regionId,
+      start: startTime,
+      end: endTime,
+      drag: false,
+      color: "rgba(0,0,0,0)",
+      resize: false
+    })
+
+    bpmRegion.element.setAttribute("data-rangetype", "bpm-range")
+
+    const tempoDiv = document.createElement("div")
+    tempoDiv.id = `tempoDiv-${i}`
+    tempoDiv.textContent = `${(i + 1) % 4 === 0 ? 4 : (i + 1) % 4}`
+    tempoDiv.className = "bpm-range"
+
+    bpmRegion.element.appendChild(tempoDiv)
 
     let handleType: undefined | "both" | "left" | "right"
-    let leftHandleInitValue: number
-    let rightHandleInitValue: number
+    let leftHandleInitValue = 0
+    let rightHandleInitValue = 0
 
-    const regionDblClick = (region: Region) => {
-      console.log(region)
+    bpmRegion.unAll()
+    bpmRegion.on("dblclick", async (event: MouseEvent) => {
+      const regionElement = (event.target as HTMLDivElement).parentElement as HTMLUnknownElement
+      const regionId = regionElement.getAttribute("data-id")
+
+      if (!regionId) {
+        return
+      }
+
+      const region = wavesurfer.regions.list[regionId]
+
       if (region.element.getAttribute("data-rangetype") === "effect-range") {
         return
       }
 
-      const id = uuid()
+      const newRegionId = uuid()
+
+      try {
+        await api
+          .post("region", {
+            id: newRegionId,
+            songId,
+            startTime,
+            endTime
+          })
+          .then((res) => res.data)
+      } catch (error) {
+        return
+      }
 
       addRegion({
-        id,
+        id: newRegionId,
         startTime: region.start,
         endTime: region.end
         //effects: []
       })
 
-      /* @ts-ignore */
       const effectRegion = wavesurfer.regions.add({
-        id,
-        start: region.start,
-        end: region.end,
+        id: newRegionId,
+        start: startTime,
+        end: endTime,
         drag: true,
         color: "rgba(0,0,255,.15)",
         resize: true
       })
 
+      effectRegion.unAll()
+
       effectRegion.element.setAttribute("data-rangetype", "effect-range")
+
       effectRegion.element.addEventListener("mousedown", () => {
         leftHandleInitValue = effectRegion.start
         rightHandleInitValue = effectRegion.end
@@ -83,99 +144,62 @@ export const renderBeatRegions = (
           handleType = "right"
         }
       })
-    }
 
-    const regionUpdateEnd = (region: Region) => {
-      if (handleType === "both") {
-        const regionWidth = rightHandleInitValue - leftHandleInitValue
-        const start = clamp(
-          Math.round((region.start - beatOffset) / beatInterval) * beatInterval + beatOffset,
-          beatOffset,
-          lastRegionEndTime - regionWidth
-        )
-        const end = start + regionWidth
-        region.update({
-          start,
-          end
-        })
-
-        updateRegionTime({ startTime: start, endTime: end, id: region.id })
-      }
-
-      if (handleType === "left") {
-        const start = clamp(
-          Math.round((region.start - beatOffset) / beatInterval) * beatInterval + beatOffset,
-          beatOffset,
-          region.end - beatInterval
-        )
-
-        region.update({
-          start
-        })
-
-        updateRegionTime({ startTime: start, id: region.id })
-      }
-      if (handleType === "right") {
-        const end = clamp(
-          Math.round((region.end - beatOffset) / beatInterval) * beatInterval + beatOffset,
-          region.start + beatInterval,
-          lastRegionEndTime
-        )
-
-        region.update({
-          end
-        })
-
-        updateRegionTime({ endTime: end, id: region.id })
-      }
-
-      handleType = undefined
-    }
-
-    for (const region of regions) {
-      const effectRegion = wavesurfer.regions.add({
-        id: region.id,
-        start: region.startTime,
-        end: region.endTime,
-        drag: true,
-        color: "rgba(0,0,255,.15)",
-        resize: true
+      effectRegion.on("click", () => {
+        selectRegion(newRegionId)
       })
 
-      effectRegion.element.setAttribute("data-rangetype", "effect-range")
-      effectRegion.element.addEventListener("mousedown", () => {
-        leftHandleInitValue = effectRegion.start
-        rightHandleInitValue = effectRegion.end
-        if (!handleType) {
-          handleType = "both"
+      effectRegion.on("update-end", () => {
+        if (handleType === "both") {
+          const regionWidth = rightHandleInitValue - leftHandleInitValue
+
+          const start = clamp(
+            Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
+              beatOffset,
+            beatOffset,
+            lastRegionEndTime - regionWidth
+          )
+          const end = start + regionWidth
+
+          effectRegion.update({
+            start,
+            end
+          })
+
+          updateRegionTime({ startTime: start, endTime: end, id: effectRegion.id })
         }
-      })
 
-      effectRegion.handleLeftEl?.addEventListener("mousedown", () => {
-        if (!handleType) {
-          handleType = "left"
+        if (handleType === "left") {
+          const start = clamp(
+            Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
+              beatOffset,
+            beatOffset,
+            effectRegion.end - beatInterval
+          )
+
+          effectRegion.update({
+            start
+          })
+
+          updateRegionTime({ startTime: start, id: effectRegion.id })
         }
-      })
 
-      effectRegion.handleRightEl?.addEventListener("mousedown", () => {
-        if (!handleType) {
-          handleType = "right"
+        if (handleType === "right") {
+          const end = clamp(
+            Math.round((effectRegion.end - beatOffset) / beatInterval) * beatInterval + beatOffset,
+            effectRegion.start + beatInterval,
+            lastRegionEndTime
+          )
+
+          effectRegion.update({
+            end
+          })
+
+          updateRegionTime({ endTime: end, id: effectRegion.id })
         }
+
+        handleType = undefined
       })
-    }
-
-    const regionClick = (region: Region) => {
-      if (region.element.getAttribute("data-rangetype") === "effect-range") {
-        selectRegion(region.id)
-      }
-    }
-    console.log(wavesurfer.regions.handlers)
-    wavesurfer.un("region-dblclick", regionDblClick)
-    wavesurfer.un("region-update-end", regionUpdateEnd)
-    wavesurfer.un("region-click", regionClick)
-
-    wavesurfer.on("region-dblclick", regionDblClick)
-    wavesurfer.on("region-update-end", regionUpdateEnd)
-    wavesurfer.on("region-click", regionClick)
+    })
   }
 }

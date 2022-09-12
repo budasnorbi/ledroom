@@ -176,7 +176,15 @@ export const initWavesurfer = (
   }
 
   wavesurfer.once("ready", () => {
-    const { volume, lastTimePosition, regions, beatAroundEnd, beatOffset, bpm } = selectedSong
+    const {
+      volume,
+      lastTimePosition,
+      regions,
+      beatAroundEnd,
+      beatOffset,
+      bpm,
+      id: selectedSongId
+    } = selectedSong
     wavesurferRef.current = wavesurfer
     updateWavesurferReady(true)
 
@@ -193,7 +201,8 @@ export const initWavesurfer = (
       {
         beatAroundEnd,
         beatOffset,
-        bpm
+        bpm,
+        songId: selectedSongId
       },
       {
         addRegion,

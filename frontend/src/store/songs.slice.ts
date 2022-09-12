@@ -63,6 +63,11 @@ export const songSlice = (
 
   updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
     const { selectedSongId } = get()
+
+    if (!selectedSongId) {
+      return
+    }
+
     api
       .put("/beat-config", {
         id: selectedSongId,
@@ -93,7 +98,8 @@ export const songSlice = (
             {
               beatAroundEnd,
               beatOffset,
-              bpm
+              bpm,
+              songId: selectedSongId
             },
             {
               addRegion,
@@ -108,29 +114,18 @@ export const songSlice = (
 
   async addRegion(config) {
     const { selectedSongId } = get()
-    api
-      .post("region", {
-        id: config.id,
-        songId: selectedSongId,
-        startTime: config.startTime,
-        endTime: config.endTime
-      })
-      .then((res) => res.data)
-      .then((data) => {
-        const region: EffectRegion = {
-          ...config
-          //effects: []
-        }
+    const region: EffectRegion = {
+      ...config
+      //effects: []
+    }
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
 
-        setState((state) => {
-          const song = state.songs.find((song) => song.id === state.selectedSongId)
-
-          if (song) {
-            song.regions.push(region)
-            state.selectRegion(config.id)
-          }
-        }, "addRegion")
-      })
+      if (song) {
+        song.regions.push(region)
+        state.selectRegion(config.id)
+      }
+    }, "addRegion")
   },
 
   selectRegion(id) {
