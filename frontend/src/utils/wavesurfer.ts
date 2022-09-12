@@ -169,6 +169,12 @@ export const initWavesurfer = (
     sendTimeupdate(time)
   })
 
+  const handleSpacePress = (event: KeyboardEvent) => {
+    if (event.code === "Space") {
+      wavesurfer.playPause()
+    }
+  }
+
   wavesurfer.once("ready", () => {
     const { volume, lastTimePosition, regions, beatAroundEnd, beatOffset, bpm } = selectedSong
     wavesurferRef.current = wavesurfer
@@ -196,5 +202,8 @@ export const initWavesurfer = (
       },
       regions
     )
+
+    window.removeEventListener("keydown", handleSpacePress)
+    window.addEventListener("keydown", handleSpacePress)
   })
 }

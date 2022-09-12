@@ -38,7 +38,7 @@ export const renderBeatRegions = (
     let leftHandleInitValue: number
     let rightHandleInitValue: number
 
-    const regiondblClick = (region: Region) => {
+    const regionDblClick = (region: Region) => {
       console.log(region)
       if (region.element.getAttribute("data-rangetype") === "effect-range") {
         return
@@ -169,12 +169,12 @@ export const renderBeatRegions = (
         selectRegion(region.id)
       }
     }
-
-    wavesurfer.un("region-dblclick", regiondblClick)
+    console.log(wavesurfer.regions.handlers)
+    wavesurfer.un("region-dblclick", regionDblClick)
     wavesurfer.un("region-update-end", regionUpdateEnd)
     wavesurfer.un("region-click", regionClick)
 
-    wavesurfer.on("region-dblclick", regiondblClick)
+    wavesurfer.on("region-dblclick", regionDblClick)
     wavesurfer.on("region-update-end", regionUpdateEnd)
     wavesurfer.on("region-click", regionClick)
   }
