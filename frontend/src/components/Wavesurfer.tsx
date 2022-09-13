@@ -22,6 +22,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   const updateLastTimePosition = useStore.use.updateLastTimePosition()
   const updateRegionTime = useStore.use.updateRegionTime()
   const addRegion = useStore.use.addRegion()
+  const wavesurferReady = useStore.use.wavesurferReady()
 
   /*   useEffect(() => {
     const handleRegionClick = (region: Region) => {
@@ -82,6 +83,19 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
 
   return (
     <div>
+      {!wavesurferReady && (
+        <div
+          css={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "148px",
+            textTransform: "uppercase"
+          }}
+        >
+          <span>Loading...</span>
+        </div>
+      )}
       <div ref={wavesurferContainerRef}></div>
       <div css={{ height: "20px" }} id="wave-timeline"></div>
     </div>

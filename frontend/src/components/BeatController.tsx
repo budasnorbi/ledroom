@@ -1,5 +1,4 @@
 import { ChangeEvent, FC, useEffect, useState } from "react"
-import { css } from "@emotion/react"
 
 import * as style from "@styles/shared"
 import { useStore } from "@store"

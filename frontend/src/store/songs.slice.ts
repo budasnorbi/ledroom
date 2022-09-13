@@ -105,8 +105,7 @@ export const songSlice = (
               addRegion,
               updateRegionTime,
               selectRegion
-            },
-            song.regions
+            }
           )
         }, "updateSongBeatsConfig")
       })

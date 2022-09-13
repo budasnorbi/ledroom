@@ -179,7 +179,6 @@ export const initWavesurfer = (
     const {
       volume,
       lastTimePosition,
-      regions,
       beatAroundEnd,
       beatOffset,
       bpm,
@@ -208,8 +207,7 @@ export const initWavesurfer = (
         addRegion,
         updateRegionTime,
         selectRegion
-      },
-      regions
+      }
     )
 
     window.removeEventListener("keydown", handleSpacePress)

@@ -20,8 +20,7 @@ export const renderBeatRegions = (
     addRegion: (config: EffectRegion) => void
     updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
     selectRegion: (id: string) => void
-  },
-  regions: EffectRegion[]
+  }
 ) => {
   const wavesurfer = wavesurferRef.current as WaveSurfer
 
@@ -76,6 +75,7 @@ export const renderBeatRegions = (
     let rightHandleInitValue = 0
 
     bpmRegion.unAll()
+
     bpmRegion.on("dblclick", async (event: MouseEvent) => {
       const regionElement = (event.target as HTMLDivElement).parentElement as HTMLUnknownElement
       const regionId = regionElement.getAttribute("data-id")
@@ -93,14 +93,12 @@ export const renderBeatRegions = (
       const newRegionId = uuid()
 
       try {
-        await api
-          .post("region", {
-            id: newRegionId,
-            songId,
-            startTime,
-            endTime
-          })
-          .then((res) => res.data)
+        await api.post("region", {
+          id: newRegionId,
+          songId,
+          startTime,
+          endTime
+        })
       } catch (error) {
         return
       }
@@ -149,7 +147,7 @@ export const renderBeatRegions = (
         selectRegion(newRegionId)
       })
 
-      effectRegion.on("update-end", () => {
+      effectRegion.on("update-end", async () => {
         if (handleType === "both") {
           const regionWidth = rightHandleInitValue - leftHandleInitValue
 
@@ -160,6 +158,21 @@ export const renderBeatRegions = (
             lastRegionEndTime - regionWidth
           )
           const end = start + regionWidth
+
+          try {
+            await api.put("/region", {
+              id: effectRegion.id,
+              songId,
+              startTime: start,
+              endTime: end
+            })
+          } catch (error) {
+            effectRegion.update({
+              start: leftHandleInitValue,
+              end: rightHandleInitValue
+            })
+            return
+          }
 
           effectRegion.update({
             start,
@@ -177,6 +190,21 @@ export const renderBeatRegions = (
             effectRegion.end - beatInterval
           )
 
+          try {
+            await api.put("/region", {
+              id: effectRegion.id,
+              songId,
+              startTime: start,
+              endTime: effectRegion.end
+            })
+          } catch (error) {
+            effectRegion.update({
+              start: leftHandleInitValue,
+              end: rightHandleInitValue
+            })
+            return
+          }
+
           effectRegion.update({
             start
           })
@@ -190,6 +218,21 @@ export const renderBeatRegions = (
             effectRegion.start + beatInterval,
             lastRegionEndTime
           )
+
+          try {
+            await api.put("/region", {
+              id: effectRegion.id,
+              songId,
+              startTime: effectRegion.start,
+              endTime: end
+            })
+          } catch (error) {
+            effectRegion.update({
+              start: leftHandleInitValue,
+              end: rightHandleInitValue
+            })
+            return
+          }
 
           effectRegion.update({
             end

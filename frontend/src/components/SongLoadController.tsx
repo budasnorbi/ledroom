@@ -1,6 +1,4 @@
 import { useCallback, ChangeEvent, PointerEvent } from "react"
-import { css } from "@emotion/react"
-
 import { api } from "../api/instance"
 import { useStore } from "@store"
 import * as style from "@styles/shared"
@@ -26,6 +24,10 @@ export const SongLoadController = () => {
 
   const handleSongRemove = useCallback(
     async (event: PointerEvent<HTMLButtonElement>) => {
+      if (selectedSongId == null) {
+        return
+      }
+
       const deleteRes = await api.delete(`/song?id=${selectedSongId}`).catch((error) => {
         console.warn(error)
         return null
@@ -71,7 +73,7 @@ export const SongLoadController = () => {
           upload
         </label>
       </div>
-      {songs.length !== 0 && (
+      {songs.length !== 0 && selectedSongId && (
         <>
           <select onChange={handleSongChoose} value={selectedSongId}>
             {songs.map((song) => (

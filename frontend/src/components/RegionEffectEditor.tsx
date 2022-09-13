@@ -1,6 +1,5 @@
 import { ChangeEvent, FC, useCallback, useState } from "react"
-import { useStore } from "src/store/store"
-import { EffectRegion, Effects } from "@type/store"
+import { Effects } from "@type/store"
 
 interface Props {}
 

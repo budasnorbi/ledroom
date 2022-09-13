@@ -1,6 +1,5 @@
 import { useStore } from "@store"
-import { FC, useCallback, useEffect } from "react"
-import { css } from "@emotion/react"
+import { FC } from "react"
 import * as styles from "@styles/shared"
 
 interface Props {
