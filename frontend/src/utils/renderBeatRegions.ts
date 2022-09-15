@@ -3,9 +3,10 @@ import { MutableRefObject } from "react"
 import { clamp } from "./clamp"
 import { v4 as uuid } from "uuid"
 import { api } from "../api/instance"
+import Wavesurfer from "wavesurfer.js"
 
 export const renderBeatRegions = (
-  wavesurferRef: MutableRefObject<WaveSurfer | null>,
+  wavesurfer: Wavesurfer,
   {
     bpm,
     beatOffset,
@@ -22,8 +23,6 @@ export const renderBeatRegions = (
     selectRegion: (id: string) => void
   }
 ) => {
-  const wavesurfer = wavesurferRef.current as WaveSurfer
-
   if (!wavesurfer) {
     return
   }

@@ -3,6 +3,7 @@ import { api } from "../api/instance"
 import { StoreApi } from "zustand"
 import { updateRegions } from "@utils/socket"
 import { renderBeatRegions } from "@utils/renderBeatRegions"
+import { onAudioProcess, onPause, onPlay, onReady, onSeek } from "@utils/wavesurfer"
 
 export const songSlice = (
   setState: (fn: (state: Store) => void, actionName?: string) => void,
@@ -22,13 +23,10 @@ export const songSlice = (
 
     if (songs && songs.length !== 0) {
       setState((state) => {
-        const songsWithAdditionalProps = songs.map((song) => ({
-          ...song
-        }))
-
-        state.songs.push(...songsWithAdditionalProps)
-        state.selectedSongId = songs[0].id
+        state.songs.push(...songs)
       }, "addSongs")
+
+      get().selectSong(songs[0].id)
     }
   },
 
@@ -56,7 +54,15 @@ export const songSlice = (
   },
 
   selectSong(id) {
+    const { updateLastTimePosition, toggleWavesurferIsPlaying } = get()
+
     setState((state) => {
+      const song = state.songs.find((song) => song.id === id)
+
+      if (!song) {
+        return
+      }
+
       state.selectedSongId = id
     }, "selectSong")
   },

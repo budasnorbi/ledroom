@@ -1,7 +1,22 @@
 import { useRef, useEffect, FC } from "react"
+import WavesurferJS from "wavesurfer.js"
+import RegionsPlugin from "wavesurfer.js/src/plugin/regions"
+import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
 
 import { useStore } from "@store"
-import { initWavesurfer, wavesurfer } from "@utils/wavesurfer"
+import {
+  formatTimeCallback,
+  onAudioProcess,
+  onPause,
+  onPlay,
+  onReady,
+  onSeek,
+  primaryLabelInterval,
+  secondaryLabelInterval,
+  timeInterval
+} from "@utils/wavesurfer"
+
+let handleSpacePress: any
 
 interface WaveSurferProps {
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>
@@ -9,77 +24,114 @@ interface WaveSurferProps {
 }
 
 const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef }) => {
-  const wavesurferContainerRef = useRef<WaveSurfer | any>(null)
   // const [zoomLevel, setZoomLevel] = useState(200)
 
-  const selectedSong = useStore((state) =>
-    state.songs.find((song) => song.id === state.selectedSongId)
-  )
-  const updateWavesurferReady = useStore.use.updateWavesurferReady()
-  const selectRegion = useStore.use.selectRegion()
   const fetchSongs = useStore.use.fetchSongs()
   const toggleWavesurferIsPlaying = useStore.use.toggleWavesurferIsPlaying()
   const updateLastTimePosition = useStore.use.updateLastTimePosition()
+  const updateWavesurferReady = useStore.use.updateWavesurferReady()
   const updateRegionTime = useStore.use.updateRegionTime()
+  const selectRegion = useStore.use.selectRegion()
   const addRegion = useStore.use.addRegion()
+
   const wavesurferReady = useStore.use.wavesurferReady()
-
-  /*   useEffect(() => {
-    const handleRegionClick = (region: Region) => {
-      if (region.element.getAttribute("data-rangetype") === "effect-range") {
-        wavesurfer.setCurrentTime(region.start)
-        const regionId = parseInt(region.id)
-        if (regionId !== selectedRegion) {
-          selectRegion(regionId)
-        }
-      }
-    }
-
-    if (wavesurferReady && wavesurfer) {
-      wavesurfer.on("region-click", handleRegionClick)
-    }
-
-    return () => wavesurfer.un("region-click", handleRegionClick)
-  }, [wavesurferReady, selectedRegion]) */
+  const selectedSong = useStore((state) =>
+    state.songs.find((song) => song.id === state.selectedSongId)
+  )
 
   useEffect(() => {
+    wavesurferRef.current = WavesurferJS.create({
+      container: "#wavesurfer-container",
+      barWidth: 1,
+      partialRender: true,
+      normalize: true,
+      pixelRatio: 1,
+      responsive: true,
+      plugins: [
+        TimelinePlugin.create({
+          container: "#wave-timeline",
+          formatTimeCallback: formatTimeCallback,
+          timeInterval: timeInterval,
+          primaryLabelInterval: primaryLabelInterval,
+          secondaryLabelInterval: secondaryLabelInterval,
+          primaryColor: "blue",
+          secondaryColor: "red",
+          primaryFontColor: "blue",
+          secondaryFontColor: "red"
+        }),
+        RegionsPlugin.create({})
+      ]
+    })
+
     fetchSongs()
 
     return () => {
-      //wavesurfer.destroy()
+      wavesurferRef.current?.unAll()
+      wavesurferRef.current?.destroy()
     }
   }, [fetchSongs])
 
   useEffect(() => {
-    if (selectedSong?.id || selectedSong?.id === 0) {
-      initWavesurfer(
-        `${process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC}/api/song?id=${selectedSong?.id}`,
-        {
-          wavesurferRef,
-          containerRef: wavesurferContainerRef,
-          setMusicCurrentTime,
-          updateWavesurferReady,
-          toggleWavesurferIsPlaying,
-          updateLastTimePosition,
+    if (selectedSong && selectedSong.id !== null) {
+      const wavesurfer = wavesurferRef.current as WaveSurfer
+
+      if (!wavesurfer) {
+        return
+      }
+
+      setMusicCurrentTime(selectedSong.lastTimePosition)
+
+      wavesurfer.unAll()
+      wavesurfer.on("audioprocess", () => {
+        setMusicCurrentTime(wavesurfer.getCurrentTime())
+      })
+
+      wavesurfer.on("seek", () => {
+        setMusicCurrentTime(wavesurfer.getCurrentTime())
+      })
+
+      wavesurfer.on(
+        "play",
+        onPlay.bind(this, wavesurfer, toggleWavesurferIsPlaying, updateLastTimePosition)
+      )
+      wavesurfer.on(
+        "pause",
+        onPause.bind(this, wavesurfer, toggleWavesurferIsPlaying, updateLastTimePosition)
+      )
+      wavesurfer.on("seek", onSeek.bind(this, wavesurfer, updateLastTimePosition))
+      wavesurfer.on("audioprocess", onAudioProcess)
+
+      wavesurfer.on(
+        "ready",
+        /* @ts-ignore */
+        onReady.bind(
+          this,
+          wavesurfer,
           selectedSong,
-          updateRegionTime,
+          updateWavesurferReady,
           addRegion,
+          updateRegionTime,
           selectRegion
+        )
+      )
+
+      if (!handleSpacePress) {
+        handleSpacePress = (event: KeyboardEvent) => {
+          console.log("space")
+          if (event.code === "Space") {
+            wavesurfer.playPause()
+          }
         }
+      }
+
+      window.removeEventListener("keydown", handleSpacePress)
+      window.addEventListener("keydown", handleSpacePress)
+
+      wavesurfer.load(
+        `${process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC}/api/song?id=${selectedSong.id}`
       )
     }
-
-    return () => {
-      wavesurfer?.destroy()
-    }
-  }, [
-    selectedSong?.id,
-    setMusicCurrentTime,
-    updateWavesurferReady,
-    toggleWavesurferIsPlaying,
-    updateLastTimePosition,
-    wavesurferRef
-  ])
+  }, [selectedSong?.id])
 
   return (
     <div>
@@ -96,7 +148,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
           <span>Loading...</span>
         </div>
       )}
-      <div ref={wavesurferContainerRef}></div>
+      <div id="wavesurfer-container"></div>
       <div css={{ height: "20px" }} id="wave-timeline"></div>
     </div>
   )

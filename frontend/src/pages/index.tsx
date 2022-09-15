@@ -23,9 +23,6 @@ let bezierChangeTimeout: any
 function Dashboard(props: any) {
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [musicCurrentTime, setMusicCurrentTime] = useState(0)
-  const selectedSong = useStore((store) =>
-    store.songs.find((song) => song.id === store.selectedSongId)
-  )
 
   /*   useEffect(() => {
     if (selectedRegion?.id) {
