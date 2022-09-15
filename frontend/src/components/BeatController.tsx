@@ -71,11 +71,11 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
         <input type="number" value={songBeatConfig.bpm} onChange={handleBPM} />
       </div>
       <div>
-        <span>Beat offset:</span>
+        <span>Suggested Beat offset:</span>
         <input type="number" value={songBeatConfig.beatOffset} onChange={handleBeatOffset} />
       </div>
       <div>
-        <span>Beat around end:</span>
+        <span>Suggested Beat around end:</span>
         <input type="number" value={songBeatConfig.beatAroundEnd} onChange={handleBeatEndTime} />
       </div>
       <button onClick={handleRenderBeats} disabled={isRenderButtonDisabled}>

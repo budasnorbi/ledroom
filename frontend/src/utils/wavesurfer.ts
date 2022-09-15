@@ -1,7 +1,10 @@
 import Wavesurfer from "wavesurfer.js"
 import { sendSeek, sendStart, sendStop, sendTimeupdate } from "./socket"
-import { EffectRegion, Song, Store, WavesurferSlice } from "@type/store"
+import { EffectRegion, Song } from "@type/store"
 import { renderBeatRegions } from "./renderBeatRegions"
+import { MutableRefObject } from "react"
+import { clamp } from "./clamp"
+import { api } from "../api/instance"
 
 export function formatTimeCallback(seconds: number, pxPerSec: number) {
   seconds = Number(seconds)
@@ -74,16 +77,10 @@ export function secondaryLabelInterval(pxPerSec: number) {
   return Math.floor(10 / timeInterval(pxPerSec))
 }
 
-export const onPlay = (
-  wavesurfer: Wavesurfer,
-  toggleWavesurferIsPlaying: () => void,
-  updateLastTimePosition: (time: number) => void
-) => {
+export const onPlay = (wavesurfer: Wavesurfer, toggleWavesurferIsPlaying: () => void) => {
   const currTime = wavesurfer.getCurrentTime()
-  //setMusicCurrentTime(currTime)
   sendStart(currTime)
   toggleWavesurferIsPlaying()
-  updateLastTimePosition(wavesurfer.getCurrentTime())
 }
 
 export const onPause = (
@@ -110,18 +107,23 @@ export const onSeek = (wavesurfer: Wavesurfer, updateLastTimePosition: (time: nu
 }
 
 export const onAudioProcess = (time: number) => {
-  //setMusicCurrentTime(time)
   sendTimeupdate(time)
 }
 
 export function onReady(
-  wavesurfer: Wavesurfer,
+  wavesurferRef: MutableRefObject<WaveSurfer | null>,
   selectedSong: Song,
   updateWavesurferReady: (isReady: boolean) => void,
   addRegion: (config: EffectRegion) => void,
   updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void,
   selectRegion: (id: string) => void
 ) {
+  const wavesurfer = wavesurferRef.current as WaveSurfer
+
+  if (!wavesurfer) {
+    return
+  }
+
   const { volume, lastTimePosition, beatAroundEnd, beatOffset, bpm, id } = selectedSong
   updateWavesurferReady(true)
 
@@ -133,7 +135,7 @@ export function onReady(
   wavesurfer.setVolume(volume)
 
   renderBeatRegions(
-    wavesurfer,
+    wavesurferRef,
     {
       beatAroundEnd,
       beatOffset,
@@ -146,4 +148,152 @@ export function onReady(
       selectRegion
     }
   )
+
+  const beatInterval = 1 / (bpm / 60)
+  const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
+
+  let lastRegionEndTime = 0
+
+  for (let i = 0; i < beatOccurences; i++) {
+    if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
+      lastRegionEndTime = (i - 1) * beatInterval + beatInterval + beatOffset
+      break
+    }
+  }
+
+  let handleType: undefined | "both" | "left" | "right"
+  let leftHandleInitValue = 0
+  let rightHandleInitValue = 0
+
+  for (const region of selectedSong.regions) {
+    const effectRegion = wavesurfer.regions.add({
+      id: region.id,
+      start: region.startTime,
+      end: region.endTime,
+      drag: true,
+      color: "rgba(0,0,255,.15)",
+      resize: true
+    })
+
+    effectRegion.element.setAttribute("data-rangetype", "effect-range")
+
+    effectRegion.element.addEventListener("mousedown", () => {
+      leftHandleInitValue = effectRegion.start
+      rightHandleInitValue = effectRegion.end
+      if (!handleType) {
+        handleType = "both"
+      }
+    })
+
+    effectRegion.handleLeftEl?.addEventListener("mousedown", () => {
+      if (!handleType) {
+        handleType = "left"
+      }
+    })
+
+    effectRegion.handleRightEl?.addEventListener("mousedown", () => {
+      if (!handleType) {
+        handleType = "right"
+      }
+    })
+
+    effectRegion.on("click", () => {
+      selectRegion(effectRegion.id)
+    })
+
+    effectRegion.on("update-end", async () => {
+      if (handleType === "both") {
+        const regionWidth = rightHandleInitValue - leftHandleInitValue
+
+        const start = clamp(
+          Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval + beatOffset,
+          beatOffset,
+          lastRegionEndTime - regionWidth
+        )
+        const end = start + regionWidth
+
+        try {
+          await api.put("/region", {
+            id: effectRegion.id,
+            songId: selectedSong.id,
+            startTime: start,
+            endTime: end
+          })
+        } catch (error) {
+          effectRegion.update({
+            start: leftHandleInitValue,
+            end: rightHandleInitValue
+          })
+          return
+        }
+
+        effectRegion.update({
+          start,
+          end
+        })
+
+        updateRegionTime({ startTime: start, endTime: end, id: effectRegion.id })
+      }
+
+      if (handleType === "left") {
+        const start = clamp(
+          Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval + beatOffset,
+          beatOffset,
+          effectRegion.end - beatInterval
+        )
+
+        try {
+          await api.put("/region", {
+            id: effectRegion.id,
+            songId: selectedSong.id,
+            startTime: start,
+            endTime: effectRegion.end
+          })
+        } catch (error) {
+          effectRegion.update({
+            start: leftHandleInitValue,
+            end: rightHandleInitValue
+          })
+          return
+        }
+
+        effectRegion.update({
+          start
+        })
+
+        updateRegionTime({ startTime: start, id: effectRegion.id })
+      }
+
+      if (handleType === "right") {
+        const end = clamp(
+          Math.round((effectRegion.end - beatOffset) / beatInterval) * beatInterval + beatOffset,
+          effectRegion.start + beatInterval,
+          lastRegionEndTime
+        )
+
+        try {
+          await api.put("/region", {
+            id: effectRegion.id,
+            songId: selectedSong.id,
+            startTime: effectRegion.start,
+            endTime: end
+          })
+        } catch (error) {
+          effectRegion.update({
+            start: leftHandleInitValue,
+            end: rightHandleInitValue
+          })
+          return
+        }
+
+        effectRegion.update({
+          end
+        })
+
+        updateRegionTime({ endTime: end, id: effectRegion.id })
+      }
+
+      handleType = undefined
+    })
+  }
 }

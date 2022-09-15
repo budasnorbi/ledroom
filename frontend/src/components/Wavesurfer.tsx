@@ -1,5 +1,5 @@
 import { useRef, useEffect, FC } from "react"
-import WavesurferJS from "wavesurfer.js"
+import Wavesurfer from "wavesurfer.js"
 import RegionsPlugin from "wavesurfer.js/src/plugin/regions"
 import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
 
@@ -34,13 +34,12 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   const selectRegion = useStore.use.selectRegion()
   const addRegion = useStore.use.addRegion()
 
-  const wavesurferReady = useStore.use.wavesurferReady()
   const selectedSong = useStore((state) =>
     state.songs.find((song) => song.id === state.selectedSongId)
   )
 
   useEffect(() => {
-    wavesurferRef.current = WavesurferJS.create({
+    wavesurferRef.current = Wavesurfer.create({
       container: "#wavesurfer-container",
       barWidth: 1,
       partialRender: true,
@@ -64,20 +63,34 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
     })
 
     fetchSongs()
-
-    return () => {
-      wavesurferRef.current?.unAll()
-      wavesurferRef.current?.destroy()
-    }
-  }, [fetchSongs])
+  }, [fetchSongs, wavesurferRef])
 
   useEffect(() => {
-    if (selectedSong && selectedSong.id !== null) {
-      const wavesurfer = wavesurferRef.current as WaveSurfer
-
-      if (!wavesurfer) {
-        return
+    if (selectedSong) {
+      if (wavesurferRef.current) {
       }
+      const wavesurfer = (wavesurferRef.current = Wavesurfer.create({
+        container: "#wavesurfer-container",
+        barWidth: 1,
+        partialRender: true,
+        normalize: true,
+        pixelRatio: 1,
+        responsive: true,
+        plugins: [
+          TimelinePlugin.create({
+            container: "#wave-timeline",
+            formatTimeCallback: formatTimeCallback,
+            timeInterval: timeInterval,
+            primaryLabelInterval: primaryLabelInterval,
+            secondaryLabelInterval: secondaryLabelInterval,
+            primaryColor: "blue",
+            secondaryColor: "red",
+            primaryFontColor: "blue",
+            secondaryFontColor: "red"
+          }),
+          RegionsPlugin.create({})
+        ]
+      }))
 
       setMusicCurrentTime(selectedSong.lastTimePosition)
 
@@ -90,10 +103,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
         setMusicCurrentTime(wavesurfer.getCurrentTime())
       })
 
-      wavesurfer.on(
-        "play",
-        onPlay.bind(this, wavesurfer, toggleWavesurferIsPlaying, updateLastTimePosition)
-      )
+      wavesurfer.on("play", onPlay.bind(this, wavesurfer, toggleWavesurferIsPlaying))
       wavesurfer.on(
         "pause",
         onPause.bind(this, wavesurfer, toggleWavesurferIsPlaying, updateLastTimePosition)
@@ -106,7 +116,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
         /* @ts-ignore */
         onReady.bind(
           this,
-          wavesurfer,
+          wavesurferRef,
           selectedSong,
           updateWavesurferReady,
           addRegion,
@@ -117,7 +127,6 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
 
       if (!handleSpacePress) {
         handleSpacePress = (event: KeyboardEvent) => {
-          console.log("space")
           if (event.code === "Space") {
             wavesurfer.playPause()
           }
@@ -130,24 +139,23 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
       wavesurfer.load(
         `${process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC}/api/song?id=${selectedSong.id}`
       )
+    } else {
+      const wavesurfer = wavesurferRef.current as WaveSurfer
+
+      if (!wavesurfer) {
+        return
+      }
+
+      wavesurfer.destroy()
+    }
+
+    return () => {
+      wavesurferRef.current?.destroy()
     }
   }, [selectedSong?.id])
 
   return (
     <div>
-      {!wavesurferReady && (
-        <div
-          css={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "148px",
-            textTransform: "uppercase"
-          }}
-        >
-          <span>Loading...</span>
-        </div>
-      )}
       <div id="wavesurfer-container"></div>
       <div css={{ height: "20px" }} id="wave-timeline"></div>
     </div>

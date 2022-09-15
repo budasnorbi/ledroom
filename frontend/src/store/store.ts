@@ -1,4 +1,4 @@
-import create, { GetState, State, StoreApi, UseBoundStore } from "zustand"
+import create, { State, StoreApi, UseBoundStore } from "zustand"
 import produce from "immer"
 import { devtools } from "zustand/middleware"
 

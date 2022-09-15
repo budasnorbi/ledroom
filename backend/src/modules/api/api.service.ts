@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, InternalServerErrorException } from "@nestjs/common"
 import { dirname } from "path"
 import * as asyncFs from "fs/promises"
 import * as audioApi from "web-audio-api"
@@ -18,7 +18,7 @@ import { UpdateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema } from "@dto/selectRegion"
 const appDir = dirname(require.main.filename)
 
-const getBPM = (context: any, songBuffer: Buffer): Promise<number> => {
+const analyzeMusic = (context: any, songBuffer: Buffer): Promise<number> => {
   return new Promise((res, rej) => {
     context.decodeAudioData(songBuffer, (decodedBuffer) => {
       try {
@@ -35,8 +35,7 @@ const getBPM = (context: any, songBuffer: Buffer): Promise<number> => {
           audioData = decodedBuffer.getChannelData(0)
         }
         const musicTempo = new MusicTempo(audioData)
-        console.log(JSON.stringify(musicTempo.beats))
-        res(musicTempo.tempo)
+        res(musicTempo)
         //res(musicTempo)
       } catch (error) {
         rej(error)
@@ -56,8 +55,8 @@ export class ApiService {
   async uploadSong(file: Express.Multer.File) {
     const songBuffer = file.buffer
 
-    // const context = new audioApi.AudioContext()
-    // const suggestedBPM = await getBPM(context, songBuffer)
+    const context = new audioApi.AudioContext()
+    const analyzedMusic: any = await analyzeMusic(context, songBuffer)
 
     const filePath = `${appDir}/../songs/${file.originalname}`
     await asyncFs.writeFile(filePath, songBuffer)
@@ -65,10 +64,14 @@ export class ApiService {
     const newSong = new Songs()
     newSong.name = file.originalname
     newSong.path = filePath
-    newSong.bpm = 0
-    newSong.beatOffset = 0
+    newSong.bpm = Math.round(analyzedMusic.tempo)
+    newSong.beatOffset = analyzedMusic.beats[0]
+    newSong.beatAroundEnd = analyzedMusic.beats[analyzedMusic.beats.length - 1]
 
-    const insertedSong = await this.songRepository.save(newSong)
+    const insertedSong = await this.songRepository.save(newSong).catch(() => {
+      asyncFs.unlink(filePath)
+      throw new InternalServerErrorException()
+    })
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { path, ...restSongData } = insertedSong

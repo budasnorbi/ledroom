@@ -3,10 +3,9 @@ import { MutableRefObject } from "react"
 import { clamp } from "./clamp"
 import { v4 as uuid } from "uuid"
 import { api } from "../api/instance"
-import Wavesurfer from "wavesurfer.js"
 
 export const renderBeatRegions = (
-  wavesurfer: Wavesurfer,
+  wavesurferRef: MutableRefObject<WaveSurfer | null>,
   {
     bpm,
     beatOffset,
@@ -23,6 +22,8 @@ export const renderBeatRegions = (
     selectRegion: (id: string) => void
   }
 ) => {
+  const wavesurfer = wavesurferRef.current as WaveSurfer
+
   if (!wavesurfer) {
     return
   }
@@ -31,8 +32,7 @@ export const renderBeatRegions = (
 
   const beatInterval = 1 / (bpm / 60)
   const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
-
-  let lastRegionEndTime: number = 0
+  let lastRegionEndTime = 0
 
   for (let i = 0; i < beatOccurences; i++) {
     if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
@@ -117,8 +117,6 @@ export const renderBeatRegions = (
         color: "rgba(0,0,255,.15)",
         resize: true
       })
-
-      effectRegion.unAll()
 
       effectRegion.element.setAttribute("data-rangetype", "effect-range")
 

@@ -1,13 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import dynamic from "next/dynamic"
-import { css } from "@emotion/react"
 
 import { BeatController } from "@components/BeatController"
 import { WavesurferController } from "@components/WavesurferController"
 import { RegionEffectEditor } from "@components/RegionEffectEditor"
 import { SongLoadController } from "@components/SongLoadController"
-import { useStore } from "@store"
 import * as style from "@styles/shared"
 
 const Preview = dynamic(() => import("../components/Preview"), {
