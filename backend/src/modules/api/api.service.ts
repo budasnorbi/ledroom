@@ -1,6 +1,8 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { dirname } from "path"
 import * as asyncFs from "fs/promises"
+import * as audioApi from "web-audio-api"
+import * as MusicTempo from "music-tempo"
 
 import { Songs } from "@entities/Songs"
 import { SongsRepository } from "@repositories/Songs.repository"
@@ -16,6 +18,33 @@ import { UpdateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema } from "@dto/selectRegion"
 const appDir = dirname(require.main.filename)
 
+const getBPM = (context: any, songBuffer: Buffer): Promise<number> => {
+  return new Promise((res, rej) => {
+    context.decodeAudioData(songBuffer, (decodedBuffer) => {
+      try {
+        let audioData: any = []
+        // Take the average of the two channels
+        if (decodedBuffer.numberOfChannels == 2) {
+          const channel1Data = decodedBuffer.getChannelData(0)
+          const channel2Data = decodedBuffer.getChannelData(1)
+          const length = channel1Data.length
+          for (let i = 0; i < length; i++) {
+            audioData[i] = (channel1Data[i] + channel2Data[i]) / 2
+          }
+        } else {
+          audioData = decodedBuffer.getChannelData(0)
+        }
+        const musicTempo = new MusicTempo(audioData)
+        console.log(JSON.stringify(musicTempo.beats))
+        res(musicTempo.tempo)
+        //res(musicTempo)
+      } catch (error) {
+        rej(error)
+      }
+    })
+  })
+}
+
 @Injectable()
 export class ApiService {
   constructor(
@@ -27,20 +56,19 @@ export class ApiService {
   async uploadSong(file: Express.Multer.File) {
     const songBuffer = file.buffer
 
+    // const context = new audioApi.AudioContext()
+    // const suggestedBPM = await getBPM(context, songBuffer)
+
     const filePath = `${appDir}/../songs/${file.originalname}`
-    await asyncFs.writeFile(filePath, songBuffer).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await asyncFs.writeFile(filePath, songBuffer)
 
     const newSong = new Songs()
     newSong.name = file.originalname
     newSong.path = filePath
+    newSong.bpm = 0
+    newSong.beatOffset = 0
 
-    const insertedSong = await this.songRepository.save(newSong).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    const insertedSong = await this.songRepository.save(newSong)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { path, ...restSongData } = insertedSong
@@ -61,55 +89,34 @@ export class ApiService {
   }
 
   async getSongPath(id: number) {
-    return this.songRepository.findOne({ where: { id } }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    return this.songRepository.findOne({ where: { id } })
   }
 
   async removeSong(id: number) {
     const song = await this.getSongPath(id)
 
-    await this.regionsRepository.delete({ songId: id }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await this.regionsRepository.delete({ songId: id })
 
-    await this.songRepository.delete({ id }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await this.songRepository.delete({ id })
 
-    await asyncFs.unlink(song.path).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await asyncFs.unlink(song.path)
 
     return { status: "OK" }
   }
 
   async updateBeats(body: UpdateBeatsSchema) {
     const { id, ...beatOptions } = body
-    await this.songRepository.update({ id }, beatOptions).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await this.songRepository.update({ id }, beatOptions)
   }
 
   async updateLastTimePosition(body: LastTimePositionSchema) {
     const { time, id } = body
-    await this.songRepository.update({ id }, { lastTimePosition: time }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await this.songRepository.update({ id }, { lastTimePosition: time })
   }
 
   async updateVolume(body: VolumeSchema) {
     const { id, volume } = body
-    await this.songRepository.update({ id }, { volume }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await this.songRepository.update({ id }, { volume })
   }
 
   async addRegion(body: AddRegionSchema) {
@@ -121,34 +128,22 @@ export class ApiService {
     newRegion.endTime = endTime
     newRegion.songId = songId
 
-    await this.regionsRepository.save(newRegion).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    await this.regionsRepository.save(newRegion)
   }
 
   updateRegion(body: UpdateRegionSchema) {
     const { endTime, id, songId, startTime } = body
 
-    this.regionsRepository.update({ id, songId }, { endTime, startTime }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    this.regionsRepository.update({ id, songId }, { endTime, startTime })
   }
 
   selectRegion(body: SelectRegionSchema) {
     const { regionId, songId } = body
 
-    this.songRepository.update({ id: songId }, { selectedRegionId: regionId }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    this.songRepository.update({ id: songId }, { selectedRegionId: regionId })
   }
 
   deleteRegions(songId: number) {
-    this.regionsRepository.delete({ songId }).catch((error) => {
-      console.log(error)
-      throw new InternalServerErrorException()
-    })
+    this.regionsRepository.delete({ songId })
   }
 }

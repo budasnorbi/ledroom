@@ -33,12 +33,14 @@
     "global": "^4.4.0",
     "lodash": "^4.17.21",
     "mp3-duration": "^1.1.0",
+    "music-tempo": "^1.0.3",
     "mysql2": "^2.3.3",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.5.6",
     "socket.io": "^4.5.2",
     "typeorm": "0.3.9",
+    "web-audio-api": "^0.2.2",
     "yup": "^0.32.11"
   },
   "devDependencies": {
