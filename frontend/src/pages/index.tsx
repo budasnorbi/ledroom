@@ -41,6 +41,9 @@ function Dashboard(props: any) {
 
   return (
     <div>
+      <div>
+        <h1>Test tailwind</h1>
+      </div>
       <div css={[style.dFlex, style.flexJustifyBetween, style.flexWrap]}>
         <SongLoadController />
         <BeatController wavesurferRef={wavesurferRef} />
