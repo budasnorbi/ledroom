@@ -12,15 +12,12 @@ export const SongLoadController = () => {
   const selectSong = useStore.use.selectSong()
   const addSongs = useStore.use.addSongs()
 
-  const handleSongChoose = useCallback(
-    async (event: ChangeEvent<HTMLSelectElement>) => {
-      if (event.target.value !== "") {
-        const id = parseInt(event.target.value)
-        selectSong(id)
-      }
-    },
-    [selectSong]
-  )
+  const handleSongChoose = (event: ChangeEvent<HTMLSelectElement>) => {
+    if (event.target.value !== "") {
+      const id = parseInt(event.target.value)
+      selectSong(id)
+    }
+  }
 
   const handleSongRemove = useCallback(
     async (event: PointerEvent<HTMLButtonElement>) => {
