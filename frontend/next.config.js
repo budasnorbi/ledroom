@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: false,
   swcMinify: true,
-  compiler: {
-    emotion: true
-  },
   // experimental: {
   //   // modularizeImports: {
   //   //   '@mui/material/?(((\\w*)?/?)*)': {

@@ -6,7 +6,6 @@ import { BeatController } from "@components/BeatController"
 import { WavesurferController } from "@components/WavesurferController"
 import { RegionEffectEditor } from "@components/RegionEffectEditor"
 import { SongLoadController } from "@components/SongLoadController"
-import * as style from "@styles/shared"
 
 const Preview = dynamic(() => import("../components/Preview"), {
   ssr: false
@@ -41,10 +40,7 @@ function Dashboard(props: any) {
 
   return (
     <div>
-      <div>
-        <h1>Test tailwind</h1>
-      </div>
-      <div css={[style.dFlex, style.flexJustifyBetween, style.flexWrap]}>
+      <div className="flex justify-between items-center flex-wrap px-2 py-3">
         <SongLoadController />
         <BeatController wavesurferRef={wavesurferRef} />
       </div>

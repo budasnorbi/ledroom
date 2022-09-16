@@ -1,6 +1,5 @@
 import { ChangeEvent, FC, useEffect, useState } from "react"
 
-import * as style from "@styles/shared"
 import { useStore } from "@store"
 
 interface Props {
@@ -65,20 +64,48 @@ export const BeatController: FC<Props> = ({ wavesurferRef }) => {
       songBeatConfig.beatOffset === selectedSong.beatOffset)
 
   return (
-    <div css={[style.dFlex]}>
-      <div>
-        <span>BPM:</span>
-        <input type="number" value={songBeatConfig.bpm} onChange={handleBPM} />
+    <div className="flex items-center">
+      <div className="flex items-center mr-2">
+        <label htmlFor="suggested-bpm" className="mr-2">
+          BPM
+        </label>
+        <input
+          id="suggested-bpm"
+          type="number"
+          value={songBeatConfig.bpm}
+          onChange={handleBPM}
+          className="w-16 border-solid rounded-md border-2 text-center"
+        />
       </div>
-      <div>
-        <span>Suggested Beat offset:</span>
-        <input type="number" value={songBeatConfig.beatOffset} onChange={handleBeatOffset} />
+      <div className="flex items-center mr-2">
+        <label htmlFor="suggested-beat-offset" className="mr-2">
+          Offset
+        </label>
+        <input
+          id="suggested-beat-offset"
+          type="number"
+          value={songBeatConfig.beatOffset}
+          onChange={handleBeatOffset}
+          className="w-28 border-solid rounded-md border-2 text-center"
+        />
       </div>
-      <div>
-        <span>Suggested Beat around end:</span>
-        <input type="number" value={songBeatConfig.beatAroundEnd} onChange={handleBeatEndTime} />
+      <div className="flex items-center mr-2">
+        <label htmlFor="suggested-beat-around-end" className="mr-2">
+          Around end
+        </label>
+        <input
+          id="suggested-beat-around-end"
+          type="number"
+          value={songBeatConfig.beatAroundEnd}
+          onChange={handleBeatEndTime}
+          className="w-28 border-solid rounded-md border-2 text-center"
+        />
       </div>
-      <button onClick={handleRenderBeats} disabled={isRenderButtonDisabled}>
+      <button
+        onClick={handleRenderBeats}
+        disabled={isRenderButtonDisabled}
+        className="py-1 px-2 text-blue-600/100 hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-md"
+      >
         Render beats
       </button>
     </div>

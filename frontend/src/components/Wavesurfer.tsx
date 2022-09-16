@@ -157,7 +157,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({ setMusicCurrentTime, wavesurferRef })
   return (
     <div>
       <div id="wavesurfer-container"></div>
-      <div css={{ height: "20px" }} id="wave-timeline"></div>
+      <div id="wave-timeline"></div>
     </div>
   )
 }

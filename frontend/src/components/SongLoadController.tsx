@@ -1,8 +1,6 @@
 import { useCallback, ChangeEvent, PointerEvent } from "react"
 import { api } from "../api/instance"
 import { useStore } from "@store"
-import * as style from "@styles/shared"
-import * as btnStyle from "@styles/buttons"
 
 export const SongLoadController = () => {
   const songs = useStore.use.songs()
@@ -63,23 +61,35 @@ export const SongLoadController = () => {
   )
 
   return (
-    <div css={[style.dFlex]}>
+    <div className="flex">
       <div>
-        <input type="file" id="songFile" css={[style.dNone]} onChange={handleSongLoad} />
-        <label css={[btnStyle.defaultButton]} htmlFor="songFile">
-          upload
+        <input className="hidden" type="file" id="songFile" onChange={handleSongLoad} />
+        <label
+          className="inline-block p-2 text-blue-600/100 hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-md"
+          htmlFor="songFile"
+        >
+          Upload
         </label>
       </div>
       {songs.length !== 0 && selectedSongId && (
         <>
-          <select onChange={handleSongChoose} value={selectedSongId}>
+          <select
+            onChange={handleSongChoose}
+            value={selectedSongId}
+            className="border-solid rounded-md border-4 bg-slate-100 mx-2"
+          >
             {songs.map((song) => (
               <option value={song.id} key={song.id}>
                 {song.name}
               </option>
             ))}
           </select>
-          <button onClick={handleSongRemove}>remove</button>
+          <button
+            onClick={handleSongRemove}
+            className="inline-block p-2 text-blue-600/100 hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-md"
+          >
+            Remove
+          </button>
         </>
       )}
     </div>

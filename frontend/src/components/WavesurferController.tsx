@@ -1,10 +1,12 @@
 import { useStore } from "@store"
 import { FC } from "react"
-import * as styles from "@styles/shared"
+import { Pause, Play } from "./icons/control"
+import { Time } from "./icons/time"
+import { VolumeOff, VolumeOn } from "./icons/volume"
 
 interface Props {
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>
-  musicCurrentTime: number | undefined
+  musicCurrentTime: number
 }
 
 export const WavesurferController: FC<Props> = (props) => {
@@ -39,20 +41,47 @@ export const WavesurferController: FC<Props> = (props) => {
   }
 
   return (
-    <div css={[styles.dFlex]}>
-      <button onClick={handleWavesurferPlaypause} disabled={!wavesurferReady}>
-        {wavesurferIsPlaying ? "Pause" : "Play"}
+    <div className="flex items-center px-2 py-3">
+      <button
+        onClick={handleWavesurferPlaypause}
+        disabled={!wavesurferReady}
+        className="p-2 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-md mr-4"
+      >
+        {wavesurferIsPlaying ? <Pause /> : <Play />}
       </button>
-      <div css={{ marginRight: "15px" }}>
-        Current Time: {props.musicCurrentTime ? props.musicCurrentTime.toPrecision(5) : 0}
+      <div className="flex items-stretch mr-4">
+        <button
+          onClick={setVolumeDown}
+          disabled={selectedSong.volume === 0}
+          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tl-lg rounded-bl-lg "
+        >
+          -
+        </button>
+
+        <div className="flex bg-slate-100 px-4 items-center justify-between w-24">
+          {selectedSong.volume === 0 ? <VolumeOff /> : <VolumeOn />}
+          <span className="ml-1 text-blue-600/75">
+            {((selectedSong.volume / 1) * 100).toFixed(0)}%
+          </span>
+        </div>
+
+        <button
+          onClick={setVolumeUp}
+          disabled={selectedSong.volume === 1}
+          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tr-lg rounded-br-lg "
+        >
+          +
+        </button>
       </div>
-      <button onClick={setVolumeUp} disabled={selectedSong.volume === 1}>
-        Volume +
-      </button>
-      <button onClick={setVolumeDown} disabled={selectedSong.volume === 0}>
-        Volume -
-      </button>
-      <span>Volume {((selectedSong.volume / 1) * 100).toFixed(0)}%</span>
+      <div className="flex items-center">
+        <Time />
+        <span className="ml-2 ">
+          {wavesurferIsPlaying
+            ? props.musicCurrentTime.toFixed(2)
+            : props.musicCurrentTime.toFixed(8)}
+          s
+        </span>
+      </div>
     </div>
   )
 }
