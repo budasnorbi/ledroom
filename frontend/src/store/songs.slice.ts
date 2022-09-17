@@ -1,44 +1,34 @@
-import { Store, SongsSlice, Song, EffectRegion } from "@type/store"
-import { api } from "../api/instance"
 import { StoreApi } from "zustand"
-import { updateRegions } from "@utils/socket"
+import { Store, SongsSlice, Song, EffectRegion } from "@type/store"
+import api from "@api/web"
+import { updateRegions } from "@api/socket"
 import { renderBeatRegions } from "@utils/renderBeatRegions"
+
+export const songInitialState = {
+  songs: [],
+  selectedSongId: null
+}
 
 export const songSlice = (
   setState: (fn: (state: Store) => void, actionName?: string) => void,
   get: StoreApi<Store>["getState"]
 ): SongsSlice => ({
-  songs: [] as Song[],
-  selectedSongId: null,
-
-  async fetchSongs() {
-    const songs: Song[] = await api
-      .get("/songs")
-      .then((res) => res.data)
-      .catch((error) => {
-        console.log(error)
-        return null
-      })
-
-    if (songs && songs.length !== 0) {
-      setState((state) => {
-        state.songs.push(...songs)
-      }, "fetchSongs")
-
-      get().selectSong(songs[0].id)
-    }
-  },
+  ...songInitialState,
 
   addSongs(songs) {
     setState((state) => {
-      const songsWithAdditionalProps: Song[] = songs.map((song) => ({ ...song, regions: [] }))
-
-      state.songs.push(...songsWithAdditionalProps)
-      state.selectedSongId = songsWithAdditionalProps[0].id
+      state.songs.push(...songs)
+      state.selectedSongId = songs[0].id
     }, "addSong")
   },
 
-  removeSong(id) {
+  async removeSong(id) {
+    const deleteRes = await api.delete<void>(`/song/${id}`)
+
+    if (!deleteRes) {
+      return
+    }
+
     setState((state) => {
       state.songs = state.songs.filter((song) => song.id !== id)
       state.wavesurferReady = false
@@ -53,8 +43,6 @@ export const songSlice = (
   },
 
   selectSong(id) {
-    const { updateLastTimePosition, toggleWavesurferIsPlaying } = get()
-
     setState((state) => {
       const song = state.songs.find((song) => song.id === id)
 
@@ -66,103 +54,115 @@ export const songSlice = (
     }, "selectSong")
   },
 
-  updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
+  async updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
     const { selectedSongId } = get()
 
     if (!selectedSongId) {
       return
     }
 
-    api
-      .put("/beat-config", {
-        id: selectedSongId,
-        bpm: bpm,
-        beatOffset: beatOffset,
-        beatAroundEnd: beatAroundEnd
-      })
-      .then(() => {
-        return api.delete(`/regions/${selectedSongId}`)
-      })
-      .then(() => {
-        setState((state) => {
-          const song = state.songs.find((song) => song.id === state.selectedSongId)
+    const updateResponse = await api.put("/beat-config", {
+      id: selectedSongId,
+      bpm: bpm,
+      beatOffset: beatOffset,
+      beatAroundEnd: beatAroundEnd
+    })
 
-          if (!song) {
-            return
-          }
+    if (!updateResponse) {
+      return
+    }
 
-          song.bpm = bpm
-          song.beatOffset = beatOffset
-          song.beatAroundEnd = beatAroundEnd
-          song.regions = []
+    const deleteResponse = await api.delete(`/regions/${selectedSongId}`)
 
-          const { addRegion, updateRegionTime, selectRegion } = get()
+    if (!deleteResponse) {
+      return
+    }
 
-          renderBeatRegions(
-            wavesurferRef,
-            {
-              beatAroundEnd,
-              beatOffset,
-              bpm,
-              songId: selectedSongId
-            },
-            {
-              addRegion,
-              updateRegionTime,
-              selectRegion
-            }
-          )
-        }, "updateSongBeatsConfig")
-      })
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+      if (!song) {
+        return
+      }
+
+      song.bpm = bpm
+      song.beatOffset = beatOffset
+      song.beatAroundEnd = beatAroundEnd
+      song.regions = []
+
+      const { addRegion, updateRegionTime, selectRegion } = get()
+
+      renderBeatRegions(
+        wavesurferRef,
+        {
+          beatAroundEnd,
+          beatOffset,
+          bpm,
+          songId: selectedSongId
+        },
+        {
+          addRegion,
+          updateRegionTime,
+          selectRegion
+        }
+      )
+    }, "updateSongBeatsConfig")
   },
 
   async addRegion(config) {
-    const { selectedSongId } = get()
     const region: EffectRegion = {
       ...config
       //effects: []
     }
+
     setState((state) => {
       const song = state.songs.find((song) => song.id === state.selectedSongId)
 
-      if (song) {
-        song.regions.push(region)
-        state.selectRegion(config.id)
+      if (!song) {
+        return
       }
+
+      song.regions.push(region)
+      state.selectRegion(config.id)
     }, "addRegion")
   },
 
-  selectRegion(id) {
+  async selectRegion(id) {
     const { selectedSongId, songs } = get()
 
     const song = songs.find((song) => song.id === selectedSongId)
 
-    if (!song || song.selectedRegionId === id) {
+    if (!song) {
       return
     }
 
-    api.put("/select-region", { songId: selectedSongId, regionId: id }).then(() => {
-      setState((state) => {
-        const song = state.songs.find((song) => song.id === state.selectedSongId)
+    const response = await api.put("/select-region", { songId: song.id, regionId: id })
 
-        if (!song) {
-          return
-        }
+    if (!response) {
+      return
+    }
 
-        song.selectedRegionId = id
-      }, "selectRegion")
-    })
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+      if (!song) {
+        return
+      }
+
+      song.selectedRegionId = id
+    }, "selectRegion")
   },
 
   removeRegion() {
     setState((state) => {
-      for (const song of state.songs) {
-        if (song.id === state.selectedSongId) {
-          song.regions = song.regions.filter((region) => region.id !== song.selectedRegionId)
-          return
-        }
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+      if (!song) {
+        return
       }
-    })
+
+      song.regions = song.regions.filter((region) => region.id !== song.selectedRegionId)
+    }, "removeRegion")
   },
 
   async updateRegionTime(options) {
@@ -197,31 +197,35 @@ export const songSlice = (
       }
     }
 
-    api
-      .put("region", {
-        songId: selectedSongId,
-        id: options.id,
-        startTime: options.startTime ?? region.startTime,
-        endTime: options.endTime ?? region.endTime
-      })
-      .then(() => {
-        setState((state) => {
-          for (const song of state.songs) {
-            if (song.id === state.selectedSongId) {
-              const region = song.regions.find((region) => region.id === song.selectedRegionId)
+    const response = await api.put("/region", {
+      songId: song.id,
+      id: options.id,
+      startTime: options.startTime ?? region.startTime,
+      endTime: options.endTime ?? region.endTime
+    })
 
-              if (region) {
-                region.startTime = options.startTime ?? region.startTime
-                region.endTime = options.endTime ?? region.endTime
+    if (!response) {
+      return
+    }
 
-                updateRegions(song.regions)
-              }
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === selectedSongId)
 
-              return
-            }
-          }
-        }, "updateRegionTime")
-      })
+      if (!song) {
+        return
+      }
+
+      const region = song.regions.find((region) => region.id === song.selectedRegionId)
+
+      if (!region) {
+        return
+      }
+
+      region.startTime = options.startTime ?? region.startTime
+      region.endTime = options.endTime ?? region.endTime
+
+      updateRegions(song.regions)
+    }, "updateRegionTime")
   },
 
   async updateLastTimePosition(time) {
@@ -233,18 +237,24 @@ export const songSlice = (
       return
     }
 
-    await api.put("/last-time-position", { time, id: get().selectedSongId }).then(() => {
-      setState((state) => {
-        const song = state.songs.find((song) => song.id === state.selectedSongId)
+    const response = await api.put("/last-time-position", { time, id: song.id })
 
-        if (song) {
-          song.lastTimePosition = time
-        }
-      }, "updateLastTimePosition")
-    })
+    if (!response) {
+      return
+    }
+
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+      if (!song) {
+        return
+      }
+
+      song.lastTimePosition = time
+    }, "updateLastTimePosition")
   },
 
-  updateSongVolume(volume) {
+  async updateSongVolume(volume) {
     const { selectedSongId, songs } = get()
 
     const song = songs.find((song) => song.id === selectedSongId)
@@ -253,15 +263,25 @@ export const songSlice = (
       return
     }
 
-    api.put("/volume", { volume, id: selectedSongId }).then(() => {
-      setState((state) => {
-        const song = state.songs.find((song) => song.id === state.selectedSongId)
+    const response = await api.put(
+      "/volume",
+      { volume, id: song.id },
+      { "Content-Type": "application/json" }
+    )
 
-        if (song) {
-          song.volume = volume
-        }
-      }, "updateSongVolume")
-    })
+    if (!response) {
+      return
+    }
+
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+      if (!song) {
+        return
+      }
+
+      song.volume = volume
+    }, "updateSongVolume")
   }
 })
 

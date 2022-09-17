@@ -1,10 +1,15 @@
 import { useCallback, ChangeEvent, PointerEvent } from "react"
-import { api } from "../api/instance"
+import api from "@api/web"
 import { useStore } from "@store"
+import { Song } from "@type/song"
+import { FC } from "react"
 
-export const SongLoadController = () => {
+interface Props {
+  selectedSongId: number | undefined
+}
+
+export const SongLoadController: FC<Props> = (props) => {
   const songs = useStore.use.songs()
-  const selectedSongId = useStore.use.selectedSongId()
 
   const removeSong = useStore.use.removeSong()
   const selectSong = useStore.use.selectSong()
@@ -17,48 +22,29 @@ export const SongLoadController = () => {
     }
   }
 
-  const handleSongRemove = useCallback(
-    async (event: PointerEvent<HTMLButtonElement>) => {
-      if (selectedSongId == null) {
-        return
-      }
+  const handleSongRemove = () => {
+    removeSong(props.selectedSongId as number)
+  }
 
-      const deleteRes = await api.delete(`/song?id=${selectedSongId}`).catch((error) => {
-        console.warn(error)
-        return null
-      })
+  const handleSongLoad = async (event: ChangeEvent<HTMLInputElement>) => {
+    const musicFile = event.target.files?.item(0)
 
-      if (deleteRes?.data) {
-        removeSong(selectedSongId)
-      }
-    },
-    [removeSong, selectedSongId]
-  )
+    if (!musicFile) {
+      console.warn("There is no music file from upload input", musicFile)
+      return
+    }
 
-  const handleSongLoad = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const musicFile = event.target.files?.item(0)
+    const formData = new FormData()
+    formData.append("file", musicFile)
 
-      if (!musicFile) {
-        console.warn("There is no music file from upload input", musicFile)
-        return
-      }
+    const uploadRes = await api.uploadFile<Song>("/upload-song", formData)
 
-      const formData = new FormData()
-      formData.append("file", musicFile)
+    if (!uploadRes) {
+      return
+    }
 
-      const uploadRes = await api.post("/upload-song", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      })
-
-      if (uploadRes.data.id) {
-        addSongs([uploadRes.data])
-      }
-    },
-    [addSongs]
-  )
+    addSongs([uploadRes])
+  }
 
   return (
     <div className="flex">
@@ -71,11 +57,11 @@ export const SongLoadController = () => {
           Upload
         </label>
       </div>
-      {songs.length !== 0 && selectedSongId && (
+      {props.selectedSongId !== undefined && (
         <>
           <select
             onChange={handleSongChoose}
-            value={selectedSongId}
+            value={props.selectedSongId}
             className="border-solid rounded-md border-4 bg-slate-100 mx-2"
           >
             {songs.map((song) => (

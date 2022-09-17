@@ -24,6 +24,7 @@ import { VolumeSchema, volumeSchema } from "@dto/volume.yup"
 import { AddRegionSchema, addRegionSchema } from "@dto/addRegion.yup"
 import { UpdateRegionSchema, updateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema, selectRegionSchema } from "@dto/selectRegion"
+import { Response } from "express"
 
 @Controller("api")
 export class ApiController {
@@ -40,8 +41,11 @@ export class ApiController {
     return this.apiService.getSongs()
   }
 
-  @Get("song")
-  async getSong(@Query("id") id: number, @Res({ passthrough: true }) res): Promise<StreamableFile> {
+  @Get("song/:id")
+  async getSong(
+    @Param("id") id: number,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<StreamableFile> {
     const song = await this.apiService.getSongPath(id)
 
     const file = fs.createReadStream(song.path)
@@ -53,8 +57,8 @@ export class ApiController {
     return new StreamableFile(file)
   }
 
-  @Delete("song")
-  async deleteSong(@Query("id") id: number) {
+  @Delete("song/:id")
+  async deleteSong(@Param("id") id: number) {
     return this.apiService.removeSong(id)
   }
 

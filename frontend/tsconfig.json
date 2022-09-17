@@ -18,7 +18,7 @@
     "paths": {
       "@forms/*": ["src/components/forms/*"],
       "@components/*": ["src/components/*"],
-      "@api": ["src/api/api"],
+      "@api/*": ["src/api/*"],
       "@config/*": ["src/config/*"],
       "@styles/*": ["src/styles/*"],
       "@type/*": ["src/types/*"],

@@ -2,10 +2,11 @@ import { EffectRegion } from "@type/store"
 import { MutableRefObject } from "react"
 import { clamp } from "./clamp"
 import { v4 as uuid } from "uuid"
-import { api } from "../api/instance"
+import api from "@api/web"
+import WaveSurfer from "wavesurfer.js/src/wavesurfer"
 
 export const renderBeatRegions = (
-  wavesurferRef: MutableRefObject<WaveSurfer | null>,
+  wavesurfer: WaveSurfer,
   {
     bpm,
     beatOffset,
@@ -22,12 +23,6 @@ export const renderBeatRegions = (
     selectRegion: (id: string) => void
   }
 ) => {
-  const wavesurfer = wavesurferRef.current as WaveSurfer
-
-  if (!wavesurfer) {
-    return
-  }
-
   wavesurfer.regions.clear()
 
   const beatInterval = 1 / (bpm / 60)
@@ -92,7 +87,7 @@ export const renderBeatRegions = (
       const newRegionId = uuid()
 
       try {
-        await api.post("region", {
+        await api.post("/region", {
           id: newRegionId,
           songId,
           startTime,
@@ -141,7 +136,7 @@ export const renderBeatRegions = (
       })
 
       effectRegion.on("click", () => {
-        selectRegion(newRegionId)
+        selectRegion(effectRegion.id)
       })
 
       effectRegion.on("update-end", async () => {

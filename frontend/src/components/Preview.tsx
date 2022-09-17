@@ -1,4 +1,4 @@
-import { socket } from "@utils/socket"
+import { socket } from "@api/socket"
 import { useEffect, useRef } from "react"
 
 let ledCoordinatesX: number[] = new Array(187 + 98 + 35 + 84 + 231 + 186)

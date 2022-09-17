@@ -24,3 +24,7 @@ export const sendReset = () => {
 export const updateRegions = (regions: any) => {
   socket.emit("update-regions", regions)
 }
+
+export const closeSocket = () => {
+  socket.close()
+}

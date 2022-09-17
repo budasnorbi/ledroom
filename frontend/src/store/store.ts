@@ -3,8 +3,8 @@ import produce from "immer"
 import { devtools } from "zustand/middleware"
 
 import { Store, WithSelectors } from "@type/store"
-import { songSlice } from "./songs.slice"
-import { wavesurferSlice } from "./wavesurfer.slice"
+import { songInitialState, songSlice } from "./songs.slice"
+import { wavesurferIntialState, wavesurferSlice } from "./wavesurfer.slice"
 
 const createSelectors = <S extends UseBoundStore<StoreApi<State>>>(_store: S) => {
   let store = _store as WithSelectors<typeof _store>
@@ -19,7 +19,7 @@ const createSelectors = <S extends UseBoundStore<StoreApi<State>>>(_store: S) =>
 }
 
 export const useStore = createSelectors(
-  create<Store>()(
+  create<Store & { resetStore: () => void }>()(
     devtools((set, get) => {
       const setState = (fn: (state: Store) => void, actionName?: string) => {
         return set(produce(get(), fn), false, actionName)
@@ -27,7 +27,15 @@ export const useStore = createSelectors(
 
       return {
         ...wavesurferSlice(setState, get),
-        ...songSlice(setState, get)
+        ...songSlice(setState, get),
+        resetStore() {
+          setState((state) => {
+            state.songs = songInitialState.songs
+            state.selectedSongId = songInitialState.selectedSongId
+            state.wavesurferIsPlaying = wavesurferIntialState.wavesurferIsPlaying
+            state.wavesurferReady = wavesurferIntialState.wavesurferReady
+          }, "resetStore")
+        }
       }
     })
   )

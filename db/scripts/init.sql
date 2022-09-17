@@ -11,6 +11,7 @@ CREATE TABLE songs(
   selected_region_id VARCHAR(36) DEFAULT NULL,
   last_time_position FLOAT DEFAULT 0,
   volume FLOAT DEFAULT 0.1,
+  selected BOOlEAN DEFAULT 0,
   PRIMARY KEY(id)
 );
 

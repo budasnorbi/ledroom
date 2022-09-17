@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm"
+import { Effects } from "./Effects"
+import { Regions } from "./Regions"
 
 @Entity("songs", { schema: "ledroom" })
 export class Songs {
@@ -30,7 +32,7 @@ export class Songs {
   @Column("tinytext", { name: "name" })
   name: string
 
-  @Column("varchar", { name: "selected_region_id", length: 36, default: null })
+  @Column("varchar", { name: "selected_region_id", nullable: true, length: 36 })
   selectedRegionId: string | null
 
   @Column("float", {
@@ -48,4 +50,18 @@ export class Songs {
     default: () => "'0.1'"
   })
   volume: number | null
+
+  @Column("tinyint", {
+    name: "selected",
+    nullable: true,
+    width: 1,
+    default: () => "'0'"
+  })
+  selected: boolean | null
+
+  @OneToMany(() => Effects, (effects) => effects.region)
+  effects: Effects[]
+
+  @OneToMany(() => Regions, (regions) => regions.song)
+  regions: Regions[]
 }

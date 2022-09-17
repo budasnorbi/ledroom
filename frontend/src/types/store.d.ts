@@ -53,13 +53,6 @@ interface Song {
 
 interface DbSong extends Exclude<Song, "regions"> {}
 
-interface _Store {
-  // selectRegion: (id: number) => void
-  // addEffectToRegion: (effectName: Effects) => void
-  // setEffectDuration: (type: "blink", duration: number) => void
-  // setEffectRange: (type: Effects, range: [number, number]) => void
-}
-
 export interface WavesurferSlice {
   wavesurferReady: boolean
   wavesurferIsPlaying: boolean
@@ -70,7 +63,6 @@ export interface WavesurferSlice {
 export interface SongsSlice {
   selectedSongId: number | null
   songs: Song[]
-  fetchSongs: () => Promise<void>
   addSongs: (songs: DbSong[]) => void
   removeSong: (id: number) => void
   selectSong: (id: number) => void
@@ -78,7 +70,7 @@ export interface SongsSlice {
     bpm: number,
     beatOffset: number,
     beatAroundEnd: number,
-    wavesurferRef: MutableRefObject<WaveSurfer | null>
+    wavesurferRef: WaveSurfer
   ) => void
   addRegion: (config: EffectRegion) => void
   selectRegion: (id: string) => void

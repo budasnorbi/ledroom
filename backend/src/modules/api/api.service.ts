@@ -76,7 +76,7 @@ export class ApiService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { path, ...restSongData } = insertedSong
 
-    return restSongData
+    return { ...restSongData, regions: [] }
   }
 
   async getSongs() {
@@ -99,27 +99,28 @@ export class ApiService {
     const song = await this.getSongPath(id)
 
     await this.regionsRepository.delete({ songId: id })
-
     await this.songRepository.delete({ id })
-
     await asyncFs.unlink(song.path)
 
-    return { status: "OK" }
+    return {}
   }
 
   async updateBeats(body: UpdateBeatsSchema) {
     const { id, ...beatOptions } = body
     await this.songRepository.update({ id }, beatOptions)
+    return {}
   }
 
   async updateLastTimePosition(body: LastTimePositionSchema) {
     const { time, id } = body
     await this.songRepository.update({ id }, { lastTimePosition: time })
+    return {}
   }
 
   async updateVolume(body: VolumeSchema) {
     const { id, volume } = body
     await this.songRepository.update({ id }, { volume })
+    return {}
   }
 
   async addRegion(body: AddRegionSchema) {
@@ -132,21 +133,23 @@ export class ApiService {
     newRegion.songId = songId
 
     await this.regionsRepository.save(newRegion)
+    return {}
   }
 
-  updateRegion(body: UpdateRegionSchema) {
+  async updateRegion(body: UpdateRegionSchema) {
     const { endTime, id, songId, startTime } = body
-
-    this.regionsRepository.update({ id, songId }, { endTime, startTime })
+    await this.regionsRepository.update({ id, songId }, { endTime, startTime })
+    return {}
   }
 
-  selectRegion(body: SelectRegionSchema) {
+  async selectRegion(body: SelectRegionSchema) {
     const { regionId, songId } = body
-
-    this.songRepository.update({ id: songId }, { selectedRegionId: regionId })
+    await this.songRepository.update({ id: songId }, { selectedRegionId: regionId })
+    return {}
   }
 
-  deleteRegions(songId: number) {
-    this.regionsRepository.delete({ songId })
+  async deleteRegions(songId: number) {
+    await this.regionsRepository.delete({ songId })
+    return {}
   }
 }

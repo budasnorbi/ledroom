@@ -10,9 +10,10 @@ import { Regions } from "@entities/Regions"
 import { RegionsRepository } from "@repositories/Regions.repository"
 import { APP_INTERCEPTOR } from "@nestjs/core"
 import { ErrorsInterceptor } from "@interceptors/errors.interceptor"
+import { Effects } from "@entities/Effects"
 
 @Module({
-  imports: [LedModule, TypeOrmModule.forFeature([Songs, Regions])],
+  imports: [LedModule, TypeOrmModule.forFeature([Songs, Regions, Effects])],
   controllers: [ApiController],
   providers: [
     {
