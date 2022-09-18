@@ -109,8 +109,6 @@ const WaveSurfer: FC<WaveSurferProps> = ({
       "ready",
       /* @ts-ignore */
       () => {
-        updateWavesurferReady(true)
-
         wavesurfer.zoom(200)
 
         const progress = lastTimePosition / wavesurfer.getDuration()
@@ -291,6 +289,8 @@ const WaveSurfer: FC<WaveSurferProps> = ({
 
         window.removeEventListener("keydown", handleSpacePress)
         window.addEventListener("keydown", handleSpacePress)
+
+        updateWavesurferReady(true)
       }
     )
 
@@ -300,7 +300,6 @@ const WaveSurfer: FC<WaveSurferProps> = ({
 
     return () => {
       wavesurfer.unAll()
-      updateWavesurferReady(false)
       wavesurferRef.current?.destroy()
     }
   }, [selectedSong])

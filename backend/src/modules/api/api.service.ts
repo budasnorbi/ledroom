@@ -67,6 +67,7 @@ export class ApiService {
     newSong.bpm = Math.round(analyzedMusic.tempo)
     newSong.beatOffset = analyzedMusic.beats[0]
     newSong.beatAroundEnd = analyzedMusic.beats[analyzedMusic.beats.length - 1]
+    newSong.selected = true
 
     const insertedSong = await this.songRepository.save(newSong).catch(() => {
       asyncFs.unlink(filePath)
@@ -74,21 +75,25 @@ export class ApiService {
     })
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { path, ...restSongData } = insertedSong
+    const { path, selected, ...restSongData } = insertedSong
 
     return { ...restSongData, regions: [] }
   }
 
   async getSongs() {
-    const data: Song[] = []
-    const songs = await this.songRepository.getSongs()
+    const allSong = await this.songRepository.getSongs()
+    const songs: Song[] = []
+    let selectedSongId: null | number = null
 
-    for (const song of songs) {
+    for (const song of allSong) {
+      if (song.selected) {
+        selectedSongId = song.id
+      }
       const regions = await this.regionsRepository.getRegionsBySongId(song.id)
-      data.push({ ...song, regions })
+      songs.push({ ...song, regions })
     }
 
-    return data
+    return { songs, selectedSongId }
   }
 
   async getSongPath(id: number) {
@@ -102,7 +107,20 @@ export class ApiService {
     await this.songRepository.delete({ id })
     await asyncFs.unlink(song.path)
 
-    return {}
+    const restSongCount = await this.songRepository.count()
+
+    let selectedSongId: null | number
+    if (restSongCount === 0) {
+      selectedSongId = null
+    } else {
+      const songByAscOrder = await this.songRepository.find({ order: { id: "ASC" } })
+      const lastSongId = songByAscOrder[0].id
+
+      await this.songRepository.update({ id: songByAscOrder[0].id }, { selected: true })
+      selectedSongId = lastSongId
+    }
+
+    return { selectedSongId }
   }
 
   async updateBeats(body: UpdateBeatsSchema) {
@@ -150,6 +168,12 @@ export class ApiService {
 
   async deleteRegions(songId: number) {
     await this.regionsRepository.delete({ songId })
+    return {}
+  }
+
+  async updateSongSelected(songId: number) {
+    await this.songRepository.update({ selected: true }, { selected: false })
+    await this.songRepository.update({ id: songId }, { selected: true })
     return {}
   }
 }

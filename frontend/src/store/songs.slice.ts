@@ -15,34 +15,54 @@ export const songSlice = (
 ): SongsSlice => ({
   ...songInitialState,
 
-  addSongs(songs) {
+  addSongs(data) {
+    const { updateWavesurferReady, wavesurferReady } = get()
+
+    if (wavesurferReady) {
+      updateWavesurferReady(false)
+    }
+
     setState((state) => {
-      state.songs.push(...songs)
-      state.selectedSongId = songs[0].id
+      state.songs.push(...data.songs)
     }, "addSong")
+    get().selectSong(data.selectedSongId)
   },
 
   async removeSong(id) {
-    const deleteRes = await api.delete<void>(`/song/${id}`)
+    const deleteRes = await api.delete<{ selectedSongId: number | null }>(`/song/${id}`)
 
     if (!deleteRes) {
       return
     }
 
+    const { updateWavesurferReady, wavesurferReady } = get()
+
+    if (wavesurferReady) {
+      updateWavesurferReady(false)
+    }
+
     setState((state) => {
       state.songs = state.songs.filter((song) => song.id !== id)
-      state.wavesurferReady = false
+
       state.wavesurferIsPlaying = false
 
-      if (state.songs.length === 0) {
-        state.selectedSongId = null
-      } else {
-        state.selectedSongId = state.songs[state.songs.length - 1].id
-      }
+      state.selectedSongId = deleteRes.selectedSongId
     }, "removeSong")
   },
 
-  selectSong(id) {
+  async selectSong(id) {
+    const { updateWavesurferReady, wavesurferReady } = get()
+
+    const response = await api.put(`/select-song?id=${id}`)
+
+    if (!response) {
+      return
+    }
+
+    if (wavesurferReady) {
+      updateWavesurferReady(false)
+    }
+
     setState((state) => {
       const song = state.songs.find((song) => song.id === id)
 
@@ -55,7 +75,7 @@ export const songSlice = (
   },
 
   async updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
-    const { selectedSongId } = get()
+    const { selectedSongId, addRegion, updateRegionTime, selectRegion } = get()
 
     if (!selectedSongId) {
       return
@@ -89,8 +109,6 @@ export const songSlice = (
       song.beatOffset = beatOffset
       song.beatAroundEnd = beatAroundEnd
       song.regions = []
-
-      const { addRegion, updateRegionTime, selectRegion } = get()
 
       renderBeatRegions(
         wavesurferRef,
@@ -143,11 +161,7 @@ export const songSlice = (
     }
 
     setState((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId)
-
-      if (!song) {
-        return
-      }
+      const song = state.songs.find((song) => song.id === state.selectedSongId) as Song
 
       song.selectedRegionId = id
     }, "selectRegion")

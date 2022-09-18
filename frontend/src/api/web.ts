@@ -63,15 +63,20 @@ class Api {
 
   async put<ServerResponse>(
     urlPart: string,
-    body: { [key: string]: string | number | {} | [] },
+    body?: { [key: string]: string | number | {} | [] },
     headers: { [key: string]: string } = { "Content-Type": "application/json" }
   ): Promise<ServerResponse | null> {
+    const config: RequestInit = {
+      method: "PUT",
+      headers
+    }
+
+    if (body) {
+      config.body = JSON.stringify(body)
+    }
+
     try {
-      const response = await fetch(`${this.baseURL}${urlPart}`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(body)
-      })
+      const response = await fetch(`${this.baseURL}${urlPart}`, config)
 
       return response.json()
     } catch (error) {

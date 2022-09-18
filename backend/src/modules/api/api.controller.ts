@@ -68,6 +68,11 @@ export class ApiController {
     return this.apiService.updateBeats(body)
   }
 
+  @Put("select-song")
+  updateSongSelected(@Query("id") id: number) {
+    return this.apiService.updateSongSelected(id)
+  }
+
   @Put("last-time-position")
   @UsePipes(new YupValidationPipe(lastTimePositionSchema))
   updateLastTimePosition(@Body() body: LastTimePositionSchema) {

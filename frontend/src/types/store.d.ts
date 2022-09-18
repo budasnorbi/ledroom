@@ -63,9 +63,9 @@ export interface WavesurferSlice {
 export interface SongsSlice {
   selectedSongId: number | null
   songs: Song[]
-  addSongs: (songs: DbSong[]) => void
+  addSongs: (data: { songs: Song[]; selectedSongId: number }) => void
   removeSong: (id: number) => void
-  selectSong: (id: number) => void
+  selectSong: (id: number | null) => void
   updateSongBeatConfig: (
     bpm: number,
     beatOffset: number,

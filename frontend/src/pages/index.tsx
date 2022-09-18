@@ -44,10 +44,15 @@ function Dashboard() {
   useEffect(() => {
     const abortController = new AbortController()
     ;(async () => {
-      const songs = await api.get<Song[]>("/songs", {}, abortController)
-      if (!songs || songs.length === 0) {
+      const songs = await api.get<{ songs: Song[]; selectedSongId: number }>(
+        "/songs",
+        {},
+        abortController
+      )
+      if (!songs || songs.songs.length === 0) {
         return
       }
+
       addSongs(songs)
     })()
     return () => {

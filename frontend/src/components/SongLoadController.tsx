@@ -15,11 +15,9 @@ export const SongLoadController: FC<Props> = (props) => {
   const selectSong = useStore.use.selectSong()
   const addSongs = useStore.use.addSongs()
 
-  const handleSongChoose = (event: ChangeEvent<HTMLSelectElement>) => {
-    if (event.target.value !== "") {
-      const id = parseInt(event.target.value)
-      selectSong(id)
-    }
+  const handleSongChoose = async (event: ChangeEvent<HTMLSelectElement>) => {
+    const id = parseInt(event.target.value)
+    selectSong(id)
   }
 
   const handleSongRemove = () => {
@@ -37,13 +35,13 @@ export const SongLoadController: FC<Props> = (props) => {
     const formData = new FormData()
     formData.append("file", musicFile)
 
-    const uploadRes = await api.uploadFile<Song>("/upload-song", formData)
+    const songData = await api.uploadFile<Song>("/upload-song", formData)
 
-    if (!uploadRes) {
+    if (!songData) {
       return
     }
 
-    addSongs([uploadRes])
+    addSongs({ songs: [songData], selectedSongId: songData.id })
   }
 
   return (
