@@ -22,7 +22,7 @@
       "@repositories/*": ["src/repositories/*"],
       "@helpers/*": ["src/helpers/*"],
       "@modules/*": ["src/modules/*"],
-      "@type/*": ["src/type/*"],
+      "@type/*": ["src/types/*"],
       "@dto/*": ["src/validation/*"],
       "@interceptors/*": ["src/interceptors/*"]
     }

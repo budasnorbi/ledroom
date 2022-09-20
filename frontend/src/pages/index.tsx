@@ -6,10 +6,10 @@ import WavesurferController from "@components/WavesurferController"
 import { RegionEffectEditor } from "@components/RegionEffectEditor"
 import { SongLoadController } from "@components/SongLoadController"
 import { useStore } from "@store"
-import { Song } from "@type/store"
 import api from "@api/web"
 import { useEffect } from "react"
 import { closeSocket } from "@api/socket"
+import type { GetSongsData } from "@backend/endpoints"
 
 const Preview = dynamic(() => import("../components/Preview"), {
   ssr: false
@@ -22,38 +22,29 @@ const WaveSurfer = dynamic(() => import("../components/Wavesurfer"), {
 let bezierChangeTimeout: any
 
 function Dashboard() {
-  const selectedSongId = useStore.use.selectedSongId()
-  const selectedSong = useStore((state) => {
-    const song = state.songs.find((song) => song.id === selectedSongId)
-
-    if (!song) {
-      return null
-    }
-
-    return song
-  })
-
   const wavesurferRef = useRef<WaveSurfer | null>(null)
-  const wavesurferReady = useStore.use.wavesurferReady()
-
   const [musicCurrentTime, setMusicCurrentTime] = useState(0)
-
   const addSongs = useStore.use.addSongs()
   const resetStore = useStore.use.resetStore()
+
+  const wavesurferReady = useStore.use.wavesurferReady()
+  const selectedSongId = useStore.use.selectedSongId()
+
+  const selectedSong = useStore((state) => {
+    const [song] = state.songs.filter((song) => song.id === selectedSongId)
+    return song ?? null
+  })
 
   useEffect(() => {
     const abortController = new AbortController()
     ;(async () => {
-      const songs = await api.get<{ songs: Song[]; selectedSongId: number }>(
-        "/songs",
-        {},
-        abortController
-      )
-      if (!songs || songs.songs.length === 0) {
+      const response = await api.get<GetSongsData>("/songs", {}, abortController)
+
+      if (!response) {
         return
       }
 
-      addSongs(songs)
+      addSongs(response)
     })()
     return () => {
       abortController.abort()
@@ -61,23 +52,6 @@ function Dashboard() {
       resetStore()
     }
   }, [addSongs, resetStore])
-
-  /*   useEffect(() => {
-    if (selectedRegion?.id) {
-      setBezierValues(selectedRegion.bezierValues)
-    }
-  }, [selectedRegion?.bezierValues]) */
-
-  /*   const handleBezierUpdate = (values: [number, number, number, number]) => {
-    setBezierValues(values)
-    if (bezierChangeTimeout) {
-      clearTimeout(bezierChangeTimeout)
-    }
-
-    bezierChangeTimeout = setTimeout(() => {
-      updateRegion({ bezierValues: values })
-    }, 350)
-  } */
 
   return (
     <div>
@@ -109,14 +83,8 @@ function Dashboard() {
           volume={selectedSong.volume}
         />
       )}
-      <div className="editorContainer">
-        {/* <RegionEffectEditor /> */}
-        <div>
-          {/*  <h2>Led Preview</h2> */}
-          {/* @ts-ignore */}
-          {/* <Preview /> */}
-        </div>
-      </div>
+
+      {selectedSong && selectedSong.selectedRegionId && <RegionEffectEditor />}
     </div>
   )
 }

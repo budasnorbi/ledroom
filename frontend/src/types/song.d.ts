@@ -1,11 +1,8 @@
-export interface Song {
-  id: number
-  bpm: number
-  beatOffset: number
-  beatAroundEnd: number
-  name: string
-  selectedRegionId: string
-  lastTimePosition: number
-  volume: number
-  regions: Region[]
+import type { DBRegions } from "@backend/RegionsRepository"
+import type { ClientSong } from "@backend/SongsRepository"
+
+export interface InitialSongState {
+  songs: Song[]
+  regions: DBRegions[]
+  selectedSongId: null | number
 }

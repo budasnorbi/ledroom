@@ -25,6 +25,7 @@ import { AddRegionSchema, addRegionSchema } from "@dto/addRegion.yup"
 import { UpdateRegionSchema, updateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema, selectRegionSchema } from "@dto/selectRegion"
 import { Response } from "express"
+import { UploadSongResponse } from "@type/endpoints"
 
 @Controller("api")
 export class ApiController {
@@ -32,7 +33,7 @@ export class ApiController {
 
   @Post("upload-song")
   @UseInterceptors(FileInterceptor("file"))
-  uploadSong(@UploadedFile() file: Express.Multer.File) {
+  uploadSong(@UploadedFile() file: Express.Multer.File): Promise<UploadSongResponse> {
     return this.apiService.uploadSong(file)
   }
 

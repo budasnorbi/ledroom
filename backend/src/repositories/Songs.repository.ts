@@ -1,21 +1,28 @@
 import { Repository } from "typeorm"
-import { Songs } from "@entities/Songs"
+import { Song } from "@entities/Song.entity"
 import { Injectable } from "@nestjs/common"
 import { DataSource } from "typeorm/data-source/DataSource"
 
 @Injectable()
-export class SongsRepository extends Repository<Songs> {
+export class SongsRepository extends Repository<Song> {
   constructor(dataSource: DataSource) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    /* @ts-ignore */
-    super(Songs, dataSource.createEntityManager())
+    super(Song, dataSource.createEntityManager())
   }
 
-  async getSongs() {
-    return (
-      this.find()
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .then((rows) => rows.map(({ path, ...rest }) => rest))
-    )
+  async getSongs(): Promise<Omit<Song, "path">[]> {
+    return this.find({
+      select: [
+        "id",
+        "bpm",
+        "beatOffset",
+        "beatAroundEnd",
+        "name",
+        "selectedRegionId",
+        "lastTimePosition",
+        "volume",
+        "selected"
+      ],
+      relations: ["regions", "regions.effects"]
+    })
   }
 }

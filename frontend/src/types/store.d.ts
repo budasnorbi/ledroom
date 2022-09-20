@@ -1,3 +1,5 @@
+import type { GetSongsData, UploadSongResponse } from "@backend/endpoints"
+
 export type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
   : never
@@ -30,27 +32,6 @@ export interface Step {
   range: [number, number]
 }
 
-export interface EffectRegion {
-  id: string
-  startTime: number
-  endTime: number
-  //effects: Blink | Step[]
-}
-
-type Effects = "blink" | "step"
-
-interface Song {
-  beatOffset: number
-  beatAroundEnd: number
-  bpm: number
-  id: number
-  name: string
-  regions: EffectRegion[]
-  selectedRegionId: string
-  lastTimePosition: number
-  volume: number
-}
-
 interface DbSong extends Exclude<Song, "regions"> {}
 
 export interface WavesurferSlice {
@@ -63,7 +44,8 @@ export interface WavesurferSlice {
 export interface SongsSlice {
   selectedSongId: number | null
   songs: Song[]
-  addSongs: (data: { songs: Song[]; selectedSongId: number }) => void
+  addSongs: (data: GetSongsData) => void
+  addSong: (data: UploadSongResponse) => void
   removeSong: (id: number) => void
   selectSong: (id: number | null) => void
   updateSongBeatConfig: (

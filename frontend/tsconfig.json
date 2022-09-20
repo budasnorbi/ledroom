@@ -24,7 +24,8 @@
       "@type/*": ["src/types/*"],
       "@utils/*": ["src/utils/*"],
       "@validation/*": ["src/validation/*"],
-      "@store": ["src/store/store.ts"]
+      "@store": ["src/store/store.ts"],
+      "@backend/*": ["../backend/src/types/*", "../backend/src/entities/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

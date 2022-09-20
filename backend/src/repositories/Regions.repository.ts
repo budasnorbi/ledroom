@@ -1,19 +1,19 @@
 import { Repository } from "typeorm"
 import { Injectable } from "@nestjs/common"
 import { DataSource } from "typeorm/data-source/DataSource"
-import { Regions } from "@entities/Regions"
+import { Region } from "@entities/Region.entity"
 
 @Injectable()
-export class RegionsRepository extends Repository<Regions> {
+export class RegionsRepository extends Repository<Region> {
   constructor(dataSource: DataSource) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    /* @ts-ignore */
-    super(Regions, dataSource.createEntityManager())
+    super(Region, dataSource.createEntityManager())
+  }
+
+  async getRegions() {
+    return this.find()
   }
 
   async getRegionsBySongId(songId: number) {
-    return this.find({
-      where: { songId }
-    })
+    return this.find({ where: { song: songId } })
   }
 }

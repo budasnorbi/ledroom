@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { map } from "@helpers/map"
 import * as g from "g.js"
 import { cloneArray } from "@helpers/cloneArray"
-import { Blink, Step } from "@type/effetc"
+import { Blink, Step } from "@type/effects"
 import { getBezierCurveY } from "@helpers/bezierCaluclator"
 
 @Injectable()

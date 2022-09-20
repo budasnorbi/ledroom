@@ -1,30 +1,27 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm"
-import { Effects } from "./Effects"
-import { Regions } from "./Regions"
+import { Region } from "./Region.entity"
 
 @Entity("songs", { schema: "ledroom" })
-export class Songs {
+export class Song {
   @PrimaryGeneratedColumn({ type: "int", name: "id" })
   id: number
 
-  @Column("int", { name: "bpm", nullable: true, default: () => "'0'" })
-  bpm: number | null
+  @Column("int", { name: "bpm", default: () => "'0'" })
+  bpm: number
 
   @Column("float", {
     name: "beat_offset",
-    nullable: true,
     precision: 12,
     default: () => "'0'"
   })
-  beatOffset: number | null
+  beatOffset: number
 
   @Column("float", {
     name: "beat_around_end",
-    nullable: true,
     precision: 12,
     default: () => "'0'"
   })
-  beatAroundEnd: number | null
+  beatAroundEnd: number
 
   @Column("text", { name: "path" })
   path: string
@@ -32,7 +29,7 @@ export class Songs {
   @Column("tinytext", { name: "name" })
   name: string
 
-  @Column("varchar", { name: "selected_region_id", nullable: true, length: 36 })
+  @Column("varchar", { name: "selected_region_id", nullable: true, length: 21 })
   selectedRegionId: string | null
 
   @Column("float", {
@@ -59,9 +56,8 @@ export class Songs {
   })
   selected: boolean | null
 
-  @OneToMany(() => Effects, (effects) => effects.region)
-  effects: Effects[]
-
-  @OneToMany(() => Regions, (regions) => regions.song)
-  regions: Regions[]
+  @OneToMany(() => Region, (regions) => regions.song, {
+    onDelete: "CASCADE"
+  })
+  regions: Region[]
 }

@@ -17,7 +17,3 @@ export interface Step {
   direction: "left" | "right"
   range?: [number, number]
 }
-
-export interface Starlight {
-  ledColors: number[]
-}

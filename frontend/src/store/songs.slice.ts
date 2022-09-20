@@ -1,5 +1,6 @@
 import { StoreApi } from "zustand"
-import { Store, SongsSlice, Song, EffectRegion } from "@type/store"
+import type { Store, SongsSlice } from "@type/store"
+
 import api from "@api/web"
 import { updateRegions } from "@api/socket"
 import { renderBeatRegions } from "@utils/renderBeatRegions"
@@ -15,16 +16,24 @@ export const songSlice = (
 ): SongsSlice => ({
   ...songInitialState,
 
-  addSongs(data) {
-    const { updateWavesurferReady, wavesurferReady } = get()
+  addSong(data) {
+    const { updateWavesurferReady, wavesurferReady, selectSong } = get()
 
     if (wavesurferReady) {
       updateWavesurferReady(false)
     }
 
     setState((state) => {
-      state.songs.push(...data.songs)
+      state.songs.push(data)
     }, "addSong")
+
+    selectSong(data.id)
+  },
+
+  addSongs(data) {
+    setState((state) => {
+      state.songs = data.songs
+    }, "addSongs")
     get().selectSong(data.selectedSongId)
   },
 
@@ -128,7 +137,7 @@ export const songSlice = (
   },
 
   async addRegion(config) {
-    const region: EffectRegion = {
+    const region: Region = {
       ...config
       //effects: []
     }

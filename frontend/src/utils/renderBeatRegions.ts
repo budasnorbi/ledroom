@@ -1,9 +1,9 @@
-import { EffectRegion } from "@type/store"
-import { MutableRefObject } from "react"
-import { clamp } from "./clamp"
-import { v4 as uuid } from "uuid"
-import api from "@api/web"
 import WaveSurfer from "wavesurfer.js/src/wavesurfer"
+import { nanoid } from "nanoid"
+
+import { clamp } from "./clamp"
+import api from "@api/web"
+//import type {} from "@backend"
 
 export const renderBeatRegions = (
   wavesurfer: WaveSurfer,
@@ -18,7 +18,7 @@ export const renderBeatRegions = (
     updateRegionTime,
     selectRegion
   }: {
-    addRegion: (config: EffectRegion) => void
+    addRegion: (config: any) => void
     updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
     selectRegion: (id: string) => void
   }
@@ -84,7 +84,7 @@ export const renderBeatRegions = (
         return
       }
 
-      const newRegionId = uuid()
+      const newRegionId = nanoid()
 
       try {
         await api.post("/region", {
@@ -101,7 +101,6 @@ export const renderBeatRegions = (
         id: newRegionId,
         startTime: region.start,
         endTime: region.end
-        //effects: []
       })
 
       const effectRegion = wavesurfer.regions.add({

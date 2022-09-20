@@ -4,16 +4,16 @@ import { ApiService } from "./api.service"
 import { LedModule } from "../Led/led.module"
 import { ApiGateway } from "./api.gateway"
 import { TypeOrmModule } from "@nestjs/typeorm"
-import { Songs } from "@entities/Songs"
+import { Song } from "@entities/Song.entity"
 import { SongsRepository } from "@repositories/Songs.repository"
-import { Regions } from "@entities/Regions"
+import { Region } from "@entities/Region.entity"
 import { RegionsRepository } from "@repositories/Regions.repository"
 import { APP_INTERCEPTOR } from "@nestjs/core"
 import { ErrorsInterceptor } from "@interceptors/errors.interceptor"
-import { Effects } from "@entities/Effects"
+import { Effect } from "@entities/Effect.entity"
 
 @Module({
-  imports: [LedModule, TypeOrmModule.forFeature([Songs, Regions, Effects])],
+  imports: [LedModule, TypeOrmModule.forFeature([Song, Region, Effect])],
   controllers: [ApiController],
   providers: [
     {

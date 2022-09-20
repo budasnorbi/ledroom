@@ -1,7 +1,7 @@
 import { useCallback, ChangeEvent, PointerEvent } from "react"
 import api from "@api/web"
 import { useStore } from "@store"
-import { Song } from "@type/song"
+import type { UploadSongResponse } from "@backend/endpoints"
 import { FC } from "react"
 
 interface Props {
@@ -13,7 +13,7 @@ export const SongLoadController: FC<Props> = (props) => {
 
   const removeSong = useStore.use.removeSong()
   const selectSong = useStore.use.selectSong()
-  const addSongs = useStore.use.addSongs()
+  const addSong = useStore.use.addSong()
 
   const handleSongChoose = async (event: ChangeEvent<HTMLSelectElement>) => {
     const id = parseInt(event.target.value)
@@ -28,20 +28,19 @@ export const SongLoadController: FC<Props> = (props) => {
     const musicFile = event.target.files?.item(0)
 
     if (!musicFile) {
-      console.warn("There is no music file from upload input", musicFile)
       return
     }
 
     const formData = new FormData()
     formData.append("file", musicFile)
 
-    const songData = await api.uploadFile<Song>("/upload-song", formData)
+    const uploadSongRes = await api.uploadFile<UploadSongResponse>("/upload-song", formData)
 
-    if (!songData) {
+    if (!uploadSongRes) {
       return
     }
 
-    addSongs({ songs: [songData], selectedSongId: songData.id })
+    addSong(uploadSongRes)
   }
 
   return (

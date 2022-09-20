@@ -1,10 +1,9 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { dirname } from "path"
 import * as asyncFs from "fs/promises"
 import * as audioApi from "web-audio-api"
 import * as MusicTempo from "music-tempo"
 
-import { Songs } from "@entities/Songs"
 import { SongsRepository } from "@repositories/Songs.repository"
 import { LedService } from "../Led/led.service"
 import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
@@ -12,8 +11,7 @@ import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
 import { VolumeSchema } from "@dto/volume.yup"
 import { AddRegionSchema } from "@dto/addRegion.yup"
 import { RegionsRepository } from "@repositories/Regions.repository"
-import { Regions } from "@entities/Regions"
-import { Song } from "@type/song"
+import { Region } from "@entities/Region.entity"
 import { UpdateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema } from "@dto/selectRegion"
 const appDir = dirname(require.main.filename)
@@ -54,46 +52,39 @@ export class ApiService {
 
   async uploadSong(file: Express.Multer.File) {
     const songBuffer = file.buffer
+    const filePath = `${appDir}/../songs/${file.originalname}`
 
     const context = new audioApi.AudioContext()
     const analyzedMusic: any = await analyzeMusic(context, songBuffer)
 
-    const filePath = `${appDir}/../songs/${file.originalname}`
+    const newSong = this.songRepository.create({
+      name: file.originalname,
+      path: filePath,
+      bpm: Math.round(analyzedMusic.tempo),
+      beatOffset: analyzedMusic.beats[0],
+      beatAroundEnd: analyzedMusic.beats[analyzedMusic.beats.length - 1],
+      selected: true
+    })
+    const { id } = await this.songRepository.save(newSong)
+
     await asyncFs.writeFile(filePath, songBuffer)
 
-    const newSong = new Songs()
-    newSong.name = file.originalname
-    newSong.path = filePath
-    newSong.bpm = Math.round(analyzedMusic.tempo)
-    newSong.beatOffset = analyzedMusic.beats[0]
-    newSong.beatAroundEnd = analyzedMusic.beats[analyzedMusic.beats.length - 1]
-    newSong.selected = true
-
-    const insertedSong = await this.songRepository.save(newSong).catch(() => {
-      asyncFs.unlink(filePath)
-      throw new InternalServerErrorException()
-    })
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { path, selected, ...restSongData } = insertedSong
-
-    return { ...restSongData, regions: [] }
+    return {
+      id,
+      name: newSong.name,
+      bpm: newSong.bpm,
+      beatOffset: newSong.beatOffset,
+      beatAroundEnd: newSong.beatAroundEnd
+    }
   }
 
   async getSongs() {
-    const allSong = await this.songRepository.getSongs()
-    const songs: Song[] = []
-    let selectedSongId: null | number = null
-
-    for (const song of allSong) {
-      if (song.selected) {
-        selectedSongId = song.id
-      }
-      const regions = await this.regionsRepository.getRegionsBySongId(song.id)
-      songs.push({ ...song, regions })
-    }
-
-    return { songs, selectedSongId }
+    //const allSong = await this.songRepository.getSongs()
+    const songs = await this.songRepository.getSongs()
+    //const regions = await this.regionsRepository.getRegions()
+    //const selectedSongId: number | null = songs.find((song) => song.selected).id ?? null
+    console.log(JSON.stringify(songs, null, 2))
+    // return { songs, regions, effects: [], selectedSongId }
   }
 
   async getSongPath(id: number) {
@@ -103,7 +94,6 @@ export class ApiService {
   async removeSong(id: number) {
     const song = await this.getSongPath(id)
 
-    await this.regionsRepository.delete({ songId: id })
     await this.songRepository.delete({ id })
     await asyncFs.unlink(song.path)
 
@@ -142,21 +132,21 @@ export class ApiService {
   }
 
   async addRegion(body: AddRegionSchema) {
-    const { endTime, songId, startTime, id } = body
-    const newRegion = new Regions()
+    // const { endTime, songId, startTime, id } = body
+    // const newRegion = new Regions()
 
-    newRegion.id = id
-    newRegion.startTime = startTime
-    newRegion.endTime = endTime
-    newRegion.songId = songId
+    // newRegion.id = id
+    // newRegion.startTime = startTime
+    // newRegion.endTime = endTime
+    // newRegion.songId = songId
 
-    await this.regionsRepository.save(newRegion)
+    // await this.regionsRepository.save(newRegion)
     return {}
   }
 
   async updateRegion(body: UpdateRegionSchema) {
     const { endTime, id, songId, startTime } = body
-    await this.regionsRepository.update({ id, songId }, { endTime, startTime })
+    //await this.regionsRepository.update({ id, songId }, { endTime, startTime })
     return {}
   }
 
@@ -167,7 +157,7 @@ export class ApiService {
   }
 
   async deleteRegions(songId: number) {
-    await this.regionsRepository.delete({ songId })
+    //await this.regionsRepository.delete({ songId })
     return {}
   }
 
