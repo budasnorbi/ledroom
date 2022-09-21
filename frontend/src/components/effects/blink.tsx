@@ -1,6 +1,4 @@
-import { Blink, Effects } from "@type/store"
-import { ChangeEvent, useState, useCallback, FC } from "react"
-import { useStore } from "@store"
+import { FC } from "react"
 
 export const BlinkEffect: FC<{
   /*   duration: number

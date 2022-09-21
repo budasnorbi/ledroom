@@ -1,7 +1,0 @@
-.editorContainer {
-  display: flex;
-}
-
-.editorPanel {
-  flex-basis: calc(100% - 500px - 100px);
-}

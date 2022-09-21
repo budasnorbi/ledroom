@@ -4,9 +4,21 @@ import type { Store, SongsSlice } from "@type/store"
 import api from "@api/web"
 import { updateRegions } from "@api/socket"
 import { renderBeatRegions } from "@utils/renderBeatRegions"
+import { DBSong } from "@backend/db-entities"
+import {
+  BeatConfigResponse,
+  DeleteSongResponse,
+  SelectRegiongResponse,
+  SelectSongResponse,
+  UpdateLastTimePositionResponse,
+  UpdateRegiongResponse,
+  UpdateVolumeResponse
+} from "@backend/endpoints"
 
 export const songInitialState = {
   songs: [],
+  regions: [],
+  effects: [],
   selectedSongId: null
 }
 
@@ -30,15 +42,29 @@ export const songSlice = (
     selectSong(data.id)
   },
 
-  addSongs(data) {
+  addSongs({ selectedRegionId, songs }) {
     setState((state) => {
-      state.songs = data.songs
+      for (let i = 0; i < songs.length; i++) {
+        const { regions: _regions, ...song } = songs[i]
+        state.songs.push(song)
+
+        for (let k = 0; k < _regions.length; k++) {
+          const { effects: _effects, ...region } = _regions[k]
+          state.regions.push(region)
+
+          for (let l = 0; l < _effects.length; l++) {
+            const effect = _effects[i]
+            state.effects.push(effect)
+          }
+        }
+      }
     }, "addSongs")
-    get().selectSong(data.selectedSongId)
+
+    get().selectSong(selectedRegionId)
   },
 
-  async removeSong(id) {
-    const deleteRes = await api.delete<{ selectedSongId: number | null }>(`/song/${id}`)
+  async removeSong(songId) {
+    const deleteRes = await api.delete<DeleteSongResponse>(`/song/${songId}`)
 
     if (!deleteRes) {
       return
@@ -51,21 +77,39 @@ export const songSlice = (
     }
 
     setState((state) => {
-      state.songs = state.songs.filter((song) => song.id !== id)
-
       state.wavesurferIsPlaying = false
 
-      state.selectedSongId = deleteRes.selectedSongId
+      const songRegionIds = state.regions
+        .filter((region) => region.songId === songId)
+        .map((region) => region.id)
+
+      // Clearing effects
+      state.effects = state.effects.filter(
+        (effect) => songRegionIds.includes(effect.regionId) === false
+      )
+
+      // Clearing regions
+      state.regions = state.regions.filter((region) => region.songId !== songId)
+
+      // Clearing song
+      state.songs = state.songs.filter((song) => song.id !== songId)
+
+      const selectedSongId =
+        state.songs.find((song, index, array) => index === array.length - 1)?.id ?? null
+
+      state.selectedSongId = selectedSongId
     }, "removeSong")
   },
 
   async selectSong(id) {
-    const { updateWavesurferReady, wavesurferReady } = get()
+    const { updateWavesurferReady, wavesurferReady, selectedSongId } = get()
 
-    const response = await api.put(`/select-song?id=${id}`)
+    if (selectedSongId !== id && id !== null) {
+      const response = await api.put<SelectSongResponse>(`/select-song?id=${id}`)
 
-    if (!response) {
-      return
+      if (!response) {
+        return
+      }
     }
 
     if (wavesurferReady) {
@@ -73,12 +117,6 @@ export const songSlice = (
     }
 
     setState((state) => {
-      const song = state.songs.find((song) => song.id === id)
-
-      if (!song) {
-        return
-      }
-
       state.selectedSongId = id
     }, "selectSong")
   },
@@ -90,7 +128,7 @@ export const songSlice = (
       return
     }
 
-    const updateResponse = await api.put("/beat-config", {
+    const updateResponse = await api.put<BeatConfigResponse>("/beat-config", {
       id: selectedSongId,
       bpm: bpm,
       beatOffset: beatOffset,
@@ -98,12 +136,6 @@ export const songSlice = (
     })
 
     if (!updateResponse) {
-      return
-    }
-
-    const deleteResponse = await api.delete(`/regions/${selectedSongId}`)
-
-    if (!deleteResponse) {
       return
     }
 
@@ -117,7 +149,18 @@ export const songSlice = (
       song.bpm = bpm
       song.beatOffset = beatOffset
       song.beatAroundEnd = beatAroundEnd
-      song.regions = []
+
+      const removedRegions = state.regions
+        .filter((region) => region.songId === song.id)
+        .map((region) => region.id)
+
+      // Clear regions
+      state.regions = state.regions.filter((region) => region.songId !== song.id)
+
+      // Clear effects
+      state.effects = state.effects.filter(
+        (effect) => removedRegions.includes(effect.regionId) === false
+      )
 
       renderBeatRegions(
         wavesurferRef,
@@ -136,22 +179,12 @@ export const songSlice = (
     }, "updateSongBeatsConfig")
   },
 
-  async addRegion(config) {
-    const region: Region = {
-      ...config
-      //effects: []
-    }
-
+  async addRegion(newRegion) {
     setState((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId)
-
-      if (!song) {
-        return
-      }
-
-      song.regions.push(region)
-      state.selectRegion(config.id)
+      state.regions.push(newRegion)
     }, "addRegion")
+
+    get().selectRegion(newRegion.id)
   },
 
   async selectRegion(id) {
@@ -163,68 +196,9 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put("/select-region", { songId: song.id, regionId: id })
-
-    if (!response) {
-      return
-    }
-
-    setState((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId) as Song
-
-      song.selectedRegionId = id
-    }, "selectRegion")
-  },
-
-  removeRegion() {
-    setState((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId)
-
-      if (!song) {
-        return
-      }
-
-      song.regions = song.regions.filter((region) => region.id !== song.selectedRegionId)
-    }, "removeRegion")
-  },
-
-  async updateRegionTime(options) {
-    const { selectedSongId, songs } = get()
-    const song = songs.find((song) => song.id === selectedSongId)
-
-    if (!song) {
-      return
-    }
-
-    const region = song.regions.find((region) => region.id === options.id)
-
-    if (!region) {
-      return
-    }
-
-    if (options.startTime !== undefined && options.endTime === undefined) {
-      if (options.startTime === region.startTime) {
-        return
-      }
-    }
-
-    if (options.endTime !== undefined && options.startTime === undefined) {
-      if (options.endTime === region.endTime) {
-        return
-      }
-    }
-
-    if (options.startTime !== undefined && options.endTime !== undefined) {
-      if (options.startTime === region.startTime && options.endTime === region.endTime) {
-        return
-      }
-    }
-
-    const response = await api.put("/region", {
+    const response = await api.put<SelectRegiongResponse>("/select-region", {
       songId: song.id,
-      id: options.id,
-      startTime: options.startTime ?? region.startTime,
-      endTime: options.endTime ?? region.endTime
+      regionId: id
     })
 
     if (!response) {
@@ -232,22 +206,85 @@ export const songSlice = (
     }
 
     setState((state) => {
-      const song = state.songs.find((song) => song.id === selectedSongId)
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
 
       if (!song) {
         return
       }
 
-      const region = song.regions.find((region) => region.id === song.selectedRegionId)
+      song.selectedRegionId = id
+    }, "selectRegion")
+  },
+
+  // removeRegion() {
+  //   setState((state) => {
+  //     const song = state.songs.find((song) => song.id === state.selectedSongId)
+
+  //     if (!song) {
+  //       return
+  //     }
+
+  //     song.regions = song.regions.filter((region) => region.id !== song.selectedRegionId)
+  //   }, "removeRegion")
+  // },
+
+  async updateRegionTime(targetedRegion) {
+    const { selectedSongId, songs, regions } = get()
+    const song = songs.find((song) => song.id === selectedSongId)
+
+    if (!song) {
+      return
+    }
+
+    const region = regions.find((region) => region.id === targetedRegion.id)
+
+    if (!region) {
+      return
+    }
+
+    if (targetedRegion.startTime !== undefined && targetedRegion.endTime === undefined) {
+      if (targetedRegion.startTime === region.startTime) {
+        return
+      }
+    }
+
+    if (targetedRegion.endTime !== undefined && targetedRegion.startTime === undefined) {
+      if (targetedRegion.endTime === region.endTime) {
+        return
+      }
+    }
+
+    if (targetedRegion.startTime !== undefined && targetedRegion.endTime !== undefined) {
+      if (
+        targetedRegion.startTime === region.startTime &&
+        targetedRegion.endTime === region.endTime
+      ) {
+        return
+      }
+    }
+
+    const response = await api.put<UpdateRegiongResponse>("/region", {
+      songId: song.id,
+      id: targetedRegion.id,
+      startTime: targetedRegion.startTime ?? region.startTime,
+      endTime: targetedRegion.endTime ?? region.endTime
+    })
+
+    if (!response) {
+      return
+    }
+
+    setState((state) => {
+      const region = state.regions.find((region) => region.id === targetedRegion.id)
 
       if (!region) {
         return
       }
 
-      region.startTime = options.startTime ?? region.startTime
-      region.endTime = options.endTime ?? region.endTime
+      region.startTime = targetedRegion.startTime ?? region.startTime
+      region.endTime = targetedRegion.endTime ?? region.endTime
 
-      updateRegions(song.regions)
+      updateRegions(state.regions)
     }, "updateRegionTime")
   },
 
@@ -260,7 +297,10 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put("/last-time-position", { time, id: song.id })
+    const response = await api.put<UpdateLastTimePositionResponse>("/last-time-position", {
+      time,
+      id: song.id
+    })
 
     if (!response) {
       return
@@ -286,7 +326,7 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put(
+    const response = await api.put<UpdateVolumeResponse>(
       "/volume",
       { volume, id: song.id },
       { "Content-Type": "application/json" }
@@ -297,12 +337,7 @@ export const songSlice = (
     }
 
     setState((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId)
-
-      if (!song) {
-        return
-      }
-
+      const song = state.songs.find((song) => song.id === state.selectedSongId) as DBSong
       song.volume = volume
     }, "updateSongVolume")
   }

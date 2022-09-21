@@ -11,7 +11,7 @@ import {
   secondaryLabelInterval,
   timeInterval
 } from "@utils/wavesurfer"
-import { Song } from "@type/store"
+import { DBSong } from "@backend/db-entities"
 import { renderBeatRegions } from "@utils/renderBeatRegions"
 import webApi from "@api/web"
 
@@ -39,14 +39,24 @@ const WaveSurfer: FC<WaveSurferProps> = ({
   const selectRegion = useStore.use.selectRegion()
   const addRegion = useStore.use.addRegion()
 
-  const _selectedSong = useStore(
-    (state) => state.songs.find((song) => song.id === state.selectedSongId) as Song
-  )
+  const _selectedSong = useStore((state) => {
+    const song = state.songs.filter((song) => song.id === state.selectedSongId)[0]
+    const regions = state.regions.filter((region) => region.songId === state.selectedSongId)
+    const regionIds = regions.map((region) => region.id)
+
+    const effects = state.effects.filter((effect) => regionIds.includes(effect.regionId))
+
+    return {
+      song,
+      regions,
+      effects
+    }
+  })
 
   const selectedSong = useMemo(() => _selectedSong, [selectedSongId])
 
   useEffect(() => {
-    const { beatAroundEnd, beatOffset, bpm, lastTimePosition, regions, volume } = selectedSong
+    const { beatAroundEnd, beatOffset, bpm, lastTimePosition, volume } = selectedSong.song
 
     const wavesurfer = (wavesurferRef.current = Wavesurfer.create({
       container: "#wavesurfer-container",
@@ -146,7 +156,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({
         let leftHandleInitValue = 0
         let rightHandleInitValue = 0
 
-        for (const region of regions) {
+        for (const region of selectedSong.regions) {
           const effectRegion = wavesurfer.regions.add({
             id: region.id,
             start: region.startTime,
@@ -302,7 +312,18 @@ const WaveSurfer: FC<WaveSurferProps> = ({
       wavesurfer.unAll()
       wavesurferRef.current?.destroy()
     }
-  }, [selectedSong])
+  }, [
+    addRegion,
+    selectRegion,
+    selectedSong,
+    selectedSongId,
+    setMusicCurrentTime,
+    toggleWavesurferIsPlaying,
+    updateLastTimePosition,
+    updateRegionTime,
+    updateWavesurferReady,
+    wavesurferRef
+  ])
 
   return (
     <div>

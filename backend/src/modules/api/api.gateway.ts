@@ -9,7 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer
 } from "@nestjs/websockets"
-import { Region } from "@type/socketData"
+import { Region } from "@type/socket"
 import { Server, Socket } from "socket.io"
 import { ApiService } from "./api.service"
 

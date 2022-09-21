@@ -1,7 +1,7 @@
 import { createLedsColorsArr } from "@helpers/createLedsColorsArr"
 import { EffectService } from "@modules/Effect/effect.service"
 import { Injectable } from "@nestjs/common"
-import { Region } from "@type/socketData"
+import { Region } from "@type/socket"
 import { UdpService } from "../Udp/udp.service"
 import { Server } from "socket.io"
 import { fixColorOrder } from "@helpers/fixLedColorOrder"

@@ -6,3 +6,5 @@ db/data
 .env.production
 backend/dist
 backend/songs/*
+
+frontend/.next

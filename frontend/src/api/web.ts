@@ -20,6 +20,11 @@ class Api {
 
     try {
       const response = await fetch(`${this.baseURL}${urlPart}`, config)
+
+      if (response.status !== 200) {
+        throw new Error()
+      }
+
       return response.json()
     } catch (error) {
       console.log(error)
@@ -38,9 +43,12 @@ class Api {
         headers,
         body: JSON.stringify(body)
       })
+      if (response.status !== 201) {
+        throw new Error()
+      }
       return response.json()
     } catch (error) {
-      console.log(error)
+      console.log("Error: ", error)
       return null
     }
   }
@@ -54,6 +62,10 @@ class Api {
         method: "POST",
         body
       })
+
+      if (response.status !== 201) {
+        throw new Error()
+      }
       return response.json()
     } catch (error) {
       console.log(error)
@@ -78,6 +90,9 @@ class Api {
     try {
       const response = await fetch(`${this.baseURL}${urlPart}`, config)
 
+      if (response.status !== 200) {
+        throw new Error()
+      }
       return response.json()
     } catch (error) {
       console.log(error)
@@ -94,6 +109,10 @@ class Api {
         method: "DELETE",
         headers
       })
+
+      if (response.status !== 200) {
+        throw new Error()
+      }
       return response.json()
     } catch (error) {
       console.log(error)

@@ -1,9 +1,9 @@
 import { ChangeEvent, FC, useState, memo, MutableRefObject } from "react"
 
 import { useStore } from "@store"
-import { Song } from "@type/song"
+import { DBSong } from "@backend/db-entities"
 
-interface Props extends Pick<Song, "bpm" | "beatOffset" | "beatAroundEnd"> {
+interface Props extends Pick<DBSong, "bpm" | "beatOffset" | "beatAroundEnd"> {
   wavesurferRef: MutableRefObject<WaveSurfer>
 }
 

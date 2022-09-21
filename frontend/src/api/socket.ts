@@ -1,5 +1,6 @@
+import { DBRegion } from "@backend/db-entities"
 import { io } from "socket.io-client"
-export const socket = io("http://localhost:3001/")
+export const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC}`)
 
 export const sendTimeupdate = (time: number) => {
   socket.emit("timeupdate", time)
@@ -21,7 +22,7 @@ export const sendReset = () => {
   socket.emit("reset")
 }
 
-export const updateRegions = (regions: any) => {
+export const updateRegions = (regions: DBRegion[]) => {
   socket.emit("update-regions", regions)
 }
 

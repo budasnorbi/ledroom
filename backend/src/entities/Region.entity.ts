@@ -1,26 +1,24 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm"
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm"
 import { Effect } from "./Effect.entity"
 import { Song } from "./Song.entity"
 
 @Entity("regions", { schema: "ledroom" })
 export class Region {
-  @Column("varchar", { primary: true, name: "id", length: 21 })
+  @Column("varchar", { primary: true, length: 21 })
   id: string
 
-  @ManyToOne(() => Song, (song) => song.regions)
-  song: number
+  @Column()
+  songId: number
 
   @Column("float", {
-    name: "start_time",
     precision: 12,
-    default: () => "'0'"
+    default: () => "0"
   })
   startTime: number
 
   @Column("float", {
-    name: "end_time",
     precision: 12,
-    default: () => "'0'"
+    default: () => "0"
   })
   endTime: number
 
@@ -28,4 +26,10 @@ export class Region {
     onDelete: "CASCADE"
   })
   effects: Effect[]
+
+  @ManyToOne(() => Song, (song) => song.regions, {
+    onDelete: "CASCADE"
+  })
+  @JoinColumn({ name: "songId" })
+  song: Song
 }

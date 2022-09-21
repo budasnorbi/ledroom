@@ -1,4 +1,4 @@
-import { MutableRefObject, useCallback, useRef, useState } from "react"
+import { MutableRefObject, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 
 import BeatController from "@components/BeatController"
@@ -9,17 +9,11 @@ import { useStore } from "@store"
 import api from "@api/web"
 import { useEffect } from "react"
 import { closeSocket } from "@api/socket"
-import type { GetSongsData } from "@backend/endpoints"
-
-const Preview = dynamic(() => import("../components/Preview"), {
-  ssr: false
-})
+import type { GetSongsResponse } from "@backend/endpoints"
 
 const WaveSurfer = dynamic(() => import("../components/Wavesurfer"), {
   ssr: false
 })
-
-let bezierChangeTimeout: any
 
 function Dashboard() {
   const wavesurferRef = useRef<WaveSurfer | null>(null)
@@ -38,9 +32,9 @@ function Dashboard() {
   useEffect(() => {
     const abortController = new AbortController()
     ;(async () => {
-      const response = await api.get<GetSongsData>("/songs", {}, abortController)
+      const response = await api.get<GetSongsResponse>("/songs", {}, abortController)
 
-      if (!response) {
+      if (!response || response.songs.length === 0) {
         return
       }
 

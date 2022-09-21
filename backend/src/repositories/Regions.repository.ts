@@ -14,6 +14,6 @@ export class RegionsRepository extends Repository<Region> {
   }
 
   async getRegionsBySongId(songId: number) {
-    return this.find({ where: { song: songId } })
+    //return this.find({ where: { songId } })
   }
 }

@@ -2,12 +2,9 @@ import React from "react"
 import { AppProps } from "next/app"
 import "../styles/globals.css"
 import "../styles/wavesurfer-custom.css"
-// import "../styles/editorContainer.css"
-// import "../styles/preview.css"
+import "../styles/resets.css"
 
-interface MyAppProps extends AppProps {}
-
-const MyApp: React.FC<MyAppProps> = (props) => {
+const MyApp: React.FC<AppProps> = (props) => {
   const { Component, pageProps } = props
   /* @ts-ignore */
   return <Component {...pageProps} />

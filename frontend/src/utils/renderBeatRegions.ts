@@ -3,6 +3,8 @@ import { nanoid } from "nanoid"
 
 import { clamp } from "./clamp"
 import api from "@api/web"
+import { AddRegionResponse, UpdateRegiongResponse } from "@backend/endpoints"
+import { AddRegion, SelectRegion, SongsSlice, UpdateRegionTime } from "@type/store"
 //import type {} from "@backend"
 
 export const renderBeatRegions = (
@@ -18,9 +20,9 @@ export const renderBeatRegions = (
     updateRegionTime,
     selectRegion
   }: {
-    addRegion: (config: any) => void
-    updateRegionTime: (options: { startTime?: number; endTime?: number; id: string }) => void
-    selectRegion: (id: string) => void
+    addRegion: AddRegion
+    updateRegionTime: UpdateRegionTime
+    selectRegion: SelectRegion
   }
 ) => {
   wavesurfer.regions.clear()
@@ -86,19 +88,22 @@ export const renderBeatRegions = (
 
       const newRegionId = nanoid()
 
-      try {
-        await api.post("/region", {
-          id: newRegionId,
-          songId,
-          startTime,
-          endTime
-        })
-      } catch (error) {
+      const response = await api.post<AddRegionResponse>("/region", {
+        id: newRegionId,
+        songId,
+        startTime,
+        endTime
+      })
+
+      if (!response) {
         return
       }
 
+      console.log(10)
+
       addRegion({
         id: newRegionId,
+        songId,
         startTime: region.start,
         endTime: region.end
       })
@@ -151,7 +156,7 @@ export const renderBeatRegions = (
           const end = start + regionWidth
 
           try {
-            await api.put("/region", {
+            await api.put<UpdateRegiongResponse>("/region", {
               id: effectRegion.id,
               songId,
               startTime: start,
@@ -182,7 +187,7 @@ export const renderBeatRegions = (
           )
 
           try {
-            await api.put("/region", {
+            await api.put<UpdateRegiongResponse>("/region", {
               id: effectRegion.id,
               songId,
               startTime: start,
@@ -211,7 +216,7 @@ export const renderBeatRegions = (
           )
 
           try {
-            await api.put("/region", {
+            await api.put<UpdateRegiongResponse>("/region", {
               id: effectRegion.id,
               songId,
               startTime: effectRegion.start,

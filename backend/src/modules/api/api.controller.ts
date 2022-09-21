@@ -11,7 +11,8 @@ import {
   StreamableFile,
   Delete,
   Put,
-  Param
+  Param,
+  BadRequestException
 } from "@nestjs/common"
 import { FileInterceptor } from "@nestjs/platform-express"
 import * as fs from "fs"
@@ -25,7 +26,18 @@ import { AddRegionSchema, addRegionSchema } from "@dto/addRegion.yup"
 import { UpdateRegionSchema, updateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema, selectRegionSchema } from "@dto/selectRegion"
 import { Response } from "express"
-import { UploadSongResponse } from "@type/endpoints"
+import {
+  AddRegionResponse,
+  BeatConfigResponse,
+  DeleteSongResponse,
+  GetSongsResponse,
+  SelectRegiongResponse,
+  SelectSongResponse,
+  UpdateLastTimePositionResponse,
+  UpdateRegiongResponse,
+  UpdateVolumeResponse,
+  UploadSongResponse
+} from "@type/endpoints"
 
 @Controller("api")
 export class ApiController {
@@ -38,7 +50,7 @@ export class ApiController {
   }
 
   @Get("songs")
-  songNames() {
+  getSongs(): Promise<GetSongsResponse> {
     return this.apiService.getSongs()
   }
 
@@ -59,48 +71,53 @@ export class ApiController {
   }
 
   @Delete("song/:id")
-  async deleteSong(@Param("id") id: number) {
+  async deleteSong(@Param("id") id: number): Promise<DeleteSongResponse> {
     return this.apiService.removeSong(id)
   }
 
   @Put("beat-config")
   @UsePipes(new YupValidationPipe(updateBeatsSchema))
-  updateSongBeats(@Body() body: UpdateBeatsSchema) {
+  updateSongBeats(@Body() body: UpdateBeatsSchema): Promise<BeatConfigResponse> {
     return this.apiService.updateBeats(body)
   }
 
   @Put("select-song")
-  updateSongSelected(@Query("id") id: number) {
+  updateSongSelected(@Query("id") id: number): Promise<SelectSongResponse> {
+    if (isNaN(id)) {
+      throw new BadRequestException("Hibás songId")
+    }
     return this.apiService.updateSongSelected(id)
   }
 
   @Put("last-time-position")
   @UsePipes(new YupValidationPipe(lastTimePositionSchema))
-  updateLastTimePosition(@Body() body: LastTimePositionSchema) {
+  updateLastTimePosition(
+    @Body() body: LastTimePositionSchema
+  ): Promise<UpdateLastTimePositionResponse> {
     return this.apiService.updateLastTimePosition(body)
   }
 
   @Put("volume")
   @UsePipes(new YupValidationPipe(volumeSchema))
-  updateVolume(@Body() body: VolumeSchema) {
+  updateVolume(@Body() body: VolumeSchema): Promise<UpdateVolumeResponse> {
     return this.apiService.updateVolume(body)
   }
 
   @Post("region")
   @UsePipes(new YupValidationPipe(addRegionSchema))
-  addRegion(@Body() body: AddRegionSchema) {
+  addRegion(@Body() body: AddRegionSchema): Promise<AddRegionResponse> {
     return this.apiService.addRegion(body)
   }
 
   @Put("region")
   @UsePipes(new YupValidationPipe(updateRegionSchema))
-  updateRegion(@Body() body: UpdateRegionSchema) {
+  updateRegion(@Body() body: UpdateRegionSchema): Promise<UpdateRegiongResponse> {
     return this.apiService.updateRegion(body)
   }
 
   @Put("select-region")
   @UsePipes(new YupValidationPipe(selectRegionSchema))
-  selectRegion(@Body() body: SelectRegionSchema) {
+  selectRegion(@Body() body: SelectRegionSchema): Promise<SelectRegiongResponse> {
     return this.apiService.selectRegion(body)
   }
 

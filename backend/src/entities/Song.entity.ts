@@ -3,58 +3,49 @@ import { Region } from "./Region.entity"
 
 @Entity("songs", { schema: "ledroom" })
 export class Song {
-  @PrimaryGeneratedColumn({ type: "int", name: "id" })
+  @PrimaryGeneratedColumn({ type: "int" })
   id: number
 
-  @Column("int", { name: "bpm", default: () => "'0'" })
+  @Column("int", { default: () => "0" })
   bpm: number
 
   @Column("float", {
-    name: "beat_offset",
     precision: 12,
-    default: () => "'0'"
+    default: () => "0"
   })
   beatOffset: number
 
   @Column("float", {
-    name: "beat_around_end",
     precision: 12,
-    default: () => "'0'"
+    default: () => "0"
   })
   beatAroundEnd: number
 
-  @Column("text", { name: "path" })
+  @Column("text")
   path: string
 
-  @Column("tinytext", { name: "name" })
+  @Column("tinytext")
   name: string
 
-  @Column("varchar", { name: "selected_region_id", nullable: true, length: 21 })
+  @Column("varchar", { length: 21, nullable: true })
   selectedRegionId: string | null
 
   @Column("float", {
-    name: "last_time_position",
-    nullable: true,
     precision: 12,
-    default: () => "'0'"
+    default: () => "0"
   })
-  lastTimePosition: number | null
+  lastTimePosition: number
 
   @Column("float", {
-    name: "volume",
-    nullable: true,
     precision: 12,
-    default: () => "'0.1'"
+    default: () => "0.15"
   })
-  volume: number | null
+  volume: number
 
-  @Column("tinyint", {
-    name: "selected",
-    nullable: true,
-    width: 1,
-    default: () => "'0'"
+  @Column("boolean", {
+    default: () => "0"
   })
-  selected: boolean | null
+  selected: boolean
 
   @OneToMany(() => Region, (regions) => regions.song, {
     onDelete: "CASCADE"

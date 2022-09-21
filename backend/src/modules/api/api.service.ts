@@ -11,9 +11,9 @@ import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
 import { VolumeSchema } from "@dto/volume.yup"
 import { AddRegionSchema } from "@dto/addRegion.yup"
 import { RegionsRepository } from "@repositories/Regions.repository"
-import { Region } from "@entities/Region.entity"
 import { UpdateRegionSchema } from "@dto/updateRegion.yup"
 import { SelectRegionSchema } from "@dto/selectRegion"
+import { DBSong } from "@type/db-entities"
 const appDir = dirname(require.main.filename)
 
 const analyzeMusic = (context: any, songBuffer: Buffer): Promise<number> => {
@@ -50,7 +50,7 @@ export class ApiService {
     private regionsRepository: RegionsRepository
   ) {}
 
-  async uploadSong(file: Express.Multer.File) {
+  async uploadSong(file: Express.Multer.File): Promise<DBSong> {
     const songBuffer = file.buffer
     const filePath = `${appDir}/../songs/${file.originalname}`
 
@@ -65,26 +65,27 @@ export class ApiService {
       beatAroundEnd: analyzedMusic.beats[analyzedMusic.beats.length - 1],
       selected: true
     })
-    const { id } = await this.songRepository.save(newSong)
+    const savedSong = await this.songRepository.save(newSong)
 
     await asyncFs.writeFile(filePath, songBuffer)
 
     return {
-      id,
-      name: newSong.name,
-      bpm: newSong.bpm,
-      beatOffset: newSong.beatOffset,
-      beatAroundEnd: newSong.beatAroundEnd
+      id: savedSong.id,
+      name: savedSong.name,
+      bpm: savedSong.bpm,
+      beatOffset: savedSong.beatOffset,
+      beatAroundEnd: savedSong.beatAroundEnd,
+      lastTimePosition: savedSong.lastTimePosition,
+      selectedRegionId: savedSong.selectedRegionId,
+      volume: savedSong.volume
     }
   }
 
   async getSongs() {
-    //const allSong = await this.songRepository.getSongs()
     const songs = await this.songRepository.getSongs()
-    //const regions = await this.regionsRepository.getRegions()
-    //const selectedSongId: number | null = songs.find((song) => song.selected).id ?? null
-    console.log(JSON.stringify(songs, null, 2))
-    // return { songs, regions, effects: [], selectedSongId }
+    const selectedRegionId = await this.songRepository.getSelectedSongId()
+
+    return { songs, selectedRegionId }
   }
 
   async getSongPath(id: number) {
@@ -93,29 +94,17 @@ export class ApiService {
 
   async removeSong(id: number) {
     const song = await this.getSongPath(id)
-
     await this.songRepository.delete({ id })
     await asyncFs.unlink(song.path)
-
-    const restSongCount = await this.songRepository.count()
-
-    let selectedSongId: null | number
-    if (restSongCount === 0) {
-      selectedSongId = null
-    } else {
-      const songByAscOrder = await this.songRepository.find({ order: { id: "ASC" } })
-      const lastSongId = songByAscOrder[0].id
-
-      await this.songRepository.update({ id: songByAscOrder[0].id }, { selected: true })
-      selectedSongId = lastSongId
-    }
-
-    return { selectedSongId }
+    return {}
   }
 
   async updateBeats(body: UpdateBeatsSchema) {
-    const { id, ...beatOptions } = body
-    await this.songRepository.update({ id }, beatOptions)
+    const { id: songId, ...beatOptions } = body
+    await this.songRepository.update({ id: songId }, beatOptions)
+
+    // Clearing added regions
+    await this.regionsRepository.delete({ songId })
     return {}
   }
 
@@ -132,21 +121,22 @@ export class ApiService {
   }
 
   async addRegion(body: AddRegionSchema) {
-    // const { endTime, songId, startTime, id } = body
-    // const newRegion = new Regions()
+    const { endTime, songId, startTime, id } = body
 
-    // newRegion.id = id
-    // newRegion.startTime = startTime
-    // newRegion.endTime = endTime
-    // newRegion.songId = songId
+    const newRegion = this.regionsRepository.create({
+      id,
+      songId,
+      endTime,
+      startTime
+    })
 
-    // await this.regionsRepository.save(newRegion)
+    await this.regionsRepository.save(newRegion)
     return {}
   }
 
   async updateRegion(body: UpdateRegionSchema) {
     const { endTime, id, songId, startTime } = body
-    //await this.regionsRepository.update({ id, songId }, { endTime, startTime })
+    await this.regionsRepository.update({ id, songId }, { endTime, startTime })
     return {}
   }
 
@@ -157,7 +147,7 @@ export class ApiService {
   }
 
   async deleteRegions(songId: number) {
-    //await this.regionsRepository.delete({ songId })
+    await this.regionsRepository.delete({ songId })
     return {}
   }
 
