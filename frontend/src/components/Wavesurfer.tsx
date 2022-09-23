@@ -83,8 +83,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({
 
     setMusicCurrentTime(lastTimePosition)
 
-    wavesurfer.on("play", (...args) => {
-      //console.log(args)
+    wavesurfer.on("play", () => {
       const currTime = wavesurfer.getCurrentTime()
       socketApi.sendStart(currTime)
       toggleWavesurferIsPlaying()

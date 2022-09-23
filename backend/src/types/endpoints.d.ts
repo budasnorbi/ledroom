@@ -8,26 +8,12 @@ export interface GetSongsResponse {
   selectedRegionId: number | null
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface DeleteSongResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface SelectSongResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface BeatConfigResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface SelectRegiongResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UpdateRegiongResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UpdateLastTimePositionResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UpdateVolumeResponse {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface AddRegionResponse {}
+export type DeleteSongResponse = void
+export type SelectSongResponse = void
+export type BeatConfigResponse = void
+export type SelectRegiongResponse = void
+export type UpdateRegiongResponse = void
+export type UpdateLastTimePositionResponse = void
+export type UpdateVolumeResponse = void
+export type AddRegionResponse = void
+export type DeleteRegionResponse = void

@@ -1,51 +1,22 @@
-import { Injectable } from "@nestjs/common"
 import { dirname } from "path"
+import { Injectable } from "@nestjs/common"
+import { RegionsRepository } from "@repositories/Regions.repository"
+import { SongsRepository } from "@repositories/Songs.repository"
+import { DBSong } from "@type/db-entities"
+
 import * as asyncFs from "fs/promises"
 import * as audioApi from "web-audio-api"
-import * as MusicTempo from "music-tempo"
 
-import { SongsRepository } from "@repositories/Songs.repository"
-import { LedService } from "../Led/led.service"
+import analyzeMusic from "@helpers/analyze-music"
 import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
 import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
 import { VolumeSchema } from "@dto/volume.yup"
-import { AddRegionSchema } from "@dto/addRegion.yup"
-import { RegionsRepository } from "@repositories/Regions.repository"
-import { UpdateRegionSchema } from "@dto/updateRegion.yup"
-import { SelectRegionSchema } from "@dto/selectRegion"
-import { DBSong } from "@type/db-entities"
+
 const appDir = dirname(require.main.filename)
 
-const analyzeMusic = (context: any, songBuffer: Buffer): Promise<number> => {
-  return new Promise((res, rej) => {
-    context.decodeAudioData(songBuffer, (decodedBuffer) => {
-      try {
-        let audioData: any = []
-        // Take the average of the two channels
-        if (decodedBuffer.numberOfChannels == 2) {
-          const channel1Data = decodedBuffer.getChannelData(0)
-          const channel2Data = decodedBuffer.getChannelData(1)
-          const length = channel1Data.length
-          for (let i = 0; i < length; i++) {
-            audioData[i] = (channel1Data[i] + channel2Data[i]) / 2
-          }
-        } else {
-          audioData = decodedBuffer.getChannelData(0)
-        }
-        const musicTempo = new MusicTempo(audioData)
-        res(musicTempo)
-        //res(musicTempo)
-      } catch (error) {
-        rej(error)
-      }
-    })
-  })
-}
-
 @Injectable()
-export class ApiService {
+export class SongService {
   constructor(
-    private ledService: LedService,
     private songRepository: SongsRepository,
     private regionsRepository: RegionsRepository
   ) {}
@@ -96,64 +67,28 @@ export class ApiService {
     const song = await this.getSongPath(id)
     await this.songRepository.delete({ id })
     await asyncFs.unlink(song.path)
-    return {}
   }
 
-  async updateBeats(body: UpdateBeatsSchema) {
+  async updateSongBeatConfig(body: UpdateBeatsSchema) {
     const { id: songId, ...beatOptions } = body
     await this.songRepository.update({ id: songId }, beatOptions)
 
     // Clearing added regions
     await this.regionsRepository.delete({ songId })
-    return {}
   }
 
   async updateLastTimePosition(body: LastTimePositionSchema) {
     const { time, id } = body
     await this.songRepository.update({ id }, { lastTimePosition: time })
-    return {}
   }
 
   async updateVolume(body: VolumeSchema) {
     const { id, volume } = body
     await this.songRepository.update({ id }, { volume })
-    return {}
   }
 
-  async addRegion(body: AddRegionSchema) {
-    const { endTime, songId, startTime, id } = body
-
-    const newRegion = this.regionsRepository.create({
-      id,
-      songId,
-      endTime,
-      startTime
-    })
-
-    await this.regionsRepository.save(newRegion)
-    return {}
-  }
-
-  async updateRegion(body: UpdateRegionSchema) {
-    const { endTime, id, songId, startTime } = body
-    await this.regionsRepository.update({ id, songId }, { endTime, startTime })
-    return {}
-  }
-
-  async selectRegion(body: SelectRegionSchema) {
-    const { regionId, songId } = body
-    await this.songRepository.update({ id: songId }, { selectedRegionId: regionId })
-    return {}
-  }
-
-  async deleteRegions(songId: number) {
-    await this.regionsRepository.delete({ songId })
-    return {}
-  }
-
-  async updateSongSelected(songId: number) {
+  async updateSelectedSong(songId: number) {
     await this.songRepository.update({ selected: true }, { selected: false })
     await this.songRepository.update({ id: songId }, { selected: true })
-    return {}
   }
 }

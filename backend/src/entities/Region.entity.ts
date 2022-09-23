@@ -7,6 +7,9 @@ export class Region {
   @Column("varchar", { primary: true, length: 21 })
   id: string
 
+  @Column("varchar", { default: () => "''" })
+  name: string
+
   @Column()
   songId: number
 

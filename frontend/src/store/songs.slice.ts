@@ -42,25 +42,23 @@ export const songSlice = (
     selectSong(data.id)
   },
 
-  addSongs({ selectedRegionId, songs }) {
+  addSongs({ songs, selectedRegionId }) {
     setState((state) => {
       for (let i = 0; i < songs.length; i++) {
         const { regions: _regions, ...song } = songs[i]
         state.songs.push(song)
-
         for (let k = 0; k < _regions.length; k++) {
           const { effects: _effects, ...region } = _regions[k]
           state.regions.push(region)
-
           for (let l = 0; l < _effects.length; l++) {
             const effect = _effects[i]
             state.effects.push(effect)
           }
         }
       }
-    }, "addSongs")
 
-    get().selectSong(selectedRegionId)
+      state.selectedSongId = selectedRegionId
+    }, "addSongs")
   },
 
   async removeSong(songId) {
@@ -68,12 +66,6 @@ export const songSlice = (
 
     if (!deleteRes) {
       return
-    }
-
-    const { updateWavesurferReady, wavesurferReady } = get()
-
-    if (wavesurferReady) {
-      updateWavesurferReady(false)
     }
 
     setState((state) => {
@@ -102,29 +94,21 @@ export const songSlice = (
   },
 
   async selectSong(id) {
-    const { updateWavesurferReady, wavesurferReady, selectedSongId } = get()
+    const response = await api.put<SelectSongResponse>(`/select-song?id=${id}`)
 
-    if (selectedSongId !== id && id !== null) {
-      const response = await api.put<SelectSongResponse>(`/select-song?id=${id}`)
-
-      if (!response) {
-        return
-      }
-    }
-
-    if (wavesurferReady) {
-      updateWavesurferReady(false)
+    if (!response) {
+      return
     }
 
     setState((state) => {
+      state.wavesurferReady = false
       state.selectedSongId = id
     }, "selectSong")
   },
 
   async updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
-    const { selectedSongId, addRegion, updateRegionTime, selectRegion } = get()
-
-    if (!selectedSongId) {
+    const { selectedSongId } = get()
+    if (selectedSongId === null) {
       return
     }
 
@@ -140,11 +124,7 @@ export const songSlice = (
     }
 
     setState((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId)
-
-      if (!song) {
-        return
-      }
+      const song = state.songs.find((song) => song.id === state.selectedSongId) as DBSong
 
       song.bpm = bpm
       song.beatOffset = beatOffset
@@ -161,6 +141,8 @@ export const songSlice = (
       state.effects = state.effects.filter(
         (effect) => removedRegions.includes(effect.regionId) === false
       )
+
+      const { addRegion, updateRegionTime, selectRegion } = get()
 
       renderBeatRegions(
         wavesurferRef,
@@ -182,9 +164,10 @@ export const songSlice = (
   async addRegion(newRegion) {
     setState((state) => {
       state.regions.push(newRegion)
-    }, "addRegion")
 
-    get().selectRegion(newRegion.id)
+      const song = state.songs.find((song) => song.id === newRegion.songId) as DBSong
+      song.selectedRegionId = newRegion.id
+    }, "addRegion")
   },
 
   async selectRegion(id) {
@@ -192,7 +175,7 @@ export const songSlice = (
 
     const song = songs.find((song) => song.id === selectedSongId)
 
-    if (!song) {
+    if (!song || song.selectedRegionId === id) {
       return
     }
 
@@ -216,17 +199,31 @@ export const songSlice = (
     }, "selectRegion")
   },
 
-  // removeRegion() {
-  //   setState((state) => {
-  //     const song = state.songs.find((song) => song.id === state.selectedSongId)
+  async removeSelectedRegion(wavesurferRef) {
+    const { songs, selectedSongId } = get()
+    const song = songs.find((song) => song.id === selectedSongId)
 
-  //     if (!song) {
-  //       return
-  //     }
+    if (!song || song.selectedRegionId === null) {
+      return
+    }
 
-  //     song.regions = song.regions.filter((region) => region.id !== song.selectedRegionId)
-  //   }, "removeRegion")
-  // },
+    const response = await api.delete<{}>(`/region?id=${song.selectedRegionId}`)
+
+    if (!response) {
+      return
+    }
+
+    setState((state) => {
+      const song = state.songs.find((song) => song.id === selectedSongId) as DBSong
+
+      state.regions = state.regions.filter(
+        (region) => region.id !== (song.selectedRegionId as string)
+      )
+
+      wavesurferRef.regions.list[song.selectedRegionId as string].remove()
+      song.selectedRegionId = null
+    }, "removeRegion")
+  },
 
   async updateRegionTime(targetedRegion) {
     const { selectedSongId, songs, regions } = get()
@@ -376,7 +373,7 @@ export const songSlice = (
 //       }
 //     }
 
-//     setState((state) => {
+//     setState(async (state) => {
 //       // for (const song in state.songs) {
 //       //   const region = song.regions.find((region) => region.id === song.selectedRegionId)
 //       //   const effectIsExsists =

@@ -1,5 +1,6 @@
-import { MutableRefObject, useRef, useState } from "react"
+import { MutableRefObject, useRef, useState, useEffect } from "react"
 import dynamic from "next/dynamic"
+import shallow from "zustand/shallow"
 
 import BeatController from "@components/BeatController"
 import WavesurferController from "@components/WavesurferController"
@@ -7,7 +8,6 @@ import { RegionEffectEditor } from "@components/RegionEffectEditor"
 import { SongLoadController } from "@components/SongLoadController"
 import { useStore } from "@store"
 import api from "@api/web"
-import { useEffect } from "react"
 import { closeSocket } from "@api/socket"
 import type { GetSongsResponse } from "@backend/endpoints"
 
@@ -18,11 +18,16 @@ const WaveSurfer = dynamic(() => import("../components/Wavesurfer"), {
 function Dashboard() {
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [musicCurrentTime, setMusicCurrentTime] = useState(0)
-  const addSongs = useStore.use.addSongs()
-  const resetStore = useStore.use.resetStore()
 
-  const wavesurferReady = useStore.use.wavesurferReady()
-  const selectedSongId = useStore.use.selectedSongId()
+  const { addSongs, resetStore, selectedSongId, wavesurferReady } = useStore(
+    (state) => ({
+      addSongs: state.addSongs,
+      resetStore: state.resetStore,
+      wavesurferReady: state.wavesurferReady,
+      selectedSongId: state.selectedSongId
+    }),
+    shallow
+  )
 
   const selectedSong = useStore((state) => {
     const [song] = state.songs.filter((song) => song.id === selectedSongId)
@@ -78,7 +83,12 @@ function Dashboard() {
         />
       )}
 
-      {selectedSong && selectedSong.selectedRegionId && <RegionEffectEditor />}
+      {selectedSong && selectedSong.selectedRegionId && wavesurferReady && (
+        <RegionEffectEditor
+          wavesurferRef={wavesurferRef as MutableRefObject<WaveSurfer>}
+          selectRegionId={selectedSong.selectedRegionId}
+        />
+      )}
     </div>
   )
 }

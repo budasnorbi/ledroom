@@ -43,7 +43,7 @@ export interface SongsSlice {
   ) => void
   addRegion: AddRegion
   selectRegion: SelectRegion
-  //removeRegion: () => void
+  removeSelectedRegion: (waveSurfer: WaveSurfer) => void
   updateRegionTime: UpdateRegionTime
   updateLastTimePosition: (time: number) => void
   updateSongVolume: (volume: number) => void

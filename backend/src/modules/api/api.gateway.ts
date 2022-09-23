@@ -11,7 +11,6 @@ import {
 } from "@nestjs/websockets"
 import { Region } from "@type/socket"
 import { Server, Socket } from "socket.io"
-import { ApiService } from "./api.service"
 
 @WebSocketGateway({
   cors: {
@@ -22,7 +21,7 @@ export class ApiGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   @WebSocketServer()
   socket: Server
 
-  constructor(private readonly appService: ApiService, private readonly ledService: LedService) {}
+  constructor(private readonly ledService: LedService) {}
 
   private logger: Logger = new Logger("ApiGateway")
 

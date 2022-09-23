@@ -29,7 +29,7 @@ export const useStore = createSelectors(
         ...wavesurferSlice(setState, get),
         ...songSlice(setState, get),
         resetStore() {
-          setState((state) => {
+          setState(async (state) => {
             state.songs = songInitialState.songs
             state.selectedSongId = songInitialState.selectedSongId
             state.wavesurferIsPlaying = wavesurferIntialState.wavesurferIsPlaying

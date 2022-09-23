@@ -4,6 +4,7 @@ import { useStore } from "@store"
 import { Pause, Play } from "./icons/control"
 import { Time } from "./icons/time"
 import { VolumeOff, VolumeOn } from "./icons/volume"
+import { Delete } from "./icons/delete"
 
 interface Props {
   wavesurferRef: MutableRefObject<WaveSurfer>
@@ -46,7 +47,7 @@ const WavesurferController: FC<Props> = memo(({ wavesurferRef, musicCurrentTime,
         <button
           onClick={setVolumeDown}
           disabled={volume === 0}
-          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tl-lg rounded-bl-lg "
+          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tl-lg rounded-bl-lg"
         >
           -
         </button>
@@ -59,12 +60,12 @@ const WavesurferController: FC<Props> = memo(({ wavesurferRef, musicCurrentTime,
         <button
           onClick={setVolumeUp}
           disabled={volume === 1}
-          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tr-lg rounded-br-lg "
+          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tr-lg rounded-br-lg"
         >
           +
         </button>
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center mr-4">
         <Time />
         <span className="ml-2 ">
           {wavesurferIsPlaying ? musicCurrentTime.toFixed(2) : musicCurrentTime.toFixed(8)}s

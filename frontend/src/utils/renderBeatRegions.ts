@@ -99,8 +99,6 @@ export const renderBeatRegions = (
         return
       }
 
-      console.log(10)
-
       addRegion({
         id: newRegionId,
         songId,
