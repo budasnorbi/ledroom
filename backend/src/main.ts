@@ -15,11 +15,10 @@ async function bootstrap() {
     .setTitle("Ledroom api")
     .setDescription("Ledroom endpoints")
     .setVersion("1.0")
-    .addTag("cats")
     .build()
 
   const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup("api", app, document)
+  SwaggerModule.setup("docs", app, document)
 
   await app.listen(process.env.BACKEND_PORT_CONTAINER)
 }

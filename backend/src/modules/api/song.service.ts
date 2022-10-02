@@ -1,5 +1,5 @@
 import { dirname } from "path"
-import { Injectable } from "@nestjs/common"
+import { BadRequestException, Injectable } from "@nestjs/common"
 import { RegionsRepository } from "@repositories/Regions.repository"
 import { SongsRepository } from "@repositories/Songs.repository"
 import { DBSong } from "@type/db-entities"
@@ -22,6 +22,9 @@ export class SongService {
   ) {}
 
   async uploadSong(file: Express.Multer.File): Promise<DBSong> {
+    if (!file) {
+      throw new BadRequestException("File not found")
+    }
     const songBuffer = file.buffer
     const filePath = `${appDir}/../songs/${file.originalname}`
 
@@ -36,6 +39,7 @@ export class SongService {
       beatAroundEnd: analyzedMusic.beats[analyzedMusic.beats.length - 1],
       selected: true
     })
+
     const savedSong = await this.songRepository.save(newSong)
 
     await asyncFs.writeFile(filePath, songBuffer)

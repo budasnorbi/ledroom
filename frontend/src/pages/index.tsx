@@ -37,7 +37,7 @@ function Dashboard() {
   useEffect(() => {
     const abortController = new AbortController()
     ;(async () => {
-      const response = await api.get<GetSongsResponse>("/songs", {}, abortController)
+      const response = await api.get<GetSongsResponse>("/song", {}, abortController)
 
       if (!response || response.songs.length === 0) {
         return

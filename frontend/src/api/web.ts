@@ -121,4 +121,4 @@ class Api {
   }
 }
 
-export default new Api(process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC + "/api")
+export default new Api(process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC + "")

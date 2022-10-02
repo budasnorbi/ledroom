@@ -33,23 +33,25 @@ import {
 } from "@type/endpoints"
 import { YupValidationPipe } from "src/pipes/yupValidation.pipe"
 import { SongService } from "./song.service"
+import { ApiTags } from "@nestjs/swagger"
 
+@ApiTags("song")
 @Controller("song")
 export class SongController {
   constructor(private readonly songService: SongService) {}
 
-  @Post("upload-song")
+  @Post()
   @UseInterceptors(FileInterceptor("file"))
   uploadSong(@UploadedFile() file: Express.Multer.File): Promise<UploadSongResponse> {
     return this.songService.uploadSong(file)
   }
 
-  @Get("songs")
+  @Get()
   getSongs(): Promise<GetSongsResponse> {
     return this.songService.getSongs()
   }
 
-  @Get("song/:id")
+  @Get(":id")
   async getSong(
     @Param("id") id: number,
     @Res({ passthrough: true }) res: Response
@@ -65,7 +67,7 @@ export class SongController {
     return new StreamableFile(file)
   }
 
-  @Delete("song/:id")
+  @Delete(":id")
   @HttpCode(204)
   deleteSong(@Param("id") id: number): Promise<DeleteSongResponse> {
     return this.songService.removeSong(id)
@@ -78,7 +80,7 @@ export class SongController {
     return this.songService.updateSongBeatConfig(body)
   }
 
-  @Put("select-song")
+  @Put("select")
   @HttpCode(204)
   updateSongSelected(@Query("id") id: number): Promise<SelectSongResponse> {
     if (isNaN(id)) {

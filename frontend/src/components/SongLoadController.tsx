@@ -34,7 +34,7 @@ export const SongLoadController: FC<Props> = (props) => {
     const formData = new FormData()
     formData.append("file", musicFile)
 
-    const uploadSongRes = await api.uploadFile<UploadSongResponse>("/upload-song", formData)
+    const uploadSongRes = await api.uploadFile<UploadSongResponse>("/song", formData)
 
     if (!uploadSongRes) {
       return

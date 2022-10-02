@@ -19,11 +19,7 @@ export interface WavesurferSlice {
 }
 
 export type AddRegion = (config: DBRegion) => void
-export type UpdateRegionTime = (options: {
-  startTime?: number
-  endTime?: number
-  id: string
-}) => void
+export type UpdateRegionTime = (options: { startTime: number; endTime: number; id: string }) => void
 export type SelectRegion = (id: string) => void
 
 export interface SongsSlice {

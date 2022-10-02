@@ -11,7 +11,6 @@ import {
   SelectRegiongResponse,
   SelectSongResponse,
   UpdateLastTimePositionResponse,
-  UpdateRegiongResponse,
   UpdateVolumeResponse
 } from "@backend/endpoints"
 
@@ -94,7 +93,7 @@ export const songSlice = (
   },
 
   async selectSong(id) {
-    const response = await api.put<SelectSongResponse>(`/select-song?id=${id}`)
+    const response = await api.put<SelectSongResponse>(`/song/select?id=${id}`)
 
     if (!response) {
       return
@@ -112,7 +111,7 @@ export const songSlice = (
       return
     }
 
-    const updateResponse = await api.put<BeatConfigResponse>("/beat-config", {
+    const updateResponse = await api.put<BeatConfigResponse>("/song/beat-config", {
       id: selectedSongId,
       bpm: bpm,
       beatOffset: beatOffset,
@@ -179,7 +178,7 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put<SelectRegiongResponse>("/select-region", {
+    const response = await api.put<SelectRegiongResponse>("/region/select", {
       songId: song.id,
       regionId: id
     })
@@ -239,38 +238,6 @@ export const songSlice = (
       return
     }
 
-    if (targetedRegion.startTime !== undefined && targetedRegion.endTime === undefined) {
-      if (targetedRegion.startTime === region.startTime) {
-        return
-      }
-    }
-
-    if (targetedRegion.endTime !== undefined && targetedRegion.startTime === undefined) {
-      if (targetedRegion.endTime === region.endTime) {
-        return
-      }
-    }
-
-    if (targetedRegion.startTime !== undefined && targetedRegion.endTime !== undefined) {
-      if (
-        targetedRegion.startTime === region.startTime &&
-        targetedRegion.endTime === region.endTime
-      ) {
-        return
-      }
-    }
-
-    const response = await api.put<UpdateRegiongResponse>("/region", {
-      songId: song.id,
-      id: targetedRegion.id,
-      startTime: targetedRegion.startTime ?? region.startTime,
-      endTime: targetedRegion.endTime ?? region.endTime
-    })
-
-    if (!response) {
-      return
-    }
-
     setState((state) => {
       const region = state.regions.find((region) => region.id === targetedRegion.id)
 
@@ -294,7 +261,7 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put<UpdateLastTimePositionResponse>("/last-time-position", {
+    const response = await api.put<UpdateLastTimePositionResponse>("/song/last-time-position", {
       time,
       id: song.id
     })
@@ -324,7 +291,7 @@ export const songSlice = (
     }
 
     const response = await api.put<UpdateVolumeResponse>(
-      "/volume",
+      "/song/volume",
       { volume, id: song.id },
       { "Content-Type": "application/json" }
     )

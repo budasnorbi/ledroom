@@ -103,7 +103,8 @@ export const renderBeatRegions = (
         id: newRegionId,
         songId,
         startTime: region.start,
-        endTime: region.end
+        endTime: region.end,
+        name: ""
       })
 
       const effectRegion = wavesurfer.regions.add({
@@ -142,100 +143,68 @@ export const renderBeatRegions = (
       })
 
       effectRegion.on("update-end", async () => {
-        if (handleType === "both") {
-          const regionWidth = rightHandleInitValue - leftHandleInitValue
+        let startTime = 0
+        let endTime = 0
 
-          const start = clamp(
-            Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
+        switch (handleType) {
+          case "both": {
+            const regionWidth = rightHandleInitValue - leftHandleInitValue
+
+            startTime = clamp(
+              Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
+                beatOffset,
               beatOffset,
-            beatOffset,
-            lastRegionEndTime - regionWidth
-          )
-          const end = start + regionWidth
-
-          try {
-            await api.put<UpdateRegiongResponse>("/region", {
-              id: effectRegion.id,
-              songId,
-              startTime: start,
-              endTime: end
-            })
-          } catch (error) {
-            effectRegion.update({
-              start: leftHandleInitValue,
-              end: rightHandleInitValue
-            })
-            return
+              lastRegionEndTime - regionWidth
+            )
+            endTime = startTime + regionWidth
+            break
           }
-
-          effectRegion.update({
-            start,
-            end
-          })
-
-          updateRegionTime({ startTime: start, endTime: end, id: effectRegion.id })
-        }
-
-        if (handleType === "left") {
-          const start = clamp(
-            Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
+          case "left": {
+            startTime = clamp(
+              Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
+                beatOffset,
               beatOffset,
-            beatOffset,
-            effectRegion.end - beatInterval
-          )
-
-          try {
-            await api.put<UpdateRegiongResponse>("/region", {
-              id: effectRegion.id,
-              songId,
-              startTime: start,
-              endTime: effectRegion.end
-            })
-          } catch (error) {
-            effectRegion.update({
-              start: leftHandleInitValue,
-              end: rightHandleInitValue
-            })
+              effectRegion.end - beatInterval
+            )
+            endTime = effectRegion.end
+          }
+          case "right": {
+            startTime = effectRegion.start
+            endTime = clamp(
+              Math.round((effectRegion.end - beatOffset) / beatInterval) * beatInterval +
+                beatOffset,
+              effectRegion.start + beatInterval,
+              lastRegionEndTime
+            )
+          }
+          default: {
             return
           }
-
-          effectRegion.update({
-            start
-          })
-
-          updateRegionTime({ startTime: start, id: effectRegion.id })
-        }
-
-        if (handleType === "right") {
-          const end = clamp(
-            Math.round((effectRegion.end - beatOffset) / beatInterval) * beatInterval + beatOffset,
-            effectRegion.start + beatInterval,
-            lastRegionEndTime
-          )
-
-          try {
-            await api.put<UpdateRegiongResponse>("/region", {
-              id: effectRegion.id,
-              songId,
-              startTime: effectRegion.start,
-              endTime: end
-            })
-          } catch (error) {
-            effectRegion.update({
-              start: leftHandleInitValue,
-              end: rightHandleInitValue
-            })
-            return
-          }
-
-          effectRegion.update({
-            end
-          })
-
-          updateRegionTime({ endTime: end, id: effectRegion.id })
         }
 
         handleType = undefined
+
+        const response = await api.put<UpdateRegiongResponse>("/region", {
+          id: effectRegion.id,
+          songId,
+          startTime,
+          endTime
+        })
+
+        if (!response) {
+          effectRegion.update({
+            start: leftHandleInitValue,
+            end: rightHandleInitValue
+          })
+          return
+        }
+
+        effectRegion.update({
+          start: startTime,
+          end: endTime
+        })
+
+        updateRegionTime({ startTime, endTime, id: effectRegion.id })
       })
     })
   }
