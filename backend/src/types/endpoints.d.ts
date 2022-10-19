@@ -15,5 +15,5 @@ export type SelectRegiongResponse = void
 export type UpdateRegiongResponse = void
 export type UpdateLastTimePositionResponse = void
 export type UpdateVolumeResponse = void
-export type AddRegionResponse = void
+export type AddRegionResponse = { id: string }
 export type DeleteRegionResponse = void

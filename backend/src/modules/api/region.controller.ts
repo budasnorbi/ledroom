@@ -1,7 +1,15 @@
-import { addRegionSchema, AddRegionSchema } from "@dto/addRegion.yup"
-import { selectRegionSchema, SelectRegionSchema } from "@dto/selectRegion"
-import { updateRegionSchema, UpdateRegionSchema } from "@dto/updateRegion.yup"
-import { Controller, Post, UsePipes, HttpCode, Body, Put, Delete, Query } from "@nestjs/common"
+import {
+  addRegionSchema,
+  AddRegionSchema,
+  selectRegionSchema,
+  SelectRegionSchema,
+  updateRegionSchema,
+  UpdateRegionSchema,
+  UpdateRegionNameSchema,
+  updateRegionNameSchema
+} from "@dto/region.yup"
+
+import { Controller, Post, HttpCode, Body, Patch, Delete, Param } from "@nestjs/common"
 import { ApiTags } from "@nestjs/swagger"
 import { AddRegionResponse, UpdateRegiongResponse, SelectRegiongResponse } from "@type/endpoints"
 import { YupValidationPipe } from "src/pipes/yupValidation.pipe"
@@ -13,29 +21,42 @@ export class RegionController {
   constructor(private readonly regionSerice: RegionService) {}
 
   @Post()
-  @UsePipes(new YupValidationPipe(addRegionSchema))
-  @HttpCode(204)
-  addRegion(@Body() body: AddRegionSchema): Promise<AddRegionResponse> {
+  addRegion(
+    @Body(new YupValidationPipe(addRegionSchema)) body: AddRegionSchema
+  ): Promise<AddRegionResponse> {
     return this.regionSerice.addRegion(body)
   }
 
-  @Put()
-  @UsePipes(new YupValidationPipe(updateRegionSchema))
+  @Patch(":regionId")
   @HttpCode(204)
-  updateRegion(@Body() body: UpdateRegionSchema): Promise<UpdateRegiongResponse> {
-    return this.regionSerice.updateRegion(body)
+  updateRegion(
+    @Param("regionId") regionId: string,
+    @Body(new YupValidationPipe(updateRegionSchema)) body: UpdateRegionSchema
+  ): Promise<UpdateRegiongResponse> {
+    return this.regionSerice.updateRegion(regionId, body)
   }
 
-  @Put("select")
-  @UsePipes(new YupValidationPipe(selectRegionSchema))
+  @Patch("/:regionId/select")
   @HttpCode(204)
-  selectRegion(@Body() body: SelectRegionSchema): Promise<SelectRegiongResponse> {
-    return this.regionSerice.selectRegion(body)
+  selectRegion(
+    @Param("regionId") regionId: string,
+    @Body(new YupValidationPipe(selectRegionSchema)) body: SelectRegionSchema
+  ): Promise<SelectRegiongResponse> {
+    return this.regionSerice.selectRegion(regionId, body)
   }
 
-  @Delete()
+  @Delete(":regionId")
   @HttpCode(204)
-  deleteRegion(@Query("id") regionId: string) {
+  delete(@Param("id") regionId: string) {
     return this.regionSerice.deleteRegion(regionId)
+  }
+
+  @Patch("/:regionId/name")
+  @HttpCode(204)
+  updateName(
+    @Param("id") regionId: string,
+    @Body(new YupValidationPipe(updateRegionNameSchema)) body: UpdateRegionNameSchema
+  ) {
+    return this.regionSerice.updateRegionName(regionId, body)
   }
 }

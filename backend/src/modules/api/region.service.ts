@@ -1,10 +1,15 @@
-import { Injectable } from "@nestjs/common"
+import { BadRequestException, Injectable } from "@nestjs/common"
+import { nanoid } from "nanoid"
 
-import { AddRegionSchema } from "@dto/addRegion.yup"
-import { SelectRegionSchema } from "@dto/selectRegion"
-import { UpdateRegionSchema } from "@dto/updateRegion.yup"
 import { RegionsRepository } from "@repositories/Regions.repository"
 import { SongsRepository } from "@repositories/Songs.repository"
+
+import type {
+  AddRegionSchema,
+  SelectRegionSchema,
+  UpdateRegionNameSchema,
+  UpdateRegionSchema
+} from "@dto/region.yup"
 
 @Injectable()
 export class RegionService {
@@ -14,7 +19,8 @@ export class RegionService {
   ) {}
 
   async addRegion(body: AddRegionSchema) {
-    const { endTime, songId, startTime, id } = body
+    const id = nanoid()
+    const { endTime, songId, startTime } = body
 
     const newRegion = this.regionsRepository.create({
       id,
@@ -26,15 +32,17 @@ export class RegionService {
 
     await this.regionsRepository.save(newRegion)
     await this.songRepository.update({ id: songId }, { selectedRegionId: id })
+
+    return { id }
   }
 
-  async updateRegion(body: UpdateRegionSchema) {
-    const { endTime, id, songId, startTime } = body
-    await this.regionsRepository.update({ id, songId }, { endTime, startTime })
+  async updateRegion(regionId: string, body: UpdateRegionSchema) {
+    const { endTime, songId, startTime } = body
+    await this.regionsRepository.update({ id: regionId, songId }, { endTime, startTime })
   }
 
-  async selectRegion(body: SelectRegionSchema) {
-    const { regionId, songId } = body
+  async selectRegion(regionId: string, body: SelectRegionSchema) {
+    const { songId } = body
     await this.songRepository.update({ id: songId }, { selectedRegionId: regionId })
   }
 
@@ -46,5 +54,14 @@ export class RegionService {
 
     await this.songRepository.update({ id: region.songId }, { selectedRegionId: null })
     await this.regionsRepository.delete({ id: regionId })
+  }
+
+  async updateRegionName(regionId: string, body: UpdateRegionNameSchema) {
+    const { name, songId } = body
+    const result = await this.regionsRepository.update({ songId, id: regionId }, { name })
+
+    if (result.affected === 0) {
+      throw new BadRequestException("Nincs ilyen régió vagy zene")
+    }
   }
 }

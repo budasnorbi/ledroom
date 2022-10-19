@@ -1,8 +1,9 @@
-import { useCallback, ChangeEvent, PointerEvent } from "react"
-import api from "@api/web"
+import { ChangeEvent } from "react"
+import { api } from "@api/web"
 import { useStore } from "@store"
 import type { UploadSongResponse } from "@backend/endpoints"
 import { FC } from "react"
+import { Methods } from "@type/api"
 
 interface Props {
   selectedSongId: number | undefined
@@ -34,13 +35,19 @@ export const SongLoadController: FC<Props> = (props) => {
     const formData = new FormData()
     formData.append("file", musicFile)
 
-    const uploadSongRes = await api.uploadFile<UploadSongResponse>("/song", formData)
+    const response = await api<UploadSongResponse, FormData>("/song", {
+      method: Methods.POST,
+      body: formData,
+      headers: {
+        "Content-Type": "inherit"
+      }
+    })
 
-    if (!uploadSongRes) {
+    if (response.statusCode !== 201) {
       return
     }
 
-    addSong(uploadSongRes)
+    addSong(response.data)
   }
 
   return (

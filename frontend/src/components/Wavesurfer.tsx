@@ -1,5 +1,4 @@
-import { useEffect, FC, useCallback } from "react"
-
+import { useEffect, FC, useMemo } from "react"
 import Wavesurfer from "wavesurfer.js"
 import RegionsPlugin from "wavesurfer.js/src/plugin/regions"
 import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
@@ -13,15 +12,9 @@ import {
 } from "@utils/wavesurfer"
 
 import { renderBeatRegions } from "@utils/renderBeatRegions"
-import webApi from "@api/web"
-
 import * as socketApi from "@api/socket"
-import { clamp } from "@utils/clamp"
-import { useMemo } from "react"
-import { UpdateRegiongResponse } from "@backend/endpoints"
-import shallow from "zustand/shallow"
 
-let handleSpacePress: any
+// let handleSpacePress: any
 
 interface WaveSurferProps {
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>
@@ -41,14 +34,16 @@ const WaveSurfer: FC<WaveSurferProps> = ({
   const selectRegion = useStore.use.selectRegion()
   const addRegion = useStore.use.addRegion()
 
-  const selectedSong = useStore((state) => {
+  const _selectedSong = useStore((state) => {
     const song = state.songs.filter((song) => song.id === state.selectedSongId)[0]
     const regions = state.regions.filter((region) => region.songId === state.selectedSongId)
     return {
       song,
       regions
     }
-  }, shallow)
+  })
+
+  const selectedSong = useMemo(() => _selectedSong, [selectedSongId])
 
   useEffect(() => {
     const { beatAroundEnd, beatOffset, bpm, lastTimePosition, volume } = selectedSong.song
@@ -109,168 +104,48 @@ const WaveSurfer: FC<WaveSurferProps> = ({
       setMusicCurrentTime(wavesurfer.getCurrentTime())
     })
 
-    wavesurfer.on(
-      "ready",
-      /* @ts-ignore */
-      () => {
-        wavesurfer.zoom(200)
+    wavesurfer.on("ready", () => {
+      wavesurfer.zoom(200)
 
-        const progress = lastTimePosition / wavesurfer.getDuration()
-        wavesurfer.seekAndCenter(progress)
-        wavesurfer.setVolume(volume)
+      const progress = lastTimePosition / wavesurfer.getDuration()
+      wavesurfer.seekAndCenter(progress)
+      wavesurfer.setVolume(volume)
 
-        renderBeatRegions(
-          wavesurfer,
-          {
-            beatAroundEnd,
-            beatOffset,
-            bpm,
-            songId: selectedSong.song.id
-          },
-          {
-            addRegion,
-            updateRegionTime,
-            selectRegion
-          }
-        )
-
-        const beatInterval = 1 / (bpm / 60)
-        const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
-
-        let lastRegionEndTime = 0
-
-        for (let i = 0; i < beatOccurences; i++) {
-          if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
-            lastRegionEndTime = (i - 1) * beatInterval + beatInterval + beatOffset
-            break
-          }
-        }
-
-        let handleType: undefined | "both" | "left" | "right"
-        let leftHandleInitValue = 0
-        let rightHandleInitValue = 0
-
-        for (const region of selectedSong.regions) {
-          const effectRegion = wavesurfer.regions.add({
-            id: region.id,
-            start: region.startTime,
-            end: region.endTime,
-            drag: true,
-            color: "rgba(0,0,255,.15)",
-            resize: true
-          })
-
-          effectRegion.element.setAttribute("data-rangetype", "effect-range")
-
-          effectRegion.element.addEventListener("mousedown", () => {
-            leftHandleInitValue = effectRegion.start
-            rightHandleInitValue = effectRegion.end
-            if (!handleType) {
-              handleType = "both"
-            }
-          })
-
-          effectRegion.handleLeftEl?.addEventListener("mousedown", () => {
-            if (!handleType) {
-              handleType = "left"
-            }
-          })
-
-          effectRegion.handleRightEl?.addEventListener("mousedown", () => {
-            if (!handleType) {
-              handleType = "right"
-            }
-          })
-
-          effectRegion.on("click", () => {
-            selectRegion(effectRegion.id)
-          })
-
-          effectRegion.on("update-end", async () => {
-            let startTime = 0
-            let endTime = 0
-
-            switch (handleType) {
-              case "both": {
-                const regionWidth = rightHandleInitValue - leftHandleInitValue
-
-                startTime = clamp(
-                  Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
-                    beatOffset,
-                  beatOffset,
-                  lastRegionEndTime - regionWidth
-                )
-                endTime = startTime + regionWidth
-                break
-              }
-              case "left": {
-                startTime = clamp(
-                  Math.round((effectRegion.start - beatOffset) / beatInterval) * beatInterval +
-                    beatOffset,
-                  beatOffset,
-                  effectRegion.end - beatInterval
-                )
-                endTime = effectRegion.end
-              }
-              case "right": {
-                startTime = effectRegion.start
-                endTime = clamp(
-                  Math.round((effectRegion.end - beatOffset) / beatInterval) * beatInterval +
-                    beatOffset,
-                  effectRegion.start + beatInterval,
-                  lastRegionEndTime
-                )
-              }
-              default: {
-                return
-              }
-            }
-
-            handleType = undefined
-
-            const response = await webApi.put<UpdateRegiongResponse>("/region", {
-              id: effectRegion.id,
-              songId: selectedSong.song.id,
-              startTime,
-              endTime
-            })
-
-            if (!response) {
-              effectRegion.update({
-                start: leftHandleInitValue,
-                end: rightHandleInitValue
-              })
-              return
-            }
-
-            effectRegion.update({
-              start: startTime,
-              end: endTime
-            })
-
-            updateRegionTime({ startTime, endTime, id: effectRegion.id })
-          })
-        }
-
-        if (!handleSpacePress) {
+      /* if (!handleSpacePress) {
           handleSpacePress = async (event: KeyboardEvent) => {
             if (event.code !== "Space") {
               return
             }
 
-            await wavesurfer.playPause()
+            ;(wavesurferRef.current as Wavesurfer).playPause()
           }
         }
 
         window.removeEventListener("keydown", handleSpacePress)
-        window.addEventListener("keydown", handleSpacePress)
+        window.addEventListener("keydown", handleSpacePress) */
 
-        updateWavesurferReady(true)
-      }
-    )
+      renderBeatRegions(
+        wavesurfer,
+        {
+          beatAroundEnd,
+          beatOffset,
+          bpm,
+          songId: selectedSong.song.id,
+          selectedRegionId: selectedSong.song.selectedRegionId
+        },
+        {
+          addRegion,
+          updateRegionTime,
+          selectRegion
+        },
+        selectedSong.regions
+      )
+
+      updateWavesurferReady(true)
+    })
 
     wavesurfer.load(
-      `${process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC}/api/song/${selectedSong.song.id}`
+      `${process.env.NEXT_PUBLIC_BACKEND_DOMAIN_FROM_PUBLIC}/song/${selectedSong.song.id}`
     )
 
     return () => {

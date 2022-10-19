@@ -6,7 +6,7 @@ export const VolumeOn = () => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className="w-5 h-5 text-blue-600/75"
+      className="w-5 h-5 text-blue-600"
     >
       <path
         strokeLinecap="round"
@@ -25,7 +25,7 @@ export const VolumeOff = () => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className="w-5 h-5 text-blue-600/75"
+      className="w-5 h-5 text-blue-600"
     >
       <path
         strokeLinecap="round"

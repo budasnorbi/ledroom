@@ -8,9 +8,7 @@ import * as asyncFs from "fs/promises"
 import * as audioApi from "web-audio-api"
 
 import analyzeMusic from "@helpers/analyze-music"
-import { UpdateBeatsSchema } from "@dto/updateBeats.yup"
-import { LastTimePositionSchema } from "@dto/lastTimePosition.yup"
-import { VolumeSchema } from "@dto/volume.yup"
+import { VolumeSchema, LastTimePositionSchema, UpdateBeatsSchema } from "@dto/song.yup"
 
 const appDir = dirname(require.main.filename)
 
@@ -29,14 +27,15 @@ export class SongService {
     const filePath = `${appDir}/../songs/${file.originalname}`
 
     const context = new audioApi.AudioContext()
-    const analyzedMusic: any = await analyzeMusic(context, songBuffer)
+
+    const analyzedMusic = await analyzeMusic(context, songBuffer)
 
     const newSong = this.songRepository.create({
       name: file.originalname,
       path: filePath,
-      bpm: Math.round(analyzedMusic.tempo),
-      beatOffset: analyzedMusic.beats[0],
-      beatAroundEnd: analyzedMusic.beats[analyzedMusic.beats.length - 1],
+      bpm: Math.round(analyzedMusic.bpm),
+      beatOffset: analyzedMusic.beatOffset,
+      beatAroundEnd: analyzedMusic.beatAroundEnd,
       selected: true
     })
 
@@ -73,25 +72,27 @@ export class SongService {
     await asyncFs.unlink(song.path)
   }
 
-  async updateSongBeatConfig(body: UpdateBeatsSchema) {
-    const { id: songId, ...beatOptions } = body
-    await this.songRepository.update({ id: songId }, beatOptions)
+  async updateSongBeatConfig(songId: number, body: UpdateBeatsSchema) {
+    await this.songRepository.update({ id: songId }, body)
 
     // Clearing added regions
     await this.regionsRepository.delete({ songId })
   }
 
-  async updateLastTimePosition(body: LastTimePositionSchema) {
-    const { time, id } = body
-    await this.songRepository.update({ id }, { lastTimePosition: time })
+  async updateLastTimePosition(songId: number, body: LastTimePositionSchema) {
+    const { time } = body
+    await this.songRepository.update({ id: songId }, { lastTimePosition: time })
   }
 
-  async updateVolume(body: VolumeSchema) {
-    const { id, volume } = body
-    await this.songRepository.update({ id }, { volume })
+  async updateVolume(songId: number, body: VolumeSchema) {
+    const { volume } = body
+    await this.songRepository.update({ id: songId }, { volume })
   }
 
   async updateSelectedSong(songId: number) {
+    if (isNaN(songId)) {
+      throw new BadRequestException("Hibás songId")
+    }
     await this.songRepository.update({ selected: true }, { selected: false })
     await this.songRepository.update({ id: songId }, { selected: true })
   }

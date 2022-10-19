@@ -1,5 +1,6 @@
 import type { GetSongsResponse, UploadSongResponse } from "@backend/endpoints"
 import type { DBEffect, DBRegion, DBSong } from "@backend/db-entities"
+import type { Region } from "wavesurfer.js/src/plugin/regions"
 
 export type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -20,7 +21,7 @@ export interface WavesurferSlice {
 
 export type AddRegion = (config: DBRegion) => void
 export type UpdateRegionTime = (options: { startTime: number; endTime: number; id: string }) => void
-export type SelectRegion = (id: string) => void
+export type SelectRegion = (selectedRegion: Region, wavesurfer: WaveSurfer) => void
 
 export interface SongsSlice {
   songs: DBSong[]
@@ -31,12 +32,7 @@ export interface SongsSlice {
   addSong: (data: UploadSongResponse) => void
   removeSong: (id: number) => void
   selectSong: (id: number | null) => void
-  updateSongBeatConfig: (
-    bpm: number,
-    beatOffset: number,
-    beatAroundEnd: number,
-    wavesurferRef: WaveSurfer
-  ) => void
+  updateSongBeatConfig: (bpm: number, beatOffset: number, beatAroundEnd: number) => void
   addRegion: AddRegion
   selectRegion: SelectRegion
   removeSelectedRegion: (waveSurfer: WaveSurfer) => void

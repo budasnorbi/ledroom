@@ -4,7 +4,6 @@ import { useStore } from "@store"
 import { Pause, Play } from "./icons/control"
 import { Time } from "./icons/time"
 import { VolumeOff, VolumeOn } from "./icons/volume"
-import { Delete } from "./icons/delete"
 
 interface Props {
   wavesurferRef: MutableRefObject<WaveSurfer>
@@ -19,7 +18,7 @@ const WavesurferController: FC<Props> = memo(({ wavesurferRef, musicCurrentTime,
   const updateSongVolume = useStore.use.updateSongVolume()
 
   const handleWavesurferPlaypause = async () => {
-    await wavesurferRef.current.playPause()
+    wavesurferRef.current.playPause()
   }
 
   const setVolumeUp = () => {
@@ -47,20 +46,20 @@ const WavesurferController: FC<Props> = memo(({ wavesurferRef, musicCurrentTime,
         <button
           onClick={setVolumeDown}
           disabled={volume === 0}
-          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tl-lg rounded-bl-lg"
+          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tl-lg rounded-bl-lg disabled:opacity-50 disabled:hover:cursor-not-allowed disabled:hover:bg-slate-100"
         >
           -
         </button>
 
         <div className="flex bg-slate-100 px-4 items-center justify-between w-24">
           {volume === 0 ? <VolumeOff /> : <VolumeOn />}
-          <span className="ml-1 text-blue-600/75">{((volume / 1) * 100).toFixed(0)}%</span>
+          <span className="ml-1 text-blue-600">{((volume / 1) * 100).toFixed(0)}%</span>
         </div>
 
         <button
           onClick={setVolumeUp}
           disabled={volume === 1}
-          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tr-lg rounded-br-lg"
+          className="py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-tr-lg rounded-br-lg disabled:opacity-50 disabled:hover:cursor-not-allowed disabled:hover:bg-slate-100"
         >
           +
         </button>

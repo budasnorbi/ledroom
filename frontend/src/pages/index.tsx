@@ -7,9 +7,16 @@ import WavesurferController from "@components/WavesurferController"
 import { RegionEffectEditor } from "@components/RegionEffectEditor"
 import { SongLoadController } from "@components/SongLoadController"
 import { useStore } from "@store"
-import api from "@api/web"
+import { api } from "@api/web"
 import { closeSocket } from "@api/socket"
 import type { GetSongsResponse } from "@backend/endpoints"
+
+enum Methods {
+  POST = "POST",
+  GET = "GET",
+  PATCH = "PATCH",
+  DELETE = "DELETE"
+}
 
 const WaveSurfer = dynamic(() => import("../components/Wavesurfer"), {
   ssr: false
@@ -36,15 +43,17 @@ function Dashboard() {
 
   useEffect(() => {
     const abortController = new AbortController()
-    ;(async () => {
-      const response = await api.get<GetSongsResponse>("/song", {}, abortController)
-
-      if (!response || response.songs.length === 0) {
+    api<GetSongsResponse>("/song", {
+      method: Methods.GET,
+      signal: abortController.signal
+    }).then((response) => {
+      if (response.statusCode !== 200) {
         return
       }
 
-      addSongs(response)
-    })()
+      addSongs(response.data)
+    })
+
     return () => {
       abortController.abort()
       closeSocket()
@@ -63,6 +72,7 @@ function Dashboard() {
             bpm={selectedSong.bpm}
             beatAroundEnd={selectedSong.beatAroundEnd}
             beatOffset={selectedSong.beatOffset}
+            selectedSongId={selectedSong?.id}
           />
         )}
       </div>

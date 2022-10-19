@@ -1,18 +1,18 @@
 import { StoreApi } from "zustand"
 import type { Store, SongsSlice } from "@type/store"
 
-import api from "@api/web"
+import { api } from "@api/web"
 import { updateRegions } from "@api/socket"
-import { renderBeatRegions } from "@utils/renderBeatRegions"
 import { DBSong } from "@backend/db-entities"
 import {
-  BeatConfigResponse,
-  DeleteSongResponse,
   SelectRegiongResponse,
   SelectSongResponse,
   UpdateLastTimePositionResponse,
   UpdateVolumeResponse
 } from "@backend/endpoints"
+import type { SelectRegionSchema } from "@backend/region.yup"
+import type { VolumeSchema, LastTimePositionSchema } from "@backend/song.yup"
+import { Methods } from "@type/api"
 
 export const songInitialState = {
   songs: [],
@@ -61,9 +61,12 @@ export const songSlice = (
   },
 
   async removeSong(songId) {
-    const deleteRes = await api.delete<DeleteSongResponse>(`/song/${songId}`)
+    const response = await api(`/song/${songId}`, {
+      method: Methods.DELETE
+    })
 
-    if (!deleteRes) {
+    if (response.statusCode !== 204) {
+      // handle error
       return
     }
 
@@ -93,9 +96,11 @@ export const songSlice = (
   },
 
   async selectSong(id) {
-    const response = await api.put<SelectSongResponse>(`/song/select?id=${id}`)
+    const response = await api<SelectSongResponse>(`/song/${id}/select`, {
+      method: Methods.PATCH
+    })
 
-    if (!response) {
+    if (response.statusCode !== 204) {
       return
     }
 
@@ -105,23 +110,7 @@ export const songSlice = (
     }, "selectSong")
   },
 
-  async updateSongBeatConfig(bpm, beatOffset, beatAroundEnd, wavesurferRef) {
-    const { selectedSongId } = get()
-    if (selectedSongId === null) {
-      return
-    }
-
-    const updateResponse = await api.put<BeatConfigResponse>("/song/beat-config", {
-      id: selectedSongId,
-      bpm: bpm,
-      beatOffset: beatOffset,
-      beatAroundEnd: beatAroundEnd
-    })
-
-    if (!updateResponse) {
-      return
-    }
-
+  updateSongBeatConfig(bpm, beatOffset, beatAroundEnd) {
     setState((state) => {
       const song = state.songs.find((song) => song.id === state.selectedSongId) as DBSong
 
@@ -140,23 +129,6 @@ export const songSlice = (
       state.effects = state.effects.filter(
         (effect) => removedRegions.includes(effect.regionId) === false
       )
-
-      const { addRegion, updateRegionTime, selectRegion } = get()
-
-      renderBeatRegions(
-        wavesurferRef,
-        {
-          beatAroundEnd,
-          beatOffset,
-          bpm,
-          songId: selectedSongId
-        },
-        {
-          addRegion,
-          updateRegionTime,
-          selectRegion
-        }
-      )
     }, "updateSongBeatsConfig")
   },
 
@@ -169,23 +141,38 @@ export const songSlice = (
     }, "addRegion")
   },
 
-  async selectRegion(id) {
-    const { selectedSongId, songs } = get()
-
-    const song = songs.find((song) => song.id === selectedSongId)
-
-    if (!song || song.selectedRegionId === id) {
+  async selectRegion(selectedRegion, wavesurfer) {
+    const { selectedSongId } = get()
+    if (selectedSongId === null) {
       return
     }
 
-    const response = await api.put<SelectRegiongResponse>("/region/select", {
-      songId: song.id,
-      regionId: id
+    const response = await api<SelectRegiongResponse, SelectRegionSchema>(
+      `/region/${selectedRegion.id}/select`,
+      {
+        method: Methods.PATCH,
+        body: {
+          songId: selectedSongId
+        }
+      }
+    )
+
+    if (response.statusCode !== 204) {
+      return
+    }
+
+    for (const key in wavesurfer.regions.list) {
+      const _region = wavesurfer.regions.list[key]
+      if (_region.element.getAttribute("data-rangetype") === "effect-range") {
+        _region.update({
+          color: "rgba(0, 0, 255, 0.15)"
+        })
+      }
+    }
+
+    selectedRegion.update({
+      color: "rgba(255, 0, 0, 0.15)"
     })
-
-    if (!response) {
-      return
-    }
 
     setState((state) => {
       const song = state.songs.find((song) => song.id === state.selectedSongId)
@@ -194,10 +181,11 @@ export const songSlice = (
         return
       }
 
-      song.selectedRegionId = id
+      song.selectedRegionId = selectedRegion.id
     }, "selectRegion")
   },
 
+  // NEED TO SEPARATE THE SIDEEFFECT AFTER SUCCESFUL API CALL
   async removeSelectedRegion(wavesurferRef) {
     const { songs, selectedSongId } = get()
     const song = songs.find((song) => song.id === selectedSongId)
@@ -206,9 +194,10 @@ export const songSlice = (
       return
     }
 
-    const response = await api.delete<{}>(`/region?id=${song.selectedRegionId}`)
+    const response = await api(`/region/${song.selectedRegionId}`, { method: Methods.DELETE })
 
-    if (!response) {
+    if (response.statusCode !== 204) {
+      // handle errors
       return
     }
 
@@ -261,12 +250,17 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put<UpdateLastTimePositionResponse>("/song/last-time-position", {
-      time,
-      id: song.id
-    })
+    const response = await api<UpdateLastTimePositionResponse, LastTimePositionSchema>(
+      `/song/${song.id}/last-time-position`,
+      {
+        method: Methods.PATCH,
+        body: {
+          time
+        }
+      }
+    )
 
-    if (!response) {
+    if (response.statusCode !== 204) {
       return
     }
 
@@ -290,13 +284,15 @@ export const songSlice = (
       return
     }
 
-    const response = await api.put<UpdateVolumeResponse>(
-      "/song/volume",
-      { volume, id: song.id },
-      { "Content-Type": "application/json" }
-    )
+    const response = await api<UpdateVolumeResponse, VolumeSchema>(`/song/${song.id}/volume`, {
+      method: Methods.PATCH,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: { volume }
+    })
 
-    if (!response) {
+    if (response.statusCode !== 204) {
       return
     }
 

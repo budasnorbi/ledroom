@@ -3,12 +3,10 @@ import { AppModule } from "./app.module"
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger"
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {})
+  const app = await NestFactory.create(AppModule)
 
   app.enableCors({
-    origin: [process.env.FRONTEND_DOMAIN_FROM_PUBLIC],
-    allowedHeaders: ["content-type"],
-    credentials: true
+    origin: [process.env.FRONTEND_DOMAIN_FROM_PUBLIC]
   })
 
   const config = new DocumentBuilder()

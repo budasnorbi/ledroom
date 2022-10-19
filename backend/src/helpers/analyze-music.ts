@@ -1,6 +1,9 @@
 import * as MusicTempo from "music-tempo"
 
-const analyzeMusic = (context: any, songBuffer: Buffer): Promise<number> => {
+const analyzeMusic = (
+  context: any,
+  songBuffer: Buffer
+): Promise<{ bpm: number; beatOffset: number; beatAroundEnd: number }> => {
   return new Promise((res, rej) => {
     context.decodeAudioData(songBuffer, (decodedBuffer) => {
       try {
@@ -17,10 +20,17 @@ const analyzeMusic = (context: any, songBuffer: Buffer): Promise<number> => {
           audioData = decodedBuffer.getChannelData(0)
         }
         const musicTempo = new MusicTempo(audioData)
-        res(musicTempo)
-        //res(musicTempo)
+        res({
+          bpm: Math.round(musicTempo.tempo),
+          beatOffset: musicTempo.beats[0],
+          beatAroundEnd: musicTempo.beats[musicTempo.beats.length - 1]
+        })
       } catch (error) {
-        rej(error)
+        res({
+          bpm: 0,
+          beatOffset: 0,
+          beatAroundEnd: 0
+        })
       }
     })
   })

@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,21 +6,24 @@ import {
   HttpCode,
   Param,
   Post,
-  Put,
-  Query,
+  Patch,
   Res,
   StreamableFile,
   UploadedFile,
-  UseInterceptors,
-  UsePipes
+  UseInterceptors
 } from "@nestjs/common"
 import { FileInterceptor } from "@nestjs/platform-express"
 import * as fs from "fs"
 
 import type { Response } from "express"
-import { lastTimePositionSchema, LastTimePositionSchema } from "@dto/lastTimePosition.yup"
-import { updateBeatsSchema, UpdateBeatsSchema } from "@dto/updateBeats.yup"
-import { volumeSchema, VolumeSchema } from "@dto/volume.yup"
+import {
+  lastTimePositionSchema,
+  LastTimePositionSchema,
+  updateBeatsSchema,
+  UpdateBeatsSchema,
+  volumeSchema,
+  VolumeSchema
+} from "@dto/song.yup"
 import {
   UploadSongResponse,
   GetSongsResponse,
@@ -57,7 +59,6 @@ export class SongController {
     @Res({ passthrough: true }) res: Response
   ): Promise<StreamableFile> {
     const song = await this.songService.getSongPath(id)
-
     const file = fs.createReadStream(song.path)
 
     res.set({
@@ -73,35 +74,37 @@ export class SongController {
     return this.songService.removeSong(id)
   }
 
-  @Put("beat-config")
+  @Patch("/:songId/beat-config")
   @HttpCode(204)
-  @UsePipes(new YupValidationPipe(updateBeatsSchema))
-  updateSongBeats(@Body() body: UpdateBeatsSchema): Promise<BeatConfigResponse> {
-    return this.songService.updateSongBeatConfig(body)
+  updateSongBeats(
+    @Param("songId") songId: number,
+    @Body(new YupValidationPipe(updateBeatsSchema)) body: UpdateBeatsSchema
+  ): Promise<BeatConfigResponse> {
+    return this.songService.updateSongBeatConfig(songId, body)
   }
 
-  @Put("select")
+  @Patch("/:songId/select")
   @HttpCode(204)
-  updateSongSelected(@Query("id") id: number): Promise<SelectSongResponse> {
-    if (isNaN(id)) {
-      throw new BadRequestException("Hibás songId")
-    }
-    return this.songService.updateSelectedSong(id)
+  updateSongSelected(@Param("songId") songId: number): Promise<SelectSongResponse> {
+    return this.songService.updateSelectedSong(songId)
   }
 
-  @Put("last-time-position")
-  @UsePipes(new YupValidationPipe(lastTimePositionSchema))
+  @Patch("/:songId/last-time-position")
   @HttpCode(204)
   updateLastTimePosition(
-    @Body() body: LastTimePositionSchema
+    @Param("songId") songId: number,
+    @Body(new YupValidationPipe(lastTimePositionSchema)) body: LastTimePositionSchema
   ): Promise<UpdateLastTimePositionResponse> {
-    return this.songService.updateLastTimePosition(body)
+    console.log(songId)
+    return this.songService.updateLastTimePosition(songId, body)
   }
 
-  @Put("volume")
-  @UsePipes(new YupValidationPipe(volumeSchema))
+  @Patch("/:songId/volume")
   @HttpCode(204)
-  updateVolume(@Body() body: VolumeSchema): Promise<UpdateVolumeResponse> {
-    return this.songService.updateVolume(body)
+  updateVolume(
+    @Param("songId") songId: number,
+    @Body(new YupValidationPipe(volumeSchema)) body: VolumeSchema
+  ): Promise<UpdateVolumeResponse> {
+    return this.songService.updateVolume(songId, body)
   }
 }

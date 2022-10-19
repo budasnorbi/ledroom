@@ -28,7 +28,7 @@ export const RegionEffectEditor: FC<Props> = ({ selectRegionId, wavesurferRef })
   const removeSelectedRegion = useStore.use.removeSelectedRegion()
 
   return (
-    <div className="px-2 py-3">
+    <div className="px-2">
       <div>
         <button
           onClick={() => removeSelectedRegion(wavesurferRef.current)}
@@ -39,7 +39,7 @@ export const RegionEffectEditor: FC<Props> = ({ selectRegionId, wavesurferRef })
         </button>
       </div>
       <div>
-        <label htmlFor="region-name" className="block mb-2">
+        <label htmlFor="region-name" className="mb-2">
           Region Name
         </label>
         <input type="text" id="region-name" className="block border-solid rounded-md border-2" />
