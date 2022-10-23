@@ -9,7 +9,7 @@ import type { UpdateRegionSchema, AddRegionSchema } from "@backend/region.yup"
 import type { DBRegion } from "@backend/db-entities"
 import type { Region } from "wavesurfer.js/src/plugin/regions"
 
-export const renderBeatRegions = (
+export const renderRegions = (
   wavesurfer: WaveSurfer,
   {
     bpm,
@@ -39,16 +39,8 @@ export const renderBeatRegions = (
   wavesurfer.regions.unAll()
 
   const beatInterval = 1 / (bpm / 60)
-  const beatOccurences = Math.trunc(wavesurfer.getDuration() / beatInterval)
-  let lastRegionEndTime = 0
-
-  for (let i = 0; i < beatOccurences; i++) {
-    if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
-      lastRegionEndTime = (i - 1) * beatInterval + beatInterval + beatOffset
-      break
-    }
-  }
-
+  const beatOccurences = Math.floor(Math.trunc(wavesurfer.getDuration() / beatInterval) / 4) * 4
+  const lastRegionEndTime = beatOffset + beatOccurences * beatInterval
   let handleType: undefined | "both" | "left" | "right"
   let leftHandleInitValue = 0
   let rightHandleInitValue = 0
@@ -92,6 +84,7 @@ export const renderBeatRegions = (
           lastRegionEndTime - regionWidth
         )
         endTime = startTime + regionWidth
+
         break
       }
       case "left": {
@@ -165,10 +158,6 @@ export const renderBeatRegions = (
 
   // Generating beat ranges
   for (let i = 0; i < beatOccurences; i++) {
-    if (beatInterval * i + beatOffset > beatAroundEnd && i % 4 === 0) {
-      break
-    }
-
     const regionId = i.toString()
     const startTime = i * beatInterval + beatOffset
     const endTime = i * beatInterval + beatInterval + beatOffset

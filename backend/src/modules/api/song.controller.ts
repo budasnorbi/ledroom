@@ -95,7 +95,6 @@ export class SongController {
     @Param("songId") songId: number,
     @Body(new YupValidationPipe(lastTimePositionSchema)) body: LastTimePositionSchema
   ): Promise<UpdateLastTimePositionResponse> {
-    console.log(songId)
     return this.songService.updateLastTimePosition(songId, body)
   }
 

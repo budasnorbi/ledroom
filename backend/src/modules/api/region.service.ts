@@ -10,6 +10,7 @@ import type {
   UpdateRegionNameSchema,
   UpdateRegionSchema
 } from "@dto/region.yup"
+import { Region } from "@entities/Region.entity"
 
 @Injectable()
 export class RegionService {
@@ -47,13 +48,15 @@ export class RegionService {
   }
 
   async deleteRegion(regionId: string) {
-    const region = await this.regionsRepository.findOne({
+    const region: Pick<Region, "songId"> = await this.regionsRepository.findOne({
       where: { id: regionId },
       select: ["songId"]
     })
 
     await this.songRepository.update({ id: region.songId }, { selectedRegionId: null })
-    await this.regionsRepository.delete({ id: regionId })
+    await this.regionsRepository
+      .delete({ id: regionId, songId: region.songId })
+      .then((res) => console.log(res))
   }
 
   async updateRegionName(regionId: string, body: UpdateRegionNameSchema) {

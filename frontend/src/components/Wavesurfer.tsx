@@ -11,7 +11,7 @@ import {
   timeInterval
 } from "@utils/wavesurfer"
 
-import { renderBeatRegions } from "@utils/renderBeatRegions"
+import { renderRegions } from "@utils/renderRegions"
 import * as socketApi from "@api/socket"
 
 // let handleSpacePress: any
@@ -124,7 +124,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({
         window.removeEventListener("keydown", handleSpacePress)
         window.addEventListener("keydown", handleSpacePress) */
 
-      renderBeatRegions(
+      renderRegions(
         wavesurfer,
         {
           beatAroundEnd,

@@ -6,7 +6,7 @@ import { Methods } from "@type/api"
 import { api } from "@api/web"
 import { BeatConfigResponse } from "@backend/endpoints"
 import { UpdateBeatsSchema } from "@backend/song.yup"
-import { renderBeatRegions } from "@utils/renderBeatRegions"
+import { renderRegions } from "@utils/renderRegions"
 
 interface Props extends Pick<DBSong, "bpm" | "beatOffset" | "beatAroundEnd"> {
   wavesurferRef: MutableRefObject<WaveSurfer>
@@ -68,7 +68,7 @@ const BeatController: FC<Props> = memo(
       }
 
       updateSongBeatConfig(bpm, beatOffset, beatAroundEnd)
-      renderBeatRegions(
+      renderRegions(
         wavesurferRef.current,
         {
           beatAroundEnd,

@@ -47,7 +47,7 @@ export class RegionController {
 
   @Delete(":regionId")
   @HttpCode(204)
-  delete(@Param("id") regionId: string) {
+  delete(@Param("regionId") regionId: string) {
     return this.regionSerice.deleteRegion(regionId)
   }
 
