@@ -1,7 +1,0 @@
-Dockerfile
-npm-debug.log
-README.md
-.git
-.DS_Store
-node_modules
-.next
