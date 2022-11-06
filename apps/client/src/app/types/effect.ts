@@ -14,5 +14,3 @@ export interface Blink {
 export interface ClientStepEffect extends Omit<StepEffect, "region"> {
   type: "step";
 }
-
-export type ClientStepEffectKeys = keyof ClientStepEffect;

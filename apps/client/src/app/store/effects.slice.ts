@@ -3,7 +3,7 @@ import { StepEffectSchema } from "@ledroom2/validations";
 import { StoreApi } from "zustand";
 import { api } from "../api/web";
 import { Methods } from "../types/api";
-import { ClientStepEffect, ClientStepEffectKeys } from "../types/effect";
+import { ClientStepEffect } from "../types/effect";
 import { Store, EffectSlice } from "../types/store";
 
 export const effectInitialState = {

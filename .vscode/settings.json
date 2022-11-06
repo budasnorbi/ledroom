@@ -23,6 +23,7 @@
     "**/postcss.config.js": true,
     "**/.browserslistrc": true,
     "**/.babelrc": true,
-    "**/*.md": true
+    "**/*.md": true,
+    "tools": true
   }
 }

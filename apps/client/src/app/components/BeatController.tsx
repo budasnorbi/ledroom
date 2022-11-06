@@ -1,16 +1,15 @@
-import { ChangeEvent, FC, useState, memo, MutableRefObject } from "react"
+import { ChangeEvent, FC, useState, memo, MutableRefObject } from "react";
 
-import { useStore } from "../store/store"
-import { DBSong } from "@ledroom2/types"
-import { Methods } from "../types/api"
-import { api } from "../api/web"
-import { BeatConfigResponse } from "@ledroom2/types"
-import { UpdateBeatsSchema } from "@ledroom2/validations"
-import { renderRegions } from "../utils/renderRegions"
+import { useStore } from "../store/store";
+import { DBSong } from "@ledroom2/types";
+import { Methods } from "../types/api";
+import { api } from "../api/web";
+import { OptionalSongSchema } from "@ledroom2/validations";
+import { renderRegions } from "../utils/renderRegions";
 
 interface Props extends Pick<DBSong, "bpm" | "beatOffset" | "beatAroundEnd"> {
-  wavesurferRef: MutableRefObject<WaveSurfer>
-  selectedSongId: number
+  wavesurferRef: MutableRefObject<WaveSurfer>;
+  selectedSongId: number;
 }
 
 const BeatController: FC<Props> = memo(
@@ -18,71 +17,73 @@ const BeatController: FC<Props> = memo(
     const [songBeatConfig, setSongBeatConfig] = useState({
       bpm,
       beatOffset,
-      beatAroundEnd
-    })
+      beatAroundEnd,
+    });
 
-    const updateSongBeatConfig = useStore.use.updateSongBeatConfig()
-    const addRegion = useStore.use.addRegion()
-    const selectRegion = useStore.use.selectRegion()
-    const updateRegionTime = useStore.use.updateRegionTime()
+    const updateSongBeatConfig = useStore.use.updateSongBeatConfig();
+    const addRegion = useStore.use.addRegion();
+    const selectRegion = useStore.use.selectRegion();
+    const updateRegionTime = useStore.use.updateRegionTime();
 
     const handleBPM = (event: ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.valueAsNumber
+      const value = event.target.valueAsNumber;
       if (!isNaN(value)) {
-        setSongBeatConfig((prevState) => ({ ...prevState, bpm: value }))
+        setSongBeatConfig((prevState) => ({ ...prevState, bpm: value }));
       }
-    }
+    };
 
     const handleBeatOffset = (event: ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.valueAsNumber
+      const value = event.target.valueAsNumber;
       if (!isNaN(value)) {
-        setSongBeatConfig((prevState) => ({ ...prevState, beatOffset: value }))
+        setSongBeatConfig((prevState) => ({ ...prevState, beatOffset: value }));
       }
-    }
+    };
 
     const handleBeatEndTime = (event: ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.valueAsNumber
+      const value = event.target.valueAsNumber;
       if (!isNaN(value)) {
-        setSongBeatConfig((prevState) => ({ ...prevState, beatAroundEnd: value }))
+        setSongBeatConfig((prevState) => ({
+          ...prevState,
+          beatAroundEnd: value,
+        }));
       }
-    }
+    };
 
     const handleRenderBeats = async () => {
-      const { bpm, beatAroundEnd, beatOffset } = songBeatConfig
+      const { bpm, beatAroundEnd, beatOffset } = songBeatConfig;
 
-      const response = await api<BeatConfigResponse, UpdateBeatsSchema>(
-        `/song/${selectedSongId}/beat-config`,
-        {
-          method: Methods.PATCH,
-          body: {
-            bpm,
-            beatOffset,
-            beatAroundEnd
-          }
-        }
-      )
+      const response = await api<
+        { statusCode: 204 },
+        Partial<OptionalSongSchema>
+      >(`/song/${selectedSongId}`, {
+        method: Methods.PATCH,
+        body: {
+          bpm,
+          beatOffset,
+          beatAroundEnd,
+        },
+      });
 
       if (response.statusCode !== 204) {
-        // handle error here
-        return
+        return;
       }
 
-      updateSongBeatConfig(bpm, beatOffset, beatAroundEnd)
+      updateSongBeatConfig(bpm, beatOffset, beatAroundEnd);
       renderRegions(
         wavesurferRef.current,
         {
           beatAroundEnd,
           beatOffset,
           bpm,
-          songId: selectedSongId
+          songId: selectedSongId,
         },
         {
           addRegion,
           updateRegionTime,
-          selectRegion
+          selectRegion,
         }
-      )
-    }
+      );
+    };
 
     const isRenderButtonDisabled =
       songBeatConfig.bpm <= 0 ||
@@ -90,7 +91,7 @@ const BeatController: FC<Props> = memo(
       songBeatConfig.beatOffset < 0 ||
       (songBeatConfig.bpm === bpm &&
         songBeatConfig.beatAroundEnd === beatAroundEnd &&
-        songBeatConfig.beatOffset === beatOffset)
+        songBeatConfig.beatOffset === beatOffset);
 
     return (
       <div className="flex items-center ml-auto">
@@ -138,9 +139,9 @@ const BeatController: FC<Props> = memo(
           Render beats
         </button>
       </div>
-    )
+    );
   }
-)
+);
 
-BeatController.displayName = "BeatController"
-export default BeatController
+BeatController.displayName = "BeatController";
+export default BeatController;

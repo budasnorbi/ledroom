@@ -1,18 +1,14 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { RegionsRepository } from "../../repositories/Regions.repository";
-import { SongsRepository } from "../../repositories/Songs.repository";
-import { DBSong } from "@ledroom2/types";
-import * as path from "path";
-
 import * as asyncFs from "fs/promises";
 import * as audioApi from "web-audio-api";
+import * as path from "path";
 
+import { RegionsRepository } from "../../repositories/Regions.repository";
+import { SongsRepository } from "../../repositories/Songs.repository";
+
+import { DBSong } from "@ledroom2/types";
 import analyzeMusic from "../../helpers/analyze-music";
-import {
-  VolumeSchema,
-  LastTimePositionSchema,
-  UpdateBeatsSchema,
-} from "@ledroom2/validations";
+import { OptionalSongSchema } from "@ledroom2/validations";
 
 @Injectable()
 export class SongService {
@@ -66,41 +62,28 @@ export class SongService {
     return { songs, selectedRegionId };
   }
 
-  async getSongPath(id: number) {
-    return this.songRepository.findOne({ where: { id } });
+  async getSong(id: number) {
+    const song = await this.songRepository.findOne({
+      where: { id },
+    });
+
+    if (!song) {
+      throw new BadRequestException("There is no song with this id");
+    }
+
+    return song;
   }
 
   async removeSong(id: number) {
-    const song = await this.getSongPath(id);
+    const song = await this.getSong(id);
     await this.songRepository.delete({ id });
     await asyncFs.unlink(song.path);
   }
 
-  async updateSongBeatConfig(songId: number, body: UpdateBeatsSchema) {
-    await this.songRepository.update({ id: songId }, body);
-
-    // Clearing added regions
-    await this.regionsRepository.delete({ songId });
-  }
-
-  async updateLastTimePosition(songId: number, body: LastTimePositionSchema) {
-    const { time } = body;
-    await this.songRepository.update(
-      { id: songId },
-      { lastTimePosition: time }
-    );
-  }
-
-  async updateVolume(songId: number, body: VolumeSchema) {
-    const { volume } = body;
-    await this.songRepository.update({ id: songId }, { volume });
-  }
-
-  async updateSelectedSong(songId: number) {
-    if (isNaN(songId)) {
-      throw new BadRequestException("Hibás songId");
+  async patchSong(songId: number, body: OptionalSongSchema) {
+    if ("selected" in body) {
+      await this.songRepository.update({ selected: true }, { selected: false });
     }
-    await this.songRepository.update({ selected: true }, { selected: false });
-    await this.songRepository.update({ id: songId }, { selected: true });
+    await this.songRepository.update({ id: songId }, body);
   }
 }

@@ -2,23 +2,10 @@ import { StoreApi } from "zustand";
 import type { Store, SongsSlice } from "../types/store";
 
 import { api } from "../api/web";
-import { updateRegions } from "../api/socket";
 
-import {
-  DBSong,
-  SelectRegiongResponse,
-  SelectSongResponse,
-  UpdateLastTimePositionResponse,
-  UpdateVolumeResponse,
-} from "@ledroom2/types";
-import type {
-  SelectRegionSchema,
-  VolumeSchema,
-  LastTimePositionSchema,
-  StepEffectSchema,
-} from "@ledroom2/validations";
+import { DBSong, PatchSongResponse } from "@ledroom2/types";
+import type { OptionalSongSchema } from "@ledroom2/validations";
 import { Methods } from "../types/api";
-import { StepEffect } from "@ledroom2/models";
 
 export const songInitialState = {
   songs: [],
@@ -71,7 +58,6 @@ export const songSlice = (
     });
 
     if (response.statusCode !== 204) {
-      // handle error
       return;
     }
 
@@ -104,9 +90,15 @@ export const songSlice = (
   },
 
   async selectSong(id) {
-    const response = await api<SelectSongResponse>(`/song/${id}/select`, {
-      method: Methods.PATCH,
-    });
+    const response = await api<PatchSongResponse, Partial<OptionalSongSchema>>(
+      `/song/${id}`,
+      {
+        method: Methods.PATCH,
+        body: {
+          selected: true,
+        },
+      }
+    );
 
     if (response.statusCode !== 204) {
       return;
@@ -153,15 +145,15 @@ export const songSlice = (
       return;
     }
 
-    const response = await api<
-      UpdateLastTimePositionResponse,
-      LastTimePositionSchema
-    >(`/song/${song.id}/last-time-position`, {
-      method: Methods.PATCH,
-      body: {
-        time,
-      },
-    });
+    const response = await api<PatchSongResponse, Partial<OptionalSongSchema>>(
+      `/song/${selectedSongId}`,
+      {
+        method: Methods.PATCH,
+        body: {
+          lastTimePosition: time,
+        },
+      }
+    );
 
     if (response.statusCode !== 204) {
       return;
@@ -187,13 +179,10 @@ export const songSlice = (
       return;
     }
 
-    const response = await api<UpdateVolumeResponse, VolumeSchema>(
-      `/song/${song.id}/volume`,
+    const response = await api<PatchSongResponse, Partial<OptionalSongSchema>>(
+      `/song/${song.id}`,
       {
         method: Methods.PATCH,
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: { volume },
       }
     );
