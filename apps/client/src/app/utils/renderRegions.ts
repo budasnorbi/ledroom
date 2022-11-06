@@ -129,8 +129,8 @@ export const renderRegions = (
 
     for (const effectRegion of effectRegions) {
       if (
-        (effectRegion.start >= startTime && effectRegion.end >= startTime) ||
-        (effectRegion.end >= endTime && effectRegion.end >= endTime)
+        (effectRegion.start > startTime && effectRegion.end < startTime) ||
+        (effectRegion.start < endTime && effectRegion.end > endTime)
       ) {
         region.update({
           start: leftHandleInitValue,
