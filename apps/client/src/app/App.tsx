@@ -83,7 +83,7 @@ function Dashboard() {
         />
       )}
 
-      {selectedSong && selectedSong.selectedRegionId && wavesurferReady && (
+      {selectedSong?.selectedRegionId && (
         <EffectController
           wavesurferRef={wavesurferRef as MutableRefObject<WaveSurfer>}
           selectedRegionId={selectedSong.selectedRegionId}

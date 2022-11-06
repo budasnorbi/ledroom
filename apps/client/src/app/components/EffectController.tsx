@@ -1,16 +1,6 @@
-import {
-  ChangeEvent,
-  FC,
-  MutableRefObject,
-  useCallback,
-  useState,
-} from "react";
+import { ChangeEvent, FC, MutableRefObject, useEffect, useState } from "react";
 import { useStore } from "../store/store";
 import { Delete } from "./icons/delete";
-import { api } from "../api/web";
-import { Methods } from "../types/api";
-import { StepEffectSchema } from "@ledroom2/validations";
-import { AddStepEffect } from "@ledroom2/types";
 import { StepEffectForm } from "./forms/StepEffect";
 
 interface Props {
@@ -35,7 +25,10 @@ interface Props {
     }, 350)
   } */
 
-export const EffectController: FC<Props> = ({ wavesurferRef }) => {
+export const EffectController: FC<Props> = ({
+  wavesurferRef,
+  selectedRegionId,
+}) => {
   const selectOrAddEffect = useStore.use.selectOrAddEffect();
   const [selectedEffectOption, selectEffectOption] = useState<"" | "step">("");
   const selectedEffect = useStore((state) => {
@@ -64,6 +57,9 @@ export const EffectController: FC<Props> = ({ wavesurferRef }) => {
     selectOrAddEffect(type);
   };
 
+  useEffect(() => {
+    return () => selectEffectOption("");
+  }, [selectedRegionId]);
   return (
     <div className="px-2">
       <div>
