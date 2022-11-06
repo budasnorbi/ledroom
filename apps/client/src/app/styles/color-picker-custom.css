@@ -1,0 +1,31 @@
+.chrome-picker .flexbox-fix:has(.flexbox-fix) {
+  display: none !important;
+}
+
+.chrome-picker .flexbox-fix:first-child > div:nth-child(2) > div:first-child {
+  height: 14px !important;
+  padding: 0 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.chrome-picker .flexbox-fix:first-child > div:nth-child(2) > div:last-child {
+  height: 14px !important;
+}
+
+.chrome-picker
+  .flexbox-fix:first-child
+  > div:nth-child(2)
+  > div:last-child
+  > div
+  > div
+  > div {
+  top: 2px !important;
+}
+
+.chrome-picker .hue-horizontal {
+  padding: 0 0 !important;
+}
+
+.chrome-picker .hue-horizontal > div {
+  top: 2px;
+}

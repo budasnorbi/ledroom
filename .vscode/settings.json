@@ -1,9 +1,6 @@
-// Workspace settings
 {
-  // The following will hide the js and map files in the editor
-  /* "files.exclude": {
-    "**/node_modules": true,
-    "frontend/.next": true,
+  "files.exclude": {
+    "node_modules": true,
     "**/yarn.lock": true,
     "**/yarn-error.log": true,
     "**/.dockerignore": true,
@@ -12,6 +9,20 @@
     "**/next-env.d.ts": true,
     "**/next.config.js": true,
     "**/.eslintrc.js": true,
-    "**/nest-cli.json": true
-  } */
+    "**/nest-cli.json": true,
+    "**/project.json": false,
+    "**/tsconfig.**.json": true,
+    "**/tsconfig.json": true,
+    "**/jest.config.ts": true,
+    "**/babel.config.json": true,
+    "**/jest.preset.js": true,
+    "**/nx.json": true,
+    "**/.gitignore": true,
+    "**/.gitkeep": true,
+    "**/tailwind.config.js": true,
+    "**/postcss.config.js": true,
+    "**/.browserslistrc": true,
+    "**/.babelrc": true,
+    "**/*.md": true
+  }
 }

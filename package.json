@@ -9,7 +9,7 @@
     "lint": "nx workspace-lint && npx nx run-many --all --target=lint --parallel",
     "start:client": "env-cmd -f ./env/.env.development nx run client:serve",
     "start:api": "env-cmd -f ./env/.env.development nx run api:serve",
-    "start:both": "nx run client:serve api:serve"
+    "start:both": "env-cmd -f ./env/.env.development nx run-many --parallel --target=serve --projects=client,api"
   },
   "private": true,
   "dependencies": {
@@ -24,7 +24,6 @@
     "autoprefixer": "^10.4.13",
     "core-js": "^3.6.5",
     "env-cmd": "^10.1.0",
-    "formik": "^2.2.9",
     "g.js": "^0.5.0",
     "immer": "^9.0.15",
     "lodash": "^4.17.21",
@@ -69,6 +68,7 @@
     "@types/multer": "^1.4.7",
     "@types/node": "18.7.1",
     "@types/react": "18.0.20",
+    "@types/react-color": "^3.0.6",
     "@types/react-dom": "18.0.6",
     "@types/supertest": "^2.0.12",
     "@types/wavesurfer.js": "^6.0.3",

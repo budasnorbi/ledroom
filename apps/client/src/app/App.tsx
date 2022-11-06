@@ -1,61 +1,55 @@
-import { MutableRefObject, useRef, useState, useEffect } from "react"
-import shallow from "zustand/shallow"
+import { MutableRefObject, useRef, useState, useEffect } from "react";
+import shallow from "zustand/shallow";
 
-import BeatController from "./components/BeatController"
-import WavesurferController from "./components/WavesurferController"
-import { RegionEffectController } from "./components/RegionEffectController"
-import { SongLoadController } from "./components/SongLoadController"
-import { useStore } from "./store/store"
-import { api } from "./api/web"
-import { closeSocket } from "./api/socket"
-import WaveSurfer from "./components/Wavesurfer"
-import { GetSongsResponse } from "@ledroom2/types"
-
-enum Methods {
-  POST = "POST",
-  GET = "GET",
-  PATCH = "PATCH",
-  DELETE = "DELETE"
-}
+import BeatController from "./components/BeatController";
+import WavesurferController from "./components/WavesurferController";
+import { EffectController } from "./components/EffectController";
+import { SongLoadController } from "./components/SongLoadController";
+import { useStore } from "./store/store";
+import { api } from "./api/web";
+import { closeSocket } from "./api/socket";
+import WaveSurfer from "./components/Wavesurfer";
+import { GetSongsResponse } from "@ledroom2/types";
+import { Methods } from "./types/api";
 
 function Dashboard() {
-  const wavesurferRef = useRef<WaveSurfer | null>(null)
-  const [musicCurrentTime, setMusicCurrentTime] = useState(0)
+  const wavesurferRef = useRef<WaveSurfer | null>(null);
+  const [musicCurrentTime, setMusicCurrentTime] = useState(0);
 
   const { addSongs, resetStore, selectedSongId, wavesurferReady } = useStore(
     (state) => ({
       addSongs: state.addSongs,
       resetStore: state.resetStore,
       wavesurferReady: state.wavesurferReady,
-      selectedSongId: state.selectedSongId
+      selectedSongId: state.selectedSongId,
     }),
     shallow
-  )
+  );
 
   const selectedSong = useStore((state) => {
-    const [song] = state.songs.filter((song) => song.id === selectedSongId)
-    return song ?? null
-  })
+    const [song] = state.songs.filter((song) => song.id === selectedSongId);
+    return song ?? null;
+  });
 
   useEffect(() => {
-    const abortController = new AbortController()
+    const abortController = new AbortController();
     api<GetSongsResponse>("/song", {
       method: Methods.GET,
-      signal: abortController.signal
+      signal: abortController.signal,
     }).then((response) => {
       if (response.statusCode !== 200) {
-        return
+        return;
       }
 
-      addSongs(response.data)
-    })
+      addSongs(response.data);
+    });
 
     return () => {
-      abortController.abort()
-      closeSocket()
-      resetStore()
-    }
-  }, [addSongs, resetStore])
+      abortController.abort();
+      closeSocket();
+      resetStore();
+    };
+  }, [addSongs, resetStore]);
 
   return (
     <div>
@@ -90,13 +84,13 @@ function Dashboard() {
       )}
 
       {selectedSong && selectedSong.selectedRegionId && wavesurferReady && (
-        <RegionEffectController
+        <EffectController
           wavesurferRef={wavesurferRef as MutableRefObject<WaveSurfer>}
-          selectRegionId={selectedSong.selectedRegionId}
+          selectedRegionId={selectedSong.selectedRegionId}
         />
       )}
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;
