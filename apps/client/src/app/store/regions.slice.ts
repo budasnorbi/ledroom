@@ -1,5 +1,9 @@
-import { DBSong, SelectRegiongResponse } from "@ledroom2/types";
-import { SelectRegionSchema } from "@ledroom2/validations";
+import {
+  DBSong,
+  SelectRegiongResponse,
+  PatchRegionResponse,
+} from "@ledroom2/types";
+import { PatchRegionSchema } from "@ledroom2/validations";
 import { StoreApi } from "zustand";
 import { updateRegions } from "../api/socket";
 import { api } from "../api/web";
@@ -32,8 +36,8 @@ export const regionsSlice = (
       return;
     }
 
-    const response = await api<SelectRegiongResponse, SelectRegionSchema>(
-      `/region/${selectedRegion.id}/select`,
+    const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
+      `/region/${selectedRegion.id}`,
       {
         method: Methods.PATCH,
         body: {

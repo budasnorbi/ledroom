@@ -1,7 +1,14 @@
 import { StepEffectSchema, stepEffectSchema } from "@ledroom2/validations";
 import { ChromePicker, ColorResult } from "react-color";
 
-import { ChangeEvent, FC, useCallback, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { ClientStepEffect } from "../../types/effect";
 import { useStore } from "../../store/store";
 
@@ -42,9 +49,14 @@ export const StepEffectForm: FC<Props> = (props) => {
   if (!effect) {
     return null;
   }
-  console.log(effect);
 
-  const { barCount, speed, direction, rangeStart, rangeEnd } = effect;
+  const { barCount, speed, direction, rangeStart, rangeEnd, regionId } = effect;
+
+  useEffect(() => {
+    setLedColors(effect.ledColors);
+    setBarColor(effect.barColor);
+    setClipColor(effect.clipColor);
+  }, [regionId]);
 
   // LEDCOLORS CHANGE
   const onLedColorsChange = useCallback((color: ColorResult) => {

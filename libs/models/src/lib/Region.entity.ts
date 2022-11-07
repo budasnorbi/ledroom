@@ -14,9 +14,6 @@ export class Region {
   @Column("varchar", { primary: true, length: 21 })
   id: string;
 
-  @Column("varchar", { default: () => "''" })
-  name: string;
-
   @Column()
   songId: number;
 
@@ -32,6 +29,9 @@ export class Region {
   })
   endTime: number;
 
+  @Column("varchar", { length: 21, default: null })
+  selectedEffect: string | null;
+
   @OneToOne(() => StepEffect, (stepEffect) => stepEffect.region, {
     onDelete: "CASCADE",
   })
@@ -40,7 +40,6 @@ export class Region {
 
   @ManyToOne(() => Song, (song) => song.regions, {
     onDelete: "CASCADE",
-    cascade: true,
   })
   @JoinColumn({ name: "songId" })
   song: Song;

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   HttpCode,
+  Param,
   Patch,
   Post,
   UnprocessableEntityException,
@@ -49,12 +50,13 @@ export class EffectController {
     return this.effectService.addStepEffect(body);
   }
 
-  @Patch("step")
+  @Patch("/step/:stepId")
   @HttpCode(204)
   patchStepEffect(
+    @Param("stepId") stepId: string,
     @Body(new YupValidationPipe(partialStepEffectSchema))
     body: PartialStepEffectSchema
   ) {
-    return this.effectService.patchStepEffect(body);
+    return this.effectService.patchStepEffect(stepId, body);
   }
 }

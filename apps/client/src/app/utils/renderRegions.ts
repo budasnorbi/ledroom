@@ -3,12 +3,9 @@ import { clamp } from "./clamp";
 import { api } from "../api/web";
 import { Methods } from "../types/api";
 
-import type { AddRegionResponse, UpdateRegiongResponse } from "@ledroom2/types";
+import type { AddRegionResponse, PatchRegionResponse } from "@ledroom2/types";
 import type { AddRegion, SelectRegion, UpdateRegionTime } from "../types/store";
-import type {
-  UpdateRegionSchema,
-  AddRegionSchema,
-} from "@ledroom2/validations";
+import type { PatchRegionSchema, AddRegionSchema } from "@ledroom2/validations";
 import type { DBRegion } from "@ledroom2/types";
 import type { Region } from "wavesurfer.js/src/plugin/regions";
 
@@ -140,7 +137,7 @@ export const renderRegions = (
       }
     }
 
-    const response = await api<UpdateRegiongResponse, UpdateRegionSchema>(
+    const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
       `/region/${region.id}`,
       {
         method: Methods.PATCH,
@@ -230,7 +227,7 @@ export const renderRegions = (
         songId,
         startTime: region.start,
         endTime: region.end,
-        name: "",
+        selectedEffect: null,
       });
 
       const effectRegion = wavesurfer.regions.add({

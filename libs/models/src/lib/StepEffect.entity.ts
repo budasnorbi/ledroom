@@ -35,7 +35,7 @@ export class StepEffect {
   rangeEnd: number;
 
   @OneToOne(() => Region, (region) => region.stepEffect, {
-    cascade: true,
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   region: number;

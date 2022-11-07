@@ -46,7 +46,6 @@ const optionalRgbColor = yup
   });
 
 export const partialStepEffectSchema = yup.object({
-  id: id.required(),
   regionId: regionId.required(),
   ledColors: optionalRgbColor,
   barColor: optionalRgbColor,

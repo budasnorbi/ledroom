@@ -1,32 +1,22 @@
-import * as yup from "yup"
+import * as yup from "yup";
 
-const name = yup.string().required()
-const songId = yup.number().required()
-const startTime = yup.number().required()
-const endTime = yup.number().required()
+const songId = yup.number();
+const startTime = yup.number();
+const endTime = yup.number();
+const selectedEffect = yup.string().length(21);
 
 export const addRegionSchema = yup.object({
-  songId,
-  startTime,
-  endTime
-})
+  songId: songId.required(),
+  startTime: startTime.required(),
+  endTime: endTime.required(),
+});
 
-export const selectRegionSchema = yup.object({
-  songId
-})
+export const patchRegionSchema = yup.object({
+  songId: songId.optional(),
+  startTime: startTime.optional(),
+  endTime: endTime.optional(),
+  selectedEffect: selectedEffect.nullable(),
+});
 
-export const updateRegionSchema = yup.object({
-  songId,
-  startTime,
-  endTime
-})
-
-export const updateRegionNameSchema = yup.object({
-  songId,
-  name
-})
-
-export type UpdateRegionNameSchema = yup.InferType<typeof updateRegionNameSchema>
-export type AddRegionSchema = yup.InferType<typeof addRegionSchema>
-export type UpdateRegionSchema = yup.InferType<typeof updateRegionSchema>
-export type SelectRegionSchema = yup.InferType<typeof selectRegionSchema>
+export type AddRegionSchema = yup.InferType<typeof addRegionSchema>;
+export type PatchRegionSchema = yup.InferType<typeof patchRegionSchema>;

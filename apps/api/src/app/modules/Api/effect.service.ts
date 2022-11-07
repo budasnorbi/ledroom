@@ -35,7 +35,7 @@ export class EffectService {
     return { id };
   }
 
-  async patchStepEffect(body: PartialStepEffectSchema) {
+  async patchStepEffect(id: string, body: PartialStepEffectSchema) {
     if (!isNaN(body.rangeEnd) && !isNaN(body.rangeStart)) {
       if (body.rangeStart >= body.rangeEnd) {
         throw new BadRequestException(
@@ -52,7 +52,7 @@ export class EffectService {
     if (!isNaN(body.rangeStart)) {
       const effect = await this.stepEffectRepository
         .findOne({
-          where: { id: body.id, regionId: body.regionId },
+          where: { id, regionId: body.regionId },
         })
         .catch((err) => {
           console.log(err);
@@ -73,7 +73,7 @@ export class EffectService {
     if (!isNaN(body.rangeEnd)) {
       const effect = await this.stepEffectRepository
         .findOne({
-          where: { id: body.id, regionId: body.regionId },
+          where: { id, regionId: body.regionId },
         })
         .catch((err) => {
           console.log(err);
@@ -91,9 +91,9 @@ export class EffectService {
       }
     }
 
-    const { id, regionId, ...updateProperties } = body;
+    const { regionId, ...restBody } = body;
     await this.stepEffectRepository
-      .update({ id, regionId }, updateProperties)
+      .update({ id, regionId }, restBody)
       .catch((err) => {
         console.log(err);
         throw new InternalServerErrorException();
