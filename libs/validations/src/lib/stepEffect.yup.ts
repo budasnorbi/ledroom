@@ -9,20 +9,18 @@ const rgbColor = yup.object({
 });
 
 const regionId = yup.string().length(21);
-const ledColors = rgbColor;
 const barColor = rgbColor;
 const clipColor = rgbColor;
 const speed = yup.number().min(1).max(255);
-const barCount = yup.number().min(1).max(826);
+const barCount = yup.number().min(1).max(900);
 const direction = yup.string().oneOf(["left", "right"]) as yup.StringSchema<
   "left" | "right"
 >;
-const rangeStart = yup.number().min(0).max(826);
-const rangeEnd = yup.number().min(0).max(826);
+const rangeStart = yup.number().min(0).max(900);
+const rangeEnd = yup.number().min(0).max(900);
 
 export const stepEffectSchema = yup.object({
   regionId: regionId.required(),
-  ledColors: ledColors.required(),
   barColor: barColor.required(),
   clipColor: clipColor.required(),
   speed: speed.required(),
@@ -46,8 +44,6 @@ const optionalRgbColor = yup
   });
 
 export const partialStepEffectSchema = yup.object({
-  regionId: regionId.required(),
-  ledColors: optionalRgbColor,
   barColor: optionalRgbColor,
   clipColor: optionalRgbColor,
   speed: speed.optional(),

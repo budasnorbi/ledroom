@@ -11,6 +11,7 @@ import { closeSocket } from "./api/socket";
 import WaveSurfer from "./components/Wavesurfer";
 import { GetSongsResponse } from "@ledroom2/types";
 import { Methods } from "./types/api";
+import Preview from "./components/Preview";
 
 function Dashboard() {
   const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -46,7 +47,6 @@ function Dashboard() {
 
     return () => {
       abortController.abort();
-      closeSocket();
       resetStore();
     };
   }, [addSongs, resetStore]);
@@ -66,7 +66,6 @@ function Dashboard() {
           />
         )}
       </div>
-
       {selectedSong && (
         <WaveSurfer
           wavesurferRef={wavesurferRef}
@@ -74,7 +73,6 @@ function Dashboard() {
           selectedSongId={selectedSong.id}
         />
       )}
-
       {selectedSong && wavesurferReady && (
         <WavesurferController
           wavesurferRef={wavesurferRef as MutableRefObject<WaveSurfer>}
@@ -82,13 +80,13 @@ function Dashboard() {
           volume={selectedSong.volume}
         />
       )}
-
       {selectedSong?.selectedRegionId && (
         <EffectController
           wavesurferRef={wavesurferRef as MutableRefObject<WaveSurfer>}
           selectedRegionId={selectedSong.selectedRegionId}
         />
       )}
+      {/* <Preview /> */}
     </div>
   );
 }

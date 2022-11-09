@@ -1,7 +1,7 @@
 import { ChangeEvent, FC, MutableRefObject, useEffect, useState } from "react";
 import { useStore } from "../store/store";
 import { Delete } from "./icons/delete";
-import { StepEffectForm } from "./forms/StepEffect";
+import { StepEffectForm } from "./effects/StepEffect";
 
 interface Props {
   wavesurferRef: MutableRefObject<WaveSurfer>;
@@ -30,6 +30,7 @@ export const EffectController: FC<Props> = ({
   selectedRegionId,
 }) => {
   const removeSelectedRegion = useStore.use.removeSelectedRegion();
+  const removeSelectedEffect = useStore.use.removeSelectedEffect();
   const selectOrAddEffect = useStore.use.selectOrAddEffect();
 
   const selectedEffect = useStore((state) => {
@@ -58,8 +59,6 @@ export const EffectController: FC<Props> = ({
     return selectedEffect ?? null;
   });
 
-  console.log(selectedEffect);
-
   const [selectedEffectOption, selectEffectOption] = useState<"" | "step">("");
 
   const onEffectChange = async (event: ChangeEvent<HTMLSelectElement>) => {
@@ -71,6 +70,12 @@ export const EffectController: FC<Props> = ({
   useEffect(() => {
     selectEffectOption(selectedEffect?.type ? selectedEffect.type : "");
   }, [selectedRegionId]);
+
+  useEffect(() => {
+    if (selectedEffect === null) {
+      selectEffectOption("");
+    }
+  }, [!!selectedEffect]);
 
   return (
     <div className="px-2">
@@ -94,7 +99,7 @@ export const EffectController: FC<Props> = ({
         </div>
         {selectedEffect && (
           <button
-            onClick={() => removeSelectedRegion(wavesurferRef.current)}
+            onClick={() => removeSelectedEffect()}
             className="flex items-center py-2 px-4 text-blue-600/100 font-medium hover:bg-slate-200 hover:cursor-pointer bg-slate-100 border-slate-50 rounded-lg"
           >
             <Delete />
@@ -102,7 +107,7 @@ export const EffectController: FC<Props> = ({
           </button>
         )}
       </div>
-      <div>
+      <div className="py-4">
         {selectedEffect?.type === "step" && (
           <StepEffectForm {...selectedEffect} />
         )}

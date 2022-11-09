@@ -10,7 +10,7 @@
     "**/next.config.js": true,
     "**/.eslintrc.js": true,
     "**/nest-cli.json": true,
-    "**/project.json": false,
+    "**/project.json": true,
     "**/tsconfig.**.json": true,
     "**/tsconfig.json": true,
     "**/jest.config.ts": true,

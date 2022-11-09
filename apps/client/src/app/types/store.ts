@@ -49,6 +49,7 @@ export interface EffectSlice {
   effects: ClientStepEffect[];
   updateStepEffect: (partialStep: Partial<ClientStepEffect>) => void;
   selectOrAddEffect: (type: "" | "step") => void;
+  removeSelectedEffect: () => void;
 }
 
 export interface RegionsSlice {

@@ -10,12 +10,14 @@ import {
 import { StepEffectRepository } from "../../repositories/StepEffect.repository";
 import { nanoid } from "nanoid";
 import { RegionsRepository } from "../../repositories/Regions.repository";
+import { LedService } from "../Led/led.service";
 
 @Injectable()
 export class EffectService {
   constructor(
     private stepEffectRepository: StepEffectRepository,
-    private regionsRepository: RegionsRepository
+    private regionsRepository: RegionsRepository,
+    private ledService: LedService
   ) {}
 
   async addStepEffect(body: StepEffectSchema) {
@@ -52,7 +54,7 @@ export class EffectService {
     if (!isNaN(body.rangeStart)) {
       const effect = await this.stepEffectRepository
         .findOne({
-          where: { id, regionId: body.regionId },
+          where: { id },
         })
         .catch((err) => {
           console.log(err);
@@ -73,7 +75,7 @@ export class EffectService {
     if (!isNaN(body.rangeEnd)) {
       const effect = await this.stepEffectRepository
         .findOne({
-          where: { id, regionId: body.regionId },
+          where: { id },
         })
         .catch((err) => {
           console.log(err);
@@ -91,12 +93,15 @@ export class EffectService {
       }
     }
 
-    const { regionId, ...restBody } = body;
-    await this.stepEffectRepository
-      .update({ id, regionId }, restBody)
-      .catch((err) => {
-        console.log(err);
-        throw new InternalServerErrorException();
-      });
+    await this.stepEffectRepository.update({ id }, body).catch((err) => {
+      console.log(err);
+      throw new InternalServerErrorException();
+    });
+
+    await this.ledService.syncSongDetails();
+  }
+
+  async deleteStepEffect(stepId: string) {
+    await this.stepEffectRepository.delete({ id: stepId });
   }
 }

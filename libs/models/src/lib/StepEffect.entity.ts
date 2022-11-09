@@ -10,9 +10,6 @@ export class StepEffect {
   @Column()
   regionId: string;
 
-  @Column({ name: "ledColors", type: "json" })
-  ledColors: RGBColor;
-
   @Column({ name: "barColor", type: "json" })
   barColor: RGBColor;
 
@@ -31,7 +28,7 @@ export class StepEffect {
   @Column({ name: "rangeStart", type: "smallint", unsigned: true, default: 0 })
   rangeStart: number;
 
-  @Column({ name: "rangeEnd", type: "smallint", unsigned: true, default: 826 })
+  @Column({ name: "rangeEnd", type: "smallint", unsigned: true, default: 900 })
   rangeEnd: number;
 
   @OneToOne(() => Region, (region) => region.stepEffect, {

@@ -118,7 +118,7 @@ export const renderRegions = (
 
     handleType = undefined;
 
-    const effectRegions = Object.values(wavesurfer.regions.list).filter(
+    /*     const effectRegions = Object.values(wavesurfer.regions.list).filter(
       (_region) =>
         _region.element.getAttribute("data-rangetype") === "effect-range" &&
         _region.id !== region.id
@@ -129,13 +129,15 @@ export const renderRegions = (
         (effectRegion.start > startTime && effectRegion.end < startTime) ||
         (effectRegion.start < endTime && effectRegion.end > endTime)
       ) {
+        console.log("Found overlapping region: ", region);
+
         region.update({
           start: leftHandleInitValue,
           end: rightHandleInitValue,
         });
         return;
       }
-    }
+    } */
 
     const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
       `/region/${region.id}`,

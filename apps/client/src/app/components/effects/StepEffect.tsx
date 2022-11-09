@@ -27,7 +27,6 @@ const colorPickerStyle = {
 export const StepEffectForm: FC<Props> = (props) => {
   const updateStepEffect = useStore.use.updateStepEffect();
 
-  const [ledColors, setLedColors] = useState(props.ledColors);
   const [barColor, setBarColor] = useState(props.barColor);
   const [clipColor, setClipColor] = useState(props.clipColor);
 
@@ -53,19 +52,9 @@ export const StepEffectForm: FC<Props> = (props) => {
   const { barCount, speed, direction, rangeStart, rangeEnd, regionId } = effect;
 
   useEffect(() => {
-    setLedColors(effect.ledColors);
     setBarColor(effect.barColor);
     setClipColor(effect.clipColor);
   }, [regionId]);
-
-  // LEDCOLORS CHANGE
-  const onLedColorsChange = useCallback((color: ColorResult) => {
-    setLedColors(color.rgb);
-  }, []);
-
-  const onLedColorsChangeComplete = useCallback((color: ColorResult) => {
-    updateStepEffect({ ledColors: color.rgb });
-  }, []);
 
   // BARCOLORS CHANGE
   const onBarColorChange = useCallback((color: ColorResult) => {
@@ -129,7 +118,7 @@ export const StepEffectForm: FC<Props> = (props) => {
 
   // SELECT VALUES
   const speedOptions = useMemo(() => {
-    return new Array(37).fill(0).map((_, index) => {
+    return new Array(57).fill(0).map((_, index) => {
       const value = 1 + index * 0.25;
       return (
         <option key={value} value={value}>
@@ -140,7 +129,7 @@ export const StepEffectForm: FC<Props> = (props) => {
   }, []);
 
   const barCountOptions = useMemo(() => {
-    return new Array(826).fill(0).map((_, index) => {
+    return new Array(900).fill(0).map((_, index) => {
       const value = index + 1;
       return (
         <option key={value} value={value}>
@@ -168,7 +157,7 @@ export const StepEffectForm: FC<Props> = (props) => {
   const rangeEndOptions = useMemo(() => {
     const options = [];
 
-    for (let i = rangeStart; i < 826; i++) {
+    for (let i = rangeStart; i < 900; i++) {
       const value = i + 1;
       options.push(
         <option key={value} value={value}>
@@ -182,21 +171,6 @@ export const StepEffectForm: FC<Props> = (props) => {
 
   return (
     <div className="flex">
-      <div className="mr-5">
-        <label
-          className="block text-gray-700 text-sm font-bold mb-2 uppercase"
-          htmlFor="ledcolors"
-        >
-          ledcolors
-        </label>
-        <ChromePicker
-          styles={colorPickerStyle}
-          onChange={onLedColorsChange}
-          onChangeComplete={onLedColorsChangeComplete}
-          color={ledColors}
-        ></ChromePicker>
-      </div>
-
       <div className="mr-5">
         <label
           className="block text-gray-700 text-sm font-bold mb-2 uppercase"

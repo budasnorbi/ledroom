@@ -10,6 +10,7 @@ import { api } from "../api/web";
 import { Methods } from "../types/api";
 import { ClientStepEffect } from "../types/effect";
 import { Store, EffectSlice } from "../types/store";
+import * as socket from "../api/socket";
 
 export const effectInitialState = {
   effects: [],
@@ -27,6 +28,10 @@ export const effectSlice = (
       (song) => song.id === selectedSongId
     ) as number;
 
+    if (songIndex === -1) {
+      return;
+    }
+
     const effectIndex = effects.findIndex(
       (effect) =>
         songs[songIndex].selectedRegionId === effect.regionId &&
@@ -37,22 +42,19 @@ export const effectSlice = (
       return;
     }
 
-    const response = await api<
-      { statusCode: 204 },
-      Partial<ClientStepEffect> & { regionId: string; id: string }
-    >(`/effect/step/${effects[effectIndex].id}`, {
-      method: Methods.PATCH,
-      body: {
-        ...partialStep,
-        regionId: effects[effectIndex].regionId,
-        id: effects[effectIndex].id,
-      },
-    });
+    const response = await api<void, Partial<ClientStepEffect>>(
+      `/effect/step/${effects[effectIndex].id}`,
+      {
+        method: Methods.PATCH,
+        body: partialStep,
+      }
+    );
 
     if (response.statusCode !== 204) {
       return;
     }
 
+    socket.renderEffectChanges();
     set((state) => {
       const effect = state.effects.find(
         (effect) =>
@@ -68,15 +70,23 @@ export const effectSlice = (
       );
     });
   },
+
   async selectOrAddEffect(type) {
     const { selectedSongId, songs, effects, regions } = get();
 
-    const songIndex = songs.findIndex(
-      (song) => song.id === selectedSongId
-    ) as number;
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
+
+    if (songIndex === -1) {
+      return;
+    }
+
     const regionIndex = regions.findIndex(
       (region) => region.id === songs[songIndex].selectedRegionId
-    ) as number;
+    );
+
+    if (regionIndex === -1) {
+      return;
+    }
 
     if (type === "") {
       const response = await api<
@@ -93,6 +103,7 @@ export const effectSlice = (
         return;
       }
 
+      socket.renderEffectChanges();
       set((state) => {
         state.regions[regionIndex].selectedEffect = null;
       });
@@ -103,6 +114,7 @@ export const effectSlice = (
           songs[songIndex].selectedRegionId === effect.regionId &&
           effect.type === type
       );
+
       if (effect) {
         const response = await api<
           PatchRegionResponse,
@@ -118,20 +130,20 @@ export const effectSlice = (
           return;
         }
 
+        socket.renderEffectChanges();
         set((state) => {
           state.regions[regionIndex].selectedEffect = effect.id;
         });
       } else {
         const initialStep: StepEffectSchema = {
           regionId: songs[songIndex].selectedRegionId as string,
-          ledColors: { r: 0, g: 0, b: 0, a: 0 },
-          barColor: { r: 0, g: 0, b: 0, a: 0 },
-          clipColor: { r: 0, g: 0, b: 0, a: 0 },
+          barColor: { r: 0, g: 0, b: 255, a: 1 },
+          clipColor: { r: 0, g: 0, b: 0, a: 1 },
           speed: 1,
           barCount: 50,
           direction: "left",
           rangeStart: 0,
-          rangeEnd: 826,
+          rangeEnd: 900,
         };
 
         const effectCreateResponse = await api<AddStepEffect, StepEffectSchema>(
@@ -160,6 +172,7 @@ export const effectSlice = (
           return;
         }
 
+        socket.renderEffectChanges();
         set((state) => {
           state.effects.push({
             ...initialStep,
@@ -175,5 +188,47 @@ export const effectSlice = (
         }, "addStepEffect");
       }
     }
+  },
+  async removeSelectedEffect() {
+    const { selectedSongId, songs, regions, effects } = get();
+
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
+
+    if (songIndex === -1) {
+      return;
+    }
+
+    const regionIndex = regions.findIndex(
+      (region) => region.id === songs[songIndex].selectedRegionId
+    );
+
+    if (regionIndex === -1) {
+      return;
+    }
+
+    const effectIndex = effects.findIndex(
+      (effect) => effect.id === regions[regionIndex].selectedEffect
+    );
+
+    if (effectIndex === -1) {
+      return;
+    }
+
+    const response = await api(`/effect/step/${effects[effectIndex].id}`, {
+      method: Methods.DELETE,
+    });
+
+    if (response.statusCode !== 204) {
+      return;
+    }
+
+    socket.renderEffectChanges();
+    set((state) => {
+      state.effects = state.effects.filter(
+        (effect) => effect.id !== state.effects[effectIndex].id
+      );
+
+      state.regions[regionIndex].selectedEffect = null;
+    });
   },
 });

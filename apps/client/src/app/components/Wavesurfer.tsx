@@ -1,52 +1,57 @@
-import { useEffect, FC, useMemo } from "react"
-import Wavesurfer from "wavesurfer.js"
-import RegionsPlugin from "wavesurfer.js/src/plugin/regions"
-import TimelinePlugin from "wavesurfer.js/src/plugin/timeline"
+import { useEffect, FC, useMemo } from "react";
+import Wavesurfer from "wavesurfer.js";
+import RegionsPlugin from "wavesurfer.js/src/plugin/regions";
+import TimelinePlugin from "wavesurfer.js/src/plugin/timeline";
 
-import { useStore } from "../store/store"
+import { useStore } from "../store/store";
 import {
   formatTimeCallback,
   primaryLabelInterval,
   secondaryLabelInterval,
-  timeInterval
-} from "../utils/wavesurfer"
+  timeInterval,
+} from "../utils/wavesurfer";
 
-import { renderRegions } from "../utils//renderRegions"
-import * as socketApi from "../api/socket"
+import { renderRegions } from "../utils//renderRegions";
+import * as socketApi from "../api/socket";
 
 // let handleSpacePress: any
 
 interface WaveSurferProps {
-  wavesurferRef: React.MutableRefObject<WaveSurfer | null>
-  setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
-  selectedSongId: number
+  wavesurferRef: React.MutableRefObject<WaveSurfer | null>;
+  setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>;
+  selectedSongId: number;
 }
 
 const WaveSurfer: FC<WaveSurferProps> = ({
   setMusicCurrentTime,
   wavesurferRef,
-  selectedSongId
+  selectedSongId,
 }) => {
-  const toggleWavesurferIsPlaying = useStore.use.toggleWavesurferIsPlaying()
-  const updateLastTimePosition = useStore.use.updateLastTimePosition()
-  const updateWavesurferReady = useStore.use.updateWavesurferReady()
-  const updateRegionTime = useStore.use.updateRegionTime()
-  const selectRegion = useStore.use.selectRegion()
-  const addRegion = useStore.use.addRegion()
+  const toggleWavesurferIsPlaying = useStore.use.toggleWavesurferIsPlaying();
+  const updateLastTimePosition = useStore.use.updateLastTimePosition();
+  const updateWavesurferReady = useStore.use.updateWavesurferReady();
+  const updateRegionTime = useStore.use.updateRegionTime();
+  const selectRegion = useStore.use.selectRegion();
+  const addRegion = useStore.use.addRegion();
 
   const _selectedSong = useStore((state) => {
-    const song = state.songs.filter((song) => song.id === state.selectedSongId)[0]
-    const regions = state.regions.filter((region) => region.songId === state.selectedSongId)
+    const song = state.songs.filter(
+      (song) => song.id === state.selectedSongId
+    )[0];
+    const regions = state.regions.filter(
+      (region) => region.songId === state.selectedSongId
+    );
     return {
       song,
-      regions
-    }
-  })
+      regions,
+    };
+  });
 
-  const selectedSong = useMemo(() => _selectedSong, [selectedSongId])
+  const selectedSong = useMemo(() => _selectedSong, [selectedSongId]);
 
   useEffect(() => {
-    const { beatAroundEnd, beatOffset, bpm, lastTimePosition, volume } = selectedSong.song
+    const { beatAroundEnd, beatOffset, bpm, lastTimePosition, volume } =
+      selectedSong.song;
 
     const wavesurfer = (wavesurferRef.current = Wavesurfer.create({
       container: "#wavesurfer-container",
@@ -65,51 +70,51 @@ const WaveSurfer: FC<WaveSurferProps> = ({
           primaryColor: "blue",
           secondaryColor: "red",
           primaryFontColor: "blue",
-          secondaryFontColor: "red"
+          secondaryFontColor: "red",
         }),
-        RegionsPlugin.create({})
-      ]
-    }))
+        RegionsPlugin.create({}),
+      ],
+    }));
 
-    setMusicCurrentTime(lastTimePosition)
+    setMusicCurrentTime(lastTimePosition);
 
     wavesurfer.on("play", () => {
-      const currTime = wavesurfer.getCurrentTime()
-      socketApi.sendStart(currTime)
-      toggleWavesurferIsPlaying()
-    })
+      const currTime = wavesurfer.getCurrentTime();
+      socketApi.sendStart(currTime);
+      toggleWavesurferIsPlaying();
+    });
 
     wavesurfer.on("pause", () => {
-      toggleWavesurferIsPlaying()
-      socketApi.sendStop()
+      toggleWavesurferIsPlaying();
+      socketApi.sendStop();
 
       // When the songs ends need to reset the last saved time
       if (wavesurfer.getCurrentTime() === wavesurfer.getDuration()) {
-        updateLastTimePosition(0)
-        wavesurfer.seekAndCenter(0)
+        updateLastTimePosition(0);
+        wavesurfer.seekAndCenter(0);
       } else {
-        updateLastTimePosition(wavesurfer.getCurrentTime())
+        updateLastTimePosition(wavesurfer.getCurrentTime());
       }
-    })
+    });
 
     wavesurfer.on("seek", () => {
-      const currTime = wavesurfer.getCurrentTime()
-      socketApi.sendSeek(currTime)
-      updateLastTimePosition(wavesurfer.getCurrentTime())
-      setMusicCurrentTime(wavesurfer.getCurrentTime())
-    })
+      const currTime = wavesurfer.getCurrentTime();
+      socketApi.sendSeek(currTime);
+      updateLastTimePosition(wavesurfer.getCurrentTime());
+      setMusicCurrentTime(wavesurfer.getCurrentTime());
+    });
 
     wavesurfer.on("audioprocess", (time: number) => {
-      socketApi.sendTimeupdate(time)
-      setMusicCurrentTime(wavesurfer.getCurrentTime())
-    })
+      socketApi.sendTimeupdate(time);
+      setMusicCurrentTime(wavesurfer.getCurrentTime());
+    });
 
     wavesurfer.on("ready", () => {
-      wavesurfer.zoom(200)
+      wavesurfer.zoom(200);
 
-      const progress = lastTimePosition / wavesurfer.getDuration()
-      wavesurfer.seekAndCenter(progress)
-      wavesurfer.setVolume(volume)
+      const progress = lastTimePosition / wavesurfer.getDuration();
+      wavesurfer.seekAndCenter(progress);
+      wavesurfer.setVolume(volume);
 
       /* if (!handleSpacePress) {
           handleSpacePress = async (event: KeyboardEvent) => {
@@ -131,25 +136,27 @@ const WaveSurfer: FC<WaveSurferProps> = ({
           beatOffset,
           bpm,
           songId: selectedSong.song.id,
-          selectedRegionId: selectedSong.song.selectedRegionId
+          selectedRegionId: selectedSong.song.selectedRegionId,
         },
         {
           addRegion,
           updateRegionTime,
-          selectRegion
+          selectRegion,
         },
         selectedSong.regions
-      )
+      );
 
-      updateWavesurferReady(true)
-    })
+      updateWavesurferReady(true);
+    });
 
-    wavesurfer.load(`${process.env["NX_API_URL"]}/song/${selectedSong.song.id}`)
+    wavesurfer.load(
+      `${process.env["NX_API_URL"]}/song/${selectedSong.song.id}`
+    );
 
     return () => {
-      wavesurfer.unAll()
-      wavesurferRef.current?.destroy()
-    }
+      wavesurfer.unAll();
+      wavesurferRef.current?.destroy();
+    };
   }, [
     selectedSong,
     wavesurferRef,
@@ -159,15 +166,15 @@ const WaveSurfer: FC<WaveSurferProps> = ({
     toggleWavesurferIsPlaying,
     updateLastTimePosition,
     updateRegionTime,
-    updateWavesurferReady
-  ])
+    updateWavesurferReady,
+  ]);
 
   return (
     <div>
       <div id="wavesurfer-container"></div>
       <div id="wave-timeline"></div>
     </div>
-  )
-}
+  );
+};
 
-export default WaveSurfer
+export default WaveSurfer;

@@ -1,12 +1,13 @@
-import { createLedsColorsArr } from "../../helpers/createLedsColorsArr";
+import { createLedsColorsArr } from "../../utils/createLedsColorsArr";
 import { EffectService } from "../Effect/effect.service";
 import { Injectable } from "@nestjs/common";
 import { Region } from "@ledroom2/models";
 import { UdpService } from "../Udp/udp.service";
 import { Server } from "socket.io";
-import { fixColorOrder } from "../../helpers/fixLedColorOrder";
+import { fixColorOrder } from "../../utils/fixLedColorOrder";
 import { SongsRepository } from "../../repositories/Songs.repository";
-import { Song } from "@ledroom2/models";
+import { RegionWithRelation, SongsWithRelation } from "@ledroom2/types";
+import { rgba2rgb } from "../../utils/rgbaToRgb";
 
 @Injectable()
 export class LedService {
@@ -19,7 +20,7 @@ export class LedService {
   private blueBuffer = createLedsColorsArr([0, 0, 255]);
   private whiteBuffer = createLedsColorsArr([255, 255, 255]);
 
-  private wholeRange: [number, number] = [0, 826];
+  private wholeRange: [number, number] = [0, 900];
   private agyFalRange: [number, number] = [75, 306];
   private ablakFalRange: [number, number] = [307, 493];
   private kanapeFalRange: [number, number] = [494, 681];
@@ -28,37 +29,16 @@ export class LedService {
   private ajtoFalRange: [number, number] = [816, 74];
   private currentFrame: number[];
   regions: Region[];
-  private song: Song | null;
+  private song: SongsWithRelation | null;
 
   constructor(
     private udpService: UdpService,
     private effectService: EffectService,
     private songsRepository: SongsRepository
-  ) {
-    // const ledColors = this.effectService.step({
-    //   ledColor: this.blackBuffer,
-    //   barColor: [0, 0, 255],
-    //   clipLed: [0, 0, 0],
-    //   barCount: 50,
-    //   direction: "left",
-    //   speed: 1000 / 60,
-    //   range: this.w1
-    // })
-  }
+  ) {}
 
-  handleSocketAfterInit(socket: Server) {
-    const colors = createLedsColorsArr([0, 0, 0], this.wholeRange);
-    const fixedColors = fixColorOrder(colors);
-
-    /*     setTimeout(() => {
-      const colors = createLedsColorsArr([0, 0, 0], this.wholeRange)
-      const fixedColors = fixColorOrder(colors)
-      socket.emit("frame", colors)
-      this.udpService.sendData(fixedColors)
-    }, 1500) */
-
-    socket.emit("frame", colors);
-    this.udpService.sendData(fixedColors);
+  async handleSocketAfterInit(socket: Server) {
+    await this.renderEffectChange(socket);
   }
 
   updateTime(time: number) {
@@ -66,7 +46,7 @@ export class LedService {
   }
 
   async start(time: number, socket: Server) {
-    this.song = await this.songsRepository.getSelectedSong();
+    await this.syncSongDetails();
     this.updateTime(time);
 
     if (!this.ledFrameIntervalID) {
@@ -83,33 +63,28 @@ export class LedService {
 
   private x = 0;
 
-  songEffect(regions: Region[], time: number) {
+  songEffect(regions: RegionWithRelation[], time: number) {
     let ledColors = this.blackBuffer;
 
-    /* for (let i = 0; i < regions.length; i++) {
+    for (let i = 0; i < regions.length; i++) {
       if (time >= regions[i].startTime && time <= regions[i].endTime) {
-        const region = regions[i]
-        for (let k = 0; k < region.effects.length; k++) {
-          const effect = region.effects[k]
+        const region = regions[i];
+        if (region.stepEffect) {
+          const effect = region.stepEffect;
 
-          ledColors = this.effectService.step({
-            ledColors: effect.ledColors,
+          return this.effectService.step({
+            ledColors,
             barColor: effect.barColor,
-            clipLed: effect.clipColor,
+            clipColor: effect.clipColor,
             barCount: effect.barCount,
             direction: effect.direction,
-            speed: effect.speed
-          })
+            speed: 1000 / 60 / effect.speed,
+            rangeStart: effect.rangeStart,
+            rangeEnd: effect.rangeEnd,
+          });
         }
       }
-    } */
-
-    // ledColors = this.effectService.blink({
-    //   currentColorOrLed: ledColors,
-    //   toColor: [0, 0, 255],
-    //   watchOnlyColored: true,
-    //   duration: 1
-    // })
+    }
 
     return ledColors;
   }
@@ -118,15 +93,12 @@ export class LedService {
     this.clearIntervals();
   }
 
-  seek(time: number, socket: Server) {
+  async seek(time: number, socket: Server) {
     this.updateTime(time);
     this.clearIntervals();
     this.effectService.clearInternals();
 
-    const colors = this.songEffect(this.song.regions, this.musicTime);
-
-    socket.emit("frame", colors);
-    this.udpService.sendData(fixColorOrder(colors));
+    this.renderEffectChange(socket);
   }
 
   reset() {
@@ -141,7 +113,16 @@ export class LedService {
     this.ledFrameIntervalID = undefined;
   }
 
-  public updateRegions(regions: Region[]) {
-    this.regions = regions;
+  async syncSongDetails() {
+    this.song =
+      (await this.songsRepository.getSelectedSong()) as SongsWithRelation;
+  }
+
+  async renderEffectChange(socket: Server) {
+    await this.syncSongDetails();
+    const colors = this.songEffect(this.song.regions, this.musicTime);
+
+    socket.emit("frame", colors);
+    this.udpService.sendData(fixColorOrder(colors));
   }
 }

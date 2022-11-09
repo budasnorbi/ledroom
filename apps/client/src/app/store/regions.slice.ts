@@ -5,7 +5,7 @@ import {
 } from "@ledroom2/types";
 import { PatchRegionSchema } from "@ledroom2/validations";
 import { StoreApi } from "zustand";
-import { updateRegions } from "../api/socket";
+import * as socket from "../api/socket";
 import { api } from "../api/web";
 import { Methods } from "../types/api";
 import { Store, EffectSlice, RegionsSlice } from "../types/store";
@@ -23,9 +23,12 @@ export const regionsSlice = (
     set((state) => {
       state.regions.push(newRegion);
 
-      const song = state.songs.find(
-        (song) => song.id === newRegion.songId
-      ) as DBSong;
+      const song = state.songs.find((song) => song.id === newRegion.songId);
+
+      if (!song) {
+        return;
+      }
+
       song.selectedRegionId = newRegion.id;
     }, "addRegion");
   },
@@ -74,65 +77,58 @@ export const regionsSlice = (
     }, "selectRegion");
   },
 
-  // NEED TO SEPARATE THE SIDEEFFECT AFTER SUCCESFUL API CALL
   async removeSelectedRegion(wavesurferRef) {
     const { songs, selectedSongId } = get();
-    const song = songs.find((song) => song.id === selectedSongId);
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
 
-    if (!song || song.selectedRegionId === null) {
+    if (songIndex === -1 || songs[songIndex].selectedRegionId === null) {
       return;
     }
 
-    const response = await api(`/region/${song.selectedRegionId}`, {
+    const response = await api(`/region/${songs[songIndex].selectedRegionId}`, {
       method: Methods.DELETE,
     });
 
     if (response.statusCode !== 204) {
-      // handle errors
       return;
     }
 
+    socket.renderEffectChanges();
     set((state) => {
-      const song = state.songs.find(
-        (song) => song.id === selectedSongId
-      ) as DBSong;
-
       state.regions = state.regions.filter(
-        (region) => region.id !== (song.selectedRegionId as string)
+        (region) =>
+          region.id !== (state.songs[songIndex].selectedRegionId as string)
       );
 
-      wavesurferRef.regions.list[song.selectedRegionId as string].remove();
-      song.selectedRegionId = null;
+      wavesurferRef.regions.list[
+        state.songs[songIndex].selectedRegionId as string
+      ].remove();
+
+      state.songs[songIndex].selectedRegionId = null;
     }, "removeRegion");
   },
 
   async updateRegionTime(targetedRegion) {
     const { selectedSongId, songs, regions } = get();
-    const song = songs.find((song) => song.id === selectedSongId);
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
 
-    if (!song) {
+    if (songIndex === -1) {
       return;
     }
 
-    const region = regions.find((region) => region.id === targetedRegion.id);
+    const regionIndex = regions.findIndex(
+      (region) => region.id === targetedRegion.id
+    );
 
-    if (!region) {
+    if (regionIndex === -1) {
       return;
     }
 
     set((state) => {
-      const region = state.regions.find(
-        (region) => region.id === targetedRegion.id
-      );
-
-      if (!region) {
-        return;
-      }
-
-      region.startTime = targetedRegion.startTime ?? region.startTime;
-      region.endTime = targetedRegion.endTime ?? region.endTime;
-
-      updateRegions(state.regions);
+      state.regions[regionIndex].startTime =
+        targetedRegion.startTime ?? state.regions[regionIndex].startTime;
+      state.regions[regionIndex].endTime =
+        targetedRegion.endTime ?? state.regions[regionIndex].endTime;
     }, "updateRegionTime");
   },
 });

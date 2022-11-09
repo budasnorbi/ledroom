@@ -1,7 +1,7 @@
-.chrome-picker .flexbox-fix:has(.flexbox-fix) {
+/* .chrome-picker .flexbox-fix:has(.flexbox-fix) {
   display: none !important;
 }
-
+ */
 .chrome-picker .flexbox-fix:first-child > div:nth-child(2) > div:first-child {
   height: 14px !important;
   padding: 0 0 !important;

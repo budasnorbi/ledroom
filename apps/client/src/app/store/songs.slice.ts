@@ -139,9 +139,9 @@ export const songSlice = (
   async updateLastTimePosition(time) {
     const { selectedSongId, songs } = get();
 
-    const song = songs.find((song) => song.id === selectedSongId);
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
 
-    if (!song || song.lastTimePosition === time) {
+    if (songIndex === -1 || songs[songIndex].lastTimePosition === time) {
       return;
     }
 
@@ -160,27 +160,21 @@ export const songSlice = (
     }
 
     set((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId);
-
-      if (!song) {
-        return;
-      }
-
-      song.lastTimePosition = time;
+      state.songs[songIndex].lastTimePosition = time;
     }, "updateLastTimePosition");
   },
 
   async updateSongVolume(volume) {
     const { selectedSongId, songs } = get();
 
-    const song = songs.find((song) => song.id === selectedSongId);
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
 
-    if (!song) {
+    if (songIndex === -1) {
       return;
     }
 
     const response = await api<PatchSongResponse, Partial<OptionalSongSchema>>(
-      `/song/${song.id}`,
+      `/song/${songs[songIndex].id}`,
       {
         method: Methods.PATCH,
         body: { volume },
@@ -192,85 +186,7 @@ export const songSlice = (
     }
 
     set((state) => {
-      const song = state.songs.find(
-        (song) => song.id === state.selectedSongId
-      ) as DBSong;
-      song.volume = volume;
+      state.songs[songIndex].volume = volume;
     }, "updateSongVolume");
   },
 });
-
-//   addEffectToRegion(effectName) {
-//     let effect: Step | Blink
-//     switch (effectName) {
-//       case "step": {
-//         const stepEffect: Step = {
-//           type: "step",
-//           barCount: 50,
-//           clipLed: [0, 0, 0],
-//           direction: "left",
-//           ledColors: [],
-//           speed: 1,
-//           range: [0, 826],
-//           barColor: [255, 255, 255]
-//         }
-//         effect = stepEffect
-//         break
-//       }
-//       case "blink": {
-//         const blinkEffect: Blink = {
-//           type: "blink",
-//           bezierPoints: [0, 1, 0, 1],
-//           duration: 1,
-//           ledColors: [],
-//           toColor: [255, 255, 255],
-//           fromColor: [0, 0, 0],
-//           watchOnlyColored: false,
-//           range: [0, 826]
-//         }
-//         effect = blinkEffect
-//         break
-//       }
-//     }
-
-//     set(async (state) => {
-//       // for (const song in state.songs) {
-//       //   const region = song.regions.find((region) => region.id === song.selectedRegionId)
-//       //   const effectIsExsists =
-//       //     region?.effects.findIndex((effect) => effect === effectName) === null
-//       //   if (region) {
-//       //   }
-//       //   return
-//       // }
-//       // if (region && !effectIsExsists) {
-//       //   region.effects.push(effect)
-//       // }
-//     }, "addEffectToRegion")
-//   },
-
-//   setEffectDuration(type, duration) {
-//     // set(
-//     //   produce((state: Store) => {
-//     //     for (const song of state.songs) {
-//     //       if (song.id === state.selectedSongId) {
-//     //         for (let i = 0; i < song.regions.length; i++) {
-//     //           const region = song.regions[i]
-//     //           if (region.id === song.selectedRegionId) {
-//     //             for (let k = 0; k < song.regions[i].effects.length; k++) {
-//     //               const effect = song.regions[i].effects[k]
-//     //               if (effect.type === type) {
-//     //                 effect.duration = duration
-//     //                 break
-//     //               }
-//     //             }
-//     //             break
-//     //           }
-//     //         }
-//     //         return
-//     //       }
-//     //     }
-//     //   }),
-//     //   false,
-//     //   "setEffectDuration"
-//     // )
-//   },

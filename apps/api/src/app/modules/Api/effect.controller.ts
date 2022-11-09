@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   Param,
   Patch,
@@ -58,5 +59,11 @@ export class EffectController {
     body: PartialStepEffectSchema
   ) {
     return this.effectService.patchStepEffect(stepId, body);
+  }
+
+  @Delete("/step/:stepId")
+  @HttpCode(204)
+  deleteStepEffect(@Param("stepId") stepId: string) {
+    return this.effectService.deleteStepEffect(stepId);
   }
 }

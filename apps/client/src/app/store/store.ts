@@ -5,8 +5,8 @@ import { devtools } from "zustand/middleware";
 import { Store, WithSelectors } from "../types/store";
 import { songInitialState, songSlice } from "./songs.slice";
 import { wavesurferIntialState, wavesurferSlice } from "./wavesurfer.slice";
-import { effectSlice } from "./effects.slice";
-import { regionsSlice } from "./regions.slice";
+import { effectInitialState, effectSlice } from "./effects.slice";
+import { regionsInitialState, regionsSlice } from "./regions.slice";
 
 const createSelectors = <S extends UseBoundStore<StoreApi<State>>>(
   _store: S
@@ -38,6 +38,8 @@ export const useStore = createSelectors(
         ...regionsSlice(setState, getState),
         resetStore() {
           setState(async (state) => {
+            state.effects = effectInitialState.effects;
+            state.regions = regionsInitialState.regions;
             state.songs = songInitialState.songs;
             state.selectedSongId = songInitialState.selectedSongId;
             state.wavesurferIsPlaying =

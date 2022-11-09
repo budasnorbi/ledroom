@@ -7,7 +7,7 @@ import { RegionsRepository } from "../../repositories/Regions.repository";
 import { SongsRepository } from "../../repositories/Songs.repository";
 
 import { DBSong } from "@ledroom2/types";
-import analyzeMusic from "../../helpers/analyze-music";
+import analyzeMusic from "../../utils/analyze-music";
 import { OptionalSongSchema } from "@ledroom2/validations";
 
 @Injectable()

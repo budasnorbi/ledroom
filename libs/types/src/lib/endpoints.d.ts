@@ -15,3 +15,4 @@ export type AddRegionResponse = { id: string };
 export type DeleteRegionResponse = void;
 export type SelectRegiongResponse = void;
 export type AddStepEffect = { id: string };
+export type DeleteStepEffect = void;
