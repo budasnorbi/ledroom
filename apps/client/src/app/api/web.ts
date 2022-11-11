@@ -7,9 +7,13 @@ import type {
 import { Methods } from "../types/api"
 
 type _BadRequestException = BadRequestException & { statusCode: 400 }
-type _InternalServerErrorException = InternalServerErrorException & { statusCode: 500 }
+type _InternalServerErrorException = InternalServerErrorException & {
+  statusCode: 500
+}
 type _NotFoundException = NotFoundException & { statusCode: 404 }
-type _UnprocessableEntityException = UnprocessableEntityException & { statusCode: 422 }
+type _UnprocessableEntityException = UnprocessableEntityException & {
+  statusCode: 422
+}
 
 interface ApiCallError {
   statusCode: null
@@ -29,7 +33,10 @@ export async function api<ServerResponse>(
 
 export async function api<ServerResponse, RequestBody>(
   endpoint: string,
-  customConfig: Omit<RequestInit, "body"> & { method: Methods.POST; body: RequestBody }
+  customConfig: Omit<RequestInit, "body"> & {
+    method: Methods.POST
+    body: RequestBody
+  }
 ): Promise<
   | ApiCallError
   | _BadRequestException
@@ -65,9 +72,12 @@ export async function api<ServerResponse, RequestBody>(
   | UnprocessableEntityException
   | { data?: ServerResponse; statusCode: 200 | 201 | 204 }
 > {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  /* @ts-ignore */
-  if (customConfig.headers && (customConfig.headers["Content-Type"] as any) === "inherit") {
+  if (
+    customConfig.headers &&
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    /* @ts-ignore */
+    (customConfig.headers["Content-Type"] as any) === "inherit"
+  ) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     /* @ts-ignore */
     delete customConfig.headers["Content-Type"]

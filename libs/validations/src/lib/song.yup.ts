@@ -1,12 +1,12 @@
-import * as yup from "yup";
+import * as yup from "yup"
 
-const time = yup.number();
-const bpm = yup.number();
-const beatOffset = yup.number();
-const beatAroundEnd = yup.number();
-const volume = yup.number();
-const selected = yup.boolean();
-const lastTimePosition = yup.number();
+const time = yup.number()
+const bpm = yup.number()
+const beatOffset = yup.number()
+const beatAroundEnd = yup.number()
+const volume = yup.number()
+const selected = yup.boolean()
+const lastTimePosition = yup.number()
 
 export const optionalSongSchema = yup.object({
   time: time.optional(),
@@ -15,7 +15,7 @@ export const optionalSongSchema = yup.object({
   beatAroundEnd: beatAroundEnd.optional(),
   volume: volume.optional(),
   selected: selected.optional(),
-  lastTimePosition: lastTimePosition.optional(),
-});
+  lastTimePosition: lastTimePosition.optional()
+})
 
-export type OptionalSongSchema = yup.InferType<typeof optionalSongSchema>;
+export type OptionalSongSchema = yup.InferType<typeof optionalSongSchema>

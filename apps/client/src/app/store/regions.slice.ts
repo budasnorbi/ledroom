@@ -1,18 +1,14 @@
-import {
-  DBSong,
-  SelectRegiongResponse,
-  PatchRegionResponse,
-} from "@ledroom2/types";
-import { PatchRegionSchema } from "@ledroom2/validations";
-import { StoreApi } from "zustand";
-import * as socket from "../api/socket";
-import { api } from "../api/web";
-import { Methods } from "../types/api";
-import { Store, EffectSlice, RegionsSlice } from "../types/store";
+import { DBSong, SelectRegiongResponse, PatchRegionResponse } from "@ledroom2/types"
+import { PatchRegionSchema } from "@ledroom2/validations"
+import { StoreApi } from "zustand"
+import * as socket from "../api/socket"
+import { api } from "../api/web"
+import { Methods } from "../types/api"
+import { Store, EffectSlice, RegionsSlice } from "../types/store"
 
 export const regionsInitialState = {
-  regions: [],
-};
+  regions: []
+}
 
 export const regionsSlice = (
   set: (fn: (state: Store) => void, actionName?: string) => void,
@@ -21,22 +17,22 @@ export const regionsSlice = (
   ...regionsInitialState,
   async addRegion(newRegion) {
     set((state) => {
-      state.regions.push(newRegion);
+      state.regions.push(newRegion)
 
-      const song = state.songs.find((song) => song.id === newRegion.songId);
+      const song = state.songs.find((song) => song.id === newRegion.songId)
 
       if (!song) {
-        return;
+        return
       }
 
-      song.selectedRegionId = newRegion.id;
-    }, "addRegion");
+      song.selectedRegionId = newRegion.id
+    }, "addRegion")
   },
 
   async selectRegion(selectedRegion, wavesurfer) {
-    const { selectedSongId } = get();
+    const { selectedSongId } = get()
     if (selectedSongId === null) {
-      return;
+      return
     }
 
     const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
@@ -44,91 +40,86 @@ export const regionsSlice = (
       {
         method: Methods.PATCH,
         body: {
-          songId: selectedSongId,
-        },
+          songId: selectedSongId
+        }
       }
-    );
+    )
 
     if (response.statusCode !== 204) {
-      return;
+      return
     }
 
     for (const key in wavesurfer.regions.list) {
-      const _region = wavesurfer.regions.list[key];
+      const _region = wavesurfer.regions.list[key]
       if (_region.element.getAttribute("data-rangetype") === "effect-range") {
         _region.update({
-          color: "rgba(0, 0, 255, 0.15)",
-        });
+          color: "rgba(0, 0, 255, 0.15)"
+        })
       }
     }
 
     selectedRegion.update({
-      color: "rgba(255, 0, 0, 0.15)",
-    });
+      color: "rgba(255, 0, 0, 0.15)"
+    })
 
     set((state) => {
-      const song = state.songs.find((song) => song.id === state.selectedSongId);
+      const song = state.songs.find((song) => song.id === state.selectedSongId)
 
       if (!song) {
-        return;
+        return
       }
 
-      song.selectedRegionId = selectedRegion.id;
-    }, "selectRegion");
+      song.selectedRegionId = selectedRegion.id
+    }, "selectRegion")
   },
 
   async removeSelectedRegion(wavesurferRef) {
-    const { songs, selectedSongId } = get();
-    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
+    const { songs, selectedSongId } = get()
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId)
 
     if (songIndex === -1 || songs[songIndex].selectedRegionId === null) {
-      return;
+      return
     }
 
     const response = await api(`/region/${songs[songIndex].selectedRegionId}`, {
-      method: Methods.DELETE,
-    });
+      method: Methods.DELETE
+    })
 
     if (response.statusCode !== 204) {
-      return;
+      return
     }
 
-    socket.renderEffectChanges();
+    socket.renderEffectChanges()
     set((state) => {
       state.regions = state.regions.filter(
-        (region) =>
-          region.id !== (state.songs[songIndex].selectedRegionId as string)
-      );
+        (region) => region.id !== (state.songs[songIndex].selectedRegionId as string)
+      )
 
-      wavesurferRef.regions.list[
-        state.songs[songIndex].selectedRegionId as string
-      ].remove();
+      wavesurferRef.regions.list[state.songs[songIndex].selectedRegionId as string].remove()
 
-      state.songs[songIndex].selectedRegionId = null;
-    }, "removeRegion");
+      state.songs[songIndex].selectedRegionId = null
+    }, "removeRegion")
   },
 
   async updateRegionTime(targetedRegion) {
-    const { selectedSongId, songs, regions } = get();
-    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
+    const { selectedSongId, songs, regions } = get()
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId)
 
     if (songIndex === -1) {
-      return;
+      return
     }
 
-    const regionIndex = regions.findIndex(
-      (region) => region.id === targetedRegion.id
-    );
+    const regionIndex = regions.findIndex((region) => region.id === targetedRegion.id)
 
     if (regionIndex === -1) {
-      return;
+      return
     }
 
     set((state) => {
       state.regions[regionIndex].startTime =
-        targetedRegion.startTime ?? state.regions[regionIndex].startTime;
+        targetedRegion.startTime ?? state.regions[regionIndex].startTime
       state.regions[regionIndex].endTime =
-        targetedRegion.endTime ?? state.regions[regionIndex].endTime;
-    }, "updateRegionTime");
-  },
-});
+        targetedRegion.endTime ?? state.regions[regionIndex].endTime
+    }, "updateRegionTime")
+  }
+})

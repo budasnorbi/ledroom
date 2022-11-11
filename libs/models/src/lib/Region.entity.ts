@@ -1,46 +1,39 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  OneToOne,
-} from "typeorm";
-import { Song } from "./Song.entity";
-import { StepEffect } from "./StepEffect.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm"
+import { Song } from "./Song.entity"
+import { StepEffect } from "./StepEffect.entity"
 
 @Entity("regions", { schema: "ledroom" })
 export class Region {
   @Column("varchar", { primary: true, length: 21 })
-  id: string;
+  id: string
 
   @Column()
-  songId: number;
+  songId: number
 
   @Column("float", {
     precision: 12,
-    default: () => "0",
+    default: () => "0"
   })
-  startTime: number;
+  startTime: number
 
   @Column("float", {
     precision: 12,
-    default: () => "0",
+    default: () => "0"
   })
-  endTime: number;
+  endTime: number
 
   @Column("varchar", { length: 21, default: null })
-  selectedEffect: string | null;
+  selectedEffect: string | null
 
   @OneToOne(() => StepEffect, (stepEffect) => stepEffect.region, {
-    onDelete: "SET NULL",
+    onDelete: "SET NULL"
   })
   @JoinColumn()
-  stepEffect: null | StepEffect;
+  stepEffect: null | StepEffect
 
   @ManyToOne(() => Song, (song) => song.regions, {
-    onDelete: "CASCADE",
+    onDelete: "CASCADE"
   })
   @JoinColumn({ name: "songId" })
-  song: Song;
+  song: Song
 }

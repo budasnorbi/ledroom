@@ -1,20 +1,15 @@
-import {
-  AddStepEffect,
-  DBRegion,
-  DBSong,
-  PatchRegionResponse,
-} from "@ledroom2/types";
-import { PatchRegionSchema, StepEffectSchema } from "@ledroom2/validations";
-import { StoreApi } from "zustand";
-import { api } from "../api/web";
-import { Methods } from "../types/api";
-import { ClientStepEffect } from "../types/effect";
-import { Store, EffectSlice } from "../types/store";
-import * as socket from "../api/socket";
+import { AddStepEffect, DBRegion, DBSong, PatchRegionResponse } from "@ledroom2/types"
+import { PatchRegionSchema, StepEffectSchema } from "@ledroom2/validations"
+import { StoreApi } from "zustand"
+import { api } from "../api/web"
+import { Methods } from "../types/api"
+import { ClientStepEffect } from "../types/effect"
+import { Store, EffectSlice } from "../types/store"
+import * as socket from "../api/socket"
 
 export const effectInitialState = {
-  effects: [],
-};
+  effects: []
+}
 
 export const effectSlice = (
   set: (fn: (state: Store) => void, actionName?: string) => void,
@@ -22,118 +17,109 @@ export const effectSlice = (
 ): EffectSlice => ({
   ...effectInitialState,
   async updateStepEffect(partialStep) {
-    const { selectedSongId, songs, effects } = get();
+    const { selectedSongId, songs, effects } = get()
 
-    const songIndex = songs.findIndex(
-      (song) => song.id === selectedSongId
-    ) as number;
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId) as number
 
     if (songIndex === -1) {
-      return;
+      return
     }
 
     const effectIndex = effects.findIndex(
-      (effect) =>
-        songs[songIndex].selectedRegionId === effect.regionId &&
-        effect.type === "step"
-    );
+      (effect) => songs[songIndex].selectedRegionId === effect.regionId && effect.type === "step"
+    )
 
     if (effectIndex === -1) {
-      return;
+      return
     }
 
     const response = await api<void, Partial<ClientStepEffect>>(
       `/effect/step/${effects[effectIndex].id}`,
       {
         method: Methods.PATCH,
-        body: partialStep,
+        body: partialStep
       }
-    );
+    )
 
     if (response.statusCode !== 204) {
-      return;
+      return
     }
 
-    socket.renderEffectChanges();
+    socket.renderEffectChanges()
     set((state) => {
       const effect = state.effects.find(
         (effect) =>
-          state.songs[songIndex].selectedRegionId === effect.regionId &&
-          effect.type === "step"
-      ) as ClientStepEffect;
+          state.songs[songIndex].selectedRegionId === effect.regionId && effect.type === "step"
+      ) as ClientStepEffect
 
-      (Object.keys(partialStep) as Array<keyof typeof partialStep>).forEach(
-        (key) => {
-          /* @ts-ignore */
-          effect[key] = partialStep[key];
-        }
-      );
-    });
+      ;(Object.keys(partialStep) as Array<keyof typeof partialStep>).forEach((key) => {
+        /* @ts-ignore */
+        effect[key] = partialStep[key]
+      })
+    })
   },
 
   async selectOrAddEffect(type) {
-    const { selectedSongId, songs, effects, regions } = get();
+    const { selectedSongId, songs, effects, regions } = get()
 
-    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId)
 
     if (songIndex === -1) {
-      return;
+      return
     }
 
     const regionIndex = regions.findIndex(
       (region) => region.id === songs[songIndex].selectedRegionId
-    );
+    )
 
     if (regionIndex === -1) {
-      return;
+      return
     }
 
     if (type === "") {
-      const response = await api<
-        PatchRegionResponse,
-        Partial<PatchRegionSchema>
-      >(`/region/${songs[songIndex].selectedRegionId}`, {
-        method: Methods.PATCH,
-        body: {
-          selectedEffect: null,
-        },
-      });
+      const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
+        `/region/${songs[songIndex].selectedRegionId}`,
+        {
+          method: Methods.PATCH,
+          body: {
+            selectedEffect: null
+          }
+        }
+      )
 
       if (response.statusCode !== 204) {
-        return;
+        return
       }
 
-      socket.renderEffectChanges();
+      socket.renderEffectChanges()
       set((state) => {
-        state.regions[regionIndex].selectedEffect = null;
-      });
+        state.regions[regionIndex].selectedEffect = null
+      })
     } else {
       // need to check if the effect already exsist by its type
       const effect = effects.find(
-        (effect) =>
-          songs[songIndex].selectedRegionId === effect.regionId &&
-          effect.type === type
-      );
+        (effect) => songs[songIndex].selectedRegionId === effect.regionId && effect.type === type
+      )
 
       if (effect) {
-        const response = await api<
-          PatchRegionResponse,
-          Partial<PatchRegionSchema>
-        >(`/region/${songs[songIndex].selectedRegionId}`, {
-          method: Methods.PATCH,
-          body: {
-            selectedEffect: effect.id,
-          },
-        });
+        const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
+          `/region/${songs[songIndex].selectedRegionId}`,
+          {
+            method: Methods.PATCH,
+            body: {
+              selectedEffect: effect.id
+            }
+          }
+        )
 
         if (response.statusCode !== 204) {
-          return;
+          return
         }
 
-        socket.renderEffectChanges();
+        socket.renderEffectChanges()
         set((state) => {
-          state.regions[regionIndex].selectedEffect = effect.id;
-        });
+          state.regions[regionIndex].selectedEffect = effect.id
+        })
       } else {
         const initialStep: StepEffectSchema = {
           regionId: songs[songIndex].selectedRegionId as string,
@@ -143,19 +129,16 @@ export const effectSlice = (
           barCount: 50,
           direction: "left",
           rangeStart: 0,
-          rangeEnd: 900,
-        };
+          rangeEnd: 900
+        }
 
-        const effectCreateResponse = await api<AddStepEffect, StepEffectSchema>(
-          "/effect/step",
-          {
-            method: Methods.POST,
-            body: initialStep,
-          }
-        );
+        const effectCreateResponse = await api<AddStepEffect, StepEffectSchema>("/effect/step", {
+          method: Methods.POST,
+          body: initialStep
+        })
 
         if (effectCreateResponse.statusCode !== 201) {
-          return;
+          return
         }
 
         const regionEffectSelectionResponse = await api<
@@ -164,71 +147,69 @@ export const effectSlice = (
         >(`/region/${songs[songIndex].selectedRegionId}`, {
           method: Methods.PATCH,
           body: {
-            selectedEffect: effectCreateResponse.data.id,
-          },
-        });
+            selectedEffect: effectCreateResponse.data.id
+          }
+        })
 
         if (regionEffectSelectionResponse.statusCode !== 204) {
-          return;
+          return
         }
 
-        socket.renderEffectChanges();
+        socket.renderEffectChanges()
         set((state) => {
           state.effects.push({
             ...initialStep,
             type: "step",
-            id: effectCreateResponse.data.id,
-          });
+            id: effectCreateResponse.data.id
+          })
 
           for (const region of state.regions) {
             if (region.id === state.songs[songIndex].selectedRegionId) {
-              region.selectedEffect = effectCreateResponse.data.id;
+              region.selectedEffect = effectCreateResponse.data.id
             }
           }
-        }, "addStepEffect");
+        }, "addStepEffect")
       }
     }
   },
   async removeSelectedEffect() {
-    const { selectedSongId, songs, regions, effects } = get();
+    const { selectedSongId, songs, regions, effects } = get()
 
-    const songIndex = songs.findIndex((song) => song.id === selectedSongId);
+    const songIndex = songs.findIndex((song) => song.id === selectedSongId)
 
     if (songIndex === -1) {
-      return;
+      return
     }
 
     const regionIndex = regions.findIndex(
       (region) => region.id === songs[songIndex].selectedRegionId
-    );
+    )
 
     if (regionIndex === -1) {
-      return;
+      return
     }
 
     const effectIndex = effects.findIndex(
       (effect) => effect.id === regions[regionIndex].selectedEffect
-    );
+    )
 
     if (effectIndex === -1) {
-      return;
+      return
     }
 
     const response = await api(`/effect/step/${effects[effectIndex].id}`, {
-      method: Methods.DELETE,
-    });
+      method: Methods.DELETE
+    })
 
     if (response.statusCode !== 204) {
-      return;
+      return
     }
 
-    socket.renderEffectChanges();
+    socket.renderEffectChanges()
     set((state) => {
-      state.effects = state.effects.filter(
-        (effect) => effect.id !== state.effects[effectIndex].id
-      );
+      state.effects = state.effects.filter((effect) => effect.id !== state.effects[effectIndex].id)
 
-      state.regions[regionIndex].selectedEffect = null;
-    });
-  },
-});
+      state.regions[regionIndex].selectedEffect = null
+    })
+  }
+})

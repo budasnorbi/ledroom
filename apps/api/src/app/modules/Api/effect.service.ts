@@ -1,16 +1,9 @@
-import {
-  PartialStepEffectSchema,
-  StepEffectSchema,
-} from "@ledroom2/validations";
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from "@nestjs/common";
-import { StepEffectRepository } from "../../repositories/StepEffect.repository";
-import { nanoid } from "nanoid";
-import { RegionsRepository } from "../../repositories/Regions.repository";
-import { LedService } from "../Led/led.service";
+import { PartialStepEffectSchema, StepEffectSchema } from "@ledroom2/validations"
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common"
+import { StepEffectRepository } from "../../repositories/StepEffect.repository"
+import { nanoid } from "nanoid"
+import { RegionsRepository } from "../../repositories/Regions.repository"
+import { LedService } from "../Led/led.service"
 
 @Injectable()
 export class EffectService {
@@ -21,87 +14,32 @@ export class EffectService {
   ) {}
 
   async addStepEffect(body: StepEffectSchema) {
-    const id = nanoid();
+    const id = nanoid()
 
-    const newStepEffect = this.stepEffectRepository.create({ ...body, id });
+    const newStepEffect = this.stepEffectRepository.create({ ...body, id })
     await this.stepEffectRepository.save(newStepEffect).catch((error: any) => {
-      console.log(error.driverError.errno);
-    });
+      console.log(error.driverError.errno)
+    })
 
     await this.regionsRepository
       .update({ id: body.regionId }, { stepEffect: newStepEffect })
       .catch((err) => {
-        console.log(err);
-      });
+        console.log(err)
+      })
 
-    return { id };
+    return { id }
   }
 
   async patchStepEffect(id: string, body: PartialStepEffectSchema) {
-    if (!isNaN(body.rangeEnd) && !isNaN(body.rangeStart)) {
-      if (body.rangeStart >= body.rangeEnd) {
-        throw new BadRequestException(
-          "Range start can't be higher than rangeEnd"
-        );
-      }
-      if (body.rangeEnd <= body.rangeStart) {
-        throw new BadRequestException(
-          "Range end can't be lower than range start"
-        );
-      }
-    }
-
-    if (!isNaN(body.rangeStart)) {
-      const effect = await this.stepEffectRepository
-        .findOne({
-          where: { id },
-        })
-        .catch((err) => {
-          console.log(err);
-          throw new InternalServerErrorException();
-        });
-
-      if (!effect) {
-        throw new BadRequestException(`There is no such a step effect`);
-      }
-
-      if (body.rangeStart >= effect.rangeEnd) {
-        throw new BadRequestException(
-          "Range start can't be higher than rangeEnd"
-        );
-      }
-    }
-
-    if (!isNaN(body.rangeEnd)) {
-      const effect = await this.stepEffectRepository
-        .findOne({
-          where: { id },
-        })
-        .catch((err) => {
-          console.log(err);
-          throw new InternalServerErrorException();
-        });
-
-      if (!effect) {
-        throw new BadRequestException(`There is no such a step effect`);
-      }
-
-      if (body.rangeEnd <= effect.rangeStart) {
-        throw new BadRequestException(
-          "Range end can't be lower than rangeStart"
-        );
-      }
-    }
-
     await this.stepEffectRepository.update({ id }, body).catch((err) => {
-      console.log(err);
-      throw new InternalServerErrorException();
-    });
+      console.log(err)
+      throw new InternalServerErrorException()
+    })
 
-    await this.ledService.syncSongDetails();
+    await this.ledService.syncSongDetails()
   }
 
   async deleteStepEffect(stepId: string) {
-    await this.stepEffectRepository.delete({ id: stepId });
+    await this.stepEffectRepository.delete({ id: stepId })
   }
 }

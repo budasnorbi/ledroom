@@ -1,11 +1,11 @@
-import { ChangeEvent, FC, MutableRefObject, useEffect, useState } from "react";
-import { useStore } from "../store/store";
-import { Delete } from "./icons/delete";
-import { StepEffectForm } from "./effects/StepEffect";
+import { ChangeEvent, FC, MutableRefObject, useEffect, useState } from "react"
+import { useStore } from "../store/store"
+import { Delete } from "./icons/delete"
+import { StepEffectForm } from "./effects/StepEffect"
 
 interface Props {
-  wavesurferRef: MutableRefObject<WaveSurfer>;
-  selectedRegionId: string;
+  wavesurferRef: MutableRefObject<WaveSurfer>
+  selectedRegionId: string
 }
 
 /*   useEffect(() => {
@@ -25,57 +25,49 @@ interface Props {
     }, 350)
   } */
 
-export const EffectController: FC<Props> = ({
-  wavesurferRef,
-  selectedRegionId,
-}) => {
-  const removeSelectedRegion = useStore.use.removeSelectedRegion();
-  const removeSelectedEffect = useStore.use.removeSelectedEffect();
-  const selectOrAddEffect = useStore.use.selectOrAddEffect();
+export const EffectController: FC<Props> = ({ wavesurferRef, selectedRegionId }) => {
+  const removeSelectedRegion = useStore.use.removeSelectedRegion()
+  const removeSelectedEffect = useStore.use.removeSelectedEffect()
+  const selectOrAddEffect = useStore.use.selectOrAddEffect()
 
   const selectedEffect = useStore((state) => {
-    const selectedSong = state.songs.find(
-      (song) => song.id === state.selectedSongId
-    );
+    const selectedSong = state.songs.find((song) => song.id === state.selectedSongId)
 
     if (!selectedSong) {
-      return null;
+      return null
     }
 
-    const region = state.regions.find(
-      (region) => region.id === selectedSong.selectedRegionId
-    );
+    const region = state.regions.find((region) => region.id === selectedSong.selectedRegionId)
 
     if (!region) {
-      return null;
+      return null
     }
 
     const selectedEffect = state.effects.find(
       (effect) =>
-        selectedSong.selectedRegionId === effect.regionId &&
-        effect.id === region.selectedEffect
-    );
+        selectedSong.selectedRegionId === effect.regionId && effect.id === region.selectedEffect
+    )
 
-    return selectedEffect ?? null;
-  });
+    return selectedEffect ?? null
+  })
 
-  const [selectedEffectOption, selectEffectOption] = useState<"" | "step">("");
+  const [selectedEffectOption, selectEffectOption] = useState<"" | "step">("")
 
   const onEffectChange = async (event: ChangeEvent<HTMLSelectElement>) => {
-    const type = event.target.value as "" | "step";
-    selectEffectOption(type);
-    selectOrAddEffect(type);
-  };
+    const type = event.target.value as "" | "step"
+    selectEffectOption(type)
+    selectOrAddEffect(type)
+  }
 
   useEffect(() => {
-    selectEffectOption(selectedEffect?.type ? selectedEffect.type : "");
-  }, [selectedRegionId]);
+    selectEffectOption(selectedEffect?.type ? selectedEffect.type : "")
+  }, [selectedRegionId])
 
   useEffect(() => {
     if (selectedEffect === null) {
-      selectEffectOption("");
+      selectEffectOption("")
     }
-  }, [!!selectedEffect]);
+  }, [!!selectedEffect])
 
   return (
     <div className="px-2">
@@ -89,7 +81,7 @@ export const EffectController: FC<Props> = ({
         </button>
         <div className="mx-2">
           <select
-            className="border-solid rounded-md bg-slate-100 py-2 px-4"
+            className="border-solid rounded-md bg-slate-100 py-3 px-4"
             onChange={onEffectChange}
             value={selectedEffectOption}
           >
@@ -108,10 +100,8 @@ export const EffectController: FC<Props> = ({
         )}
       </div>
       <div className="py-4">
-        {selectedEffect?.type === "step" && (
-          <StepEffectForm {...selectedEffect} />
-        )}
+        {selectedEffect?.type === "step" && <StepEffectForm {...selectedEffect} />}
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,23 +1,21 @@
-import * as yup from "yup";
+import * as yup from "yup"
 
-const id = yup.string().length(21);
+const id = yup.string().length(21)
 const rgbColor = yup.object({
   r: yup.number().min(0).max(255).required(),
   g: yup.number().min(0).max(255).required(),
   b: yup.number().min(0).max(255).required(),
-  a: yup.number().min(0).max(1).optional(),
-});
+  a: yup.number().min(0).max(1).optional()
+})
 
-const regionId = yup.string().length(21);
-const barColor = rgbColor;
-const clipColor = rgbColor;
-const speed = yup.number().min(1).max(255);
-const barCount = yup.number().min(1).max(900);
-const direction = yup.string().oneOf(["left", "right"]) as yup.StringSchema<
-  "left" | "right"
->;
-const rangeStart = yup.number().min(0).max(900);
-const rangeEnd = yup.number().min(0).max(900);
+const regionId = yup.string().length(21)
+const barColor = rgbColor
+const clipColor = rgbColor
+const speed = yup.number().min(1).max(255)
+const barCount = yup.number().min(1).max(900)
+const direction = yup.string().oneOf(["left", "right"]) as yup.StringSchema<"left" | "right">
+const rangeStart = yup.number().min(0).max(900)
+const rangeEnd = yup.number().min(0).max(900)
 
 export const stepEffectSchema = yup.object({
   regionId: regionId.required(),
@@ -27,10 +25,10 @@ export const stepEffectSchema = yup.object({
   barCount: barCount.required(),
   direction: direction.required(),
   rangeStart: rangeStart.required(),
-  rangeEnd: rangeEnd.required(),
-});
+  rangeEnd: rangeEnd.required()
+})
 
-export type StepEffectSchema = yup.InferType<typeof stepEffectSchema>;
+export type StepEffectSchema = yup.InferType<typeof stepEffectSchema>
 
 const optionalRgbColor = yup
   .object()
@@ -40,8 +38,8 @@ const optionalRgbColor = yup
     r: yup.number().min(0).max(255).required(),
     g: yup.number().min(0).max(255).required(),
     b: yup.number().min(0).max(255).required(),
-    a: yup.number().min(0).max(1).optional(),
-  });
+    a: yup.number().min(0).max(1).optional()
+  })
 
 export const partialStepEffectSchema = yup.object({
   barColor: optionalRgbColor,
@@ -50,9 +48,7 @@ export const partialStepEffectSchema = yup.object({
   barCount: barCount.optional(),
   direction: direction.optional(),
   rangeStart: rangeStart.optional(),
-  rangeEnd: rangeEnd.optional(),
-});
+  rangeEnd: rangeEnd.optional()
+})
 
-export type PartialStepEffectSchema = yup.InferType<
-  typeof partialStepEffectSchema
->;
+export type PartialStepEffectSchema = yup.InferType<typeof partialStepEffectSchema>

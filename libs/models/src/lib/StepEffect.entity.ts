@@ -1,39 +1,39 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from "typeorm";
-import { Region } from "./Region.entity";
-import type { RGBColor } from "react-color";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from "typeorm"
+import { Region } from "./Region.entity"
+import type { RGBColor } from "react-color"
 
 @Entity("step_effects", { schema: "ledroom" })
 export class StepEffect {
   @Column("varchar", { primary: true, length: 21 })
-  id: string;
+  id: string
 
   @Column()
-  regionId: string;
+  regionId: string
 
   @Column({ name: "barColor", type: "json" })
-  barColor: RGBColor;
+  barColor: RGBColor
 
   @Column({ name: "clipColor", type: "json" })
-  clipColor: RGBColor;
+  clipColor: RGBColor
 
   @Column({ name: "speed", type: "double", default: 1, unsigned: true })
-  speed: number;
+  speed: number
 
   @Column({ name: "barCount", type: "smallint", default: 50, unsigned: true })
-  barCount: number;
+  barCount: number
 
   @Column({ name: "direction", type: "char", length: 5, default: "left" })
-  direction: "left" | "right";
+  direction: "left" | "right"
 
   @Column({ name: "rangeStart", type: "smallint", unsigned: true, default: 0 })
-  rangeStart: number;
+  rangeStart: number
 
   @Column({ name: "rangeEnd", type: "smallint", unsigned: true, default: 900 })
-  rangeEnd: number;
+  rangeEnd: number
 
   @OneToOne(() => Region, (region) => region.stepEffect, {
-    onDelete: "CASCADE",
+    onDelete: "CASCADE"
   })
   @JoinColumn()
-  region: number;
+  region: number
 }
