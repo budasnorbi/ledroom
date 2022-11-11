@@ -33,7 +33,7 @@ export class Region {
   selectedEffect: string | null;
 
   @OneToOne(() => StepEffect, (stepEffect) => stepEffect.region, {
-    onDelete: "CASCADE",
+    onDelete: "SET NULL",
   })
   @JoinColumn()
   stepEffect: null | StepEffect;
