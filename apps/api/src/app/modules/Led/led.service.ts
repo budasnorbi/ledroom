@@ -1,13 +1,13 @@
+import { Injectable } from "@nestjs/common"
+import { Server } from "socket.io"
+
 import { createLedsColorsArr } from "../../utils/createLedsColorsArr"
 import { EffectService } from "../Effect/effect.service"
-import { Injectable } from "@nestjs/common"
-import { Region } from "@ledroom2/models"
 import { UdpService } from "../Udp/udp.service"
-import { Server } from "socket.io"
 import { fixColorOrder } from "../../utils/fixLedColorOrder"
-import { SongsRepository } from "../../repositories/Songs.repository"
+import { PrismaService } from "../../prisma.service"
+
 import { RegionWithRelation, SongsWithRelation } from "@ledroom2/types"
-import { rgba2rgb } from "../../utils/rgbaToRgb"
 
 @Injectable()
 export class LedService {
@@ -16,7 +16,7 @@ export class LedService {
   private musicTime = 0
   private blackBuffer = createLedsColorsArr([0, 0, 0])
   private redBuffer = createLedsColorsArr([255, 0, 0])
-  private greenBuffer = createLedsColorsArr([0, 255, 0])
+  private greenBuffer = createLedsColorsArr([0, 0, 255])
   private blueBuffer = createLedsColorsArr([0, 0, 255])
   private whiteBuffer = createLedsColorsArr([255, 255, 255])
 
@@ -28,17 +28,19 @@ export class LedService {
   private butorKilogasFalRange: [number, number] = [780, 815]
   private ajtoFalRange: [number, number] = [816, 74]
   private currentFrame: number[]
-  regions: Region[]
+  regions: RegionWithRelation[]
   private song: SongsWithRelation | null
 
   constructor(
+    private prismaService: PrismaService,
     private udpService: UdpService,
-    private effectService: EffectService,
-    private songsRepository: SongsRepository
-  ) {}
+    private effectService: EffectService
+  ) {
+    this.udpService.sendData(fixColorOrder(this.greenBuffer))
+  }
 
   async handleSocketAfterInit(socket: Server) {
-    await this.renderEffectChange(socket)
+    //await this.renderEffectChange(socket)
   }
 
   updateTime(time: number) {
@@ -69,18 +71,17 @@ export class LedService {
     for (let i = 0; i < regions.length; i++) {
       if (time >= regions[i].startTime && time <= regions[i].endTime) {
         const region = regions[i]
-        if (region.stepEffect) {
-          const effect = region.stepEffect
 
-          return this.effectService.step({
+        if (region.step_effects) {
+          const effect = region.step_effects
+
+          ledColors = this.effectService.step({
             ledColors,
             barColor: effect.barColor,
             clipColor: effect.clipColor,
             barCount: effect.barCount,
             direction: effect.direction,
-            speed: 1000 / 60 / effect.speed,
-            rangeStart: effect.rangeStart,
-            rangeEnd: effect.rangeEnd
+            speed: 1000 / 60 / effect.speed
           })
         }
       }
@@ -114,7 +115,14 @@ export class LedService {
   }
 
   async syncSongDetails() {
-    this.song = (await this.songsRepository.getSelectedSong()) as SongsWithRelation
+    /* this.song = await this.prismaService.songs.findFirst({
+      where: {
+        selected: true
+      },
+      include: {
+        regions: { include: { step_effects: { include: { effect_ranges: true } } } }
+      }
+    }) */
   }
 
   async renderEffectChange(socket: Server) {

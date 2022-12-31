@@ -1,11 +1,12 @@
+import * as g from "g.js"
 import { Injectable } from "@nestjs/common"
 import { map } from "../../utils/map"
-import * as g from "g.js"
 import { cloneArray } from "../../utils/cloneArray"
-import { Blink, Step } from "@ledroom2/types"
 import { getBezierCurveY } from "../../utils/bezierCaluclator"
-import { StepEffect } from "@ledroom2/models"
 import { rgba2rgb } from "../../utils/rgbaToRgb"
+
+import type { Blink, Step } from "@ledroom2/types"
+import type { step_effects } from "@prisma/client"
 
 @Injectable()
 export class EffectService {
@@ -16,18 +17,14 @@ export class EffectService {
 
   private blinkStart: undefined | number
 
-  public step(
-    config: Omit<StepEffect, "id" | "regionId" | "region"> & {
-      ledColors: number[]
-    }
-  ): number[] {
-    const { ledColors, barCount, speed, direction, rangeStart, rangeEnd } = config
+  public step(config: any): number[] {
+    const frame = cloneArray(config.ledColors)
+    /* const { ledColors, barCount, speed, direction, ranges } = config
 
     const barColor = rgba2rgb(config.barColor)
     const clipColor = rgba2rgb(config.clipColor)
 
     const timeWindowPosition = (Date.now() / speed) % this.ledCount
-    const frame = cloneArray(ledColors)
     const directionNumber = direction === "left" ? -1 : 1
 
     for (let i = this.ledCount; i < this.ledCount * 2; i++) {
@@ -38,20 +35,24 @@ export class EffectService {
         g.squareWave((i - timeWindowPosition * directionNumber) % this.ledCount, 0, 1, barCount) ===
         1
 
-      if (rangeStart < rangeEnd) {
-        if (ledIndex >= rangeStart && ledIndex <= rangeEnd) {
-          frame[byteIndex] = squareWaveIsUp ? barColor[0] : clipColor[0]
-          frame[byteIndex + 1] = squareWaveIsUp ? barColor[1] : clipColor[1]
-          frame[byteIndex + 2] = squareWaveIsUp ? barColor[2] : clipColor[2]
-        }
-      } else {
-        if (ledIndex >= rangeStart || ledIndex <= rangeEnd) {
-          frame[byteIndex] = squareWaveIsUp ? barColor[0] : clipColor[0]
-          frame[byteIndex + 1] = squareWaveIsUp ? barColor[1] : clipColor[1]
-          frame[byteIndex + 2] = squareWaveIsUp ? barColor[2] : clipColor[2]
+      for (let k = 0; k < ranges.length; k++) {
+        const { start: rangeStart, end: rangeEnd } = ranges[k]
+
+        if (rangeStart < rangeEnd) {
+          if (ledIndex >= rangeStart && ledIndex <= rangeEnd) {
+            frame[byteIndex] = squareWaveIsUp ? barColor[0] : clipColor[0]
+            frame[byteIndex + 1] = squareWaveIsUp ? barColor[1] : clipColor[1]
+            frame[byteIndex + 2] = squareWaveIsUp ? barColor[2] : clipColor[2]
+          }
+        } else {
+          if (ledIndex >= rangeStart || ledIndex <= rangeEnd) {
+            frame[byteIndex] = squareWaveIsUp ? barColor[0] : clipColor[0]
+            frame[byteIndex + 1] = squareWaveIsUp ? barColor[1] : clipColor[1]
+            frame[byteIndex + 2] = squareWaveIsUp ? barColor[2] : clipColor[2]
+          }
         }
       }
-    }
+    } */
 
     return frame
   }

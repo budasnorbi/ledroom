@@ -37,13 +37,13 @@ export class SongController {
   }
 
   @Get()
-  getSongs(): Promise<GetSongsResponse> {
+  getSongs(): Promise<any /* GetSongsResponse */> {
     return this.songService.getSongs()
   }
 
   @Get(":songId")
   async getSong(
-    @Param("songId") songId: number,
+    @Param("songId") songId: string,
     @Res({ passthrough: true }) res: Response
   ): Promise<StreamableFile> {
     const song = await this.songService.getSong(songId)
@@ -58,14 +58,14 @@ export class SongController {
 
   @Delete(":songId")
   @HttpCode(204)
-  deleteSong(@Param("songId") songId: number): Promise<DeleteSongResponse> {
+  deleteSong(@Param("songId") songId: string): Promise<DeleteSongResponse> {
     return this.songService.removeSong(songId)
   }
 
   @Patch("/:songId")
   @HttpCode(204)
   patchSong(
-    @Param("songId") songId: number,
+    @Param("songId") songId: string,
     @Body(new YupValidationPipe(optionalSongSchema)) body: OptionalSongSchema
   ) {
     return this.songService.patchSong(songId, body)

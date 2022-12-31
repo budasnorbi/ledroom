@@ -3,22 +3,19 @@ import * as asyncFs from "fs/promises"
 import * as audioApi from "web-audio-api"
 import * as path from "path"
 
-import { RegionsRepository } from "../../repositories/Regions.repository"
-import { SongsRepository } from "../../repositories/Songs.repository"
-
+import { PrismaService } from "../../prisma.service"
 import { DBSong } from "@ledroom2/types"
-import analyzeMusic from "../../utils/analyze-music"
 import { OptionalSongSchema } from "@ledroom2/validations"
+import analyzeMusic from "../../utils/analyze-music"
+
+import type { songs } from "@prisma/client"
 
 @Injectable()
 export class SongService {
-  constructor(
-    private songRepository: SongsRepository,
-    private regionsRepository: RegionsRepository
-  ) {}
+  constructor(private prismaService: PrismaService) {}
 
-  async uploadSong(file: Express.Multer.File): Promise<DBSong> {
-    if (!file) {
+  async uploadSong(file: Express.Multer.File): Promise<any /* DBSong */> {
+    /*    if (!file) {
       throw new BadRequestException("File not found")
     }
 
@@ -29,19 +26,18 @@ export class SongService {
     })
 
     const context = new audioApi.AudioContext()
-
     const analyzedMusic = await analyzeMusic(context, songBuffer)
 
-    const newSong = this.songRepository.create({
-      name: file.originalname,
-      path: filePath,
-      bpm: Math.round(analyzedMusic.bpm),
-      beatOffset: analyzedMusic.beatOffset,
-      beatAroundEnd: analyzedMusic.beatAroundEnd,
-      selected: true
+    const savedSong = await this.prismaService.songs.create({
+      data: {
+        name: file.originalname,
+        path: filePath,
+        bpm: Math.round(analyzedMusic.bpm),
+        beatOffset: analyzedMusic.beatOffset,
+        beatAroundEnd: analyzedMusic.beatAroundEnd,
+        selected: true
+      }
     })
-
-    const savedSong = await this.songRepository.save(newSong)
 
     return {
       id: savedSong.id,
@@ -52,19 +48,34 @@ export class SongService {
       lastTimePosition: savedSong.lastTimePosition,
       selectedRegionId: savedSong.selectedRegionId,
       volume: savedSong.volume
-    }
+    } */
   }
 
   async getSongs() {
-    const songs = await this.songRepository.getSongs()
-    const selectedRegionId = await this.songRepository.getSelectedSongId()
+    const songs = await this.prismaService.songs.findMany({
+      /*       select: {
+        id: true,
+        bpm: true,
+        beatOffset: true,
+        name: true,
+        lastTimePosition: true,
+        volume: true,
+        selected: true,
+        regions: {
+          include: { step_effects: true }
+        }
+      } */
+      include: {
+        regions: { include: { step_effects: { include: { effect_ranges: true } } } }
+      }
+    })
 
-    return { songs, selectedRegionId }
+    return songs
   }
 
-  async getSong(id: number) {
-    const song = await this.songRepository.findOne({
-      where: { id }
+  async getSong(id: string) {
+    const song = await this.prismaService.songs.findFirst({
+      where: { id: "12e121e212" }
     })
 
     if (!song) {
@@ -74,16 +85,24 @@ export class SongService {
     return song
   }
 
-  async removeSong(id: number) {
+  async removeSong(id: songs["id"]) {
     const song = await this.getSong(id)
-    await this.songRepository.delete({ id })
+    await this.prismaService.songs.delete({ where: { id } })
     await asyncFs.unlink(song.path)
   }
 
-  async patchSong(songId: number, body: OptionalSongSchema) {
-    if ("selected" in body) {
-      await this.songRepository.update({ selected: true }, { selected: false })
+  async patchSong(songId: string, body: OptionalSongSchema) {
+    if ("selected" in body && body.selected === true) {
+      await this.prismaService.songs.updateMany({
+        data: { selected: false }
+      })
     }
-    await this.songRepository.update({ id: songId }, body)
+
+    await this.prismaService.songs.update({
+      where: {
+        id: songId
+      },
+      data: body
+    })
   }
 }

@@ -1,5 +1,3 @@
-import { StepEffect } from "@ledroom2/models"
-
 export interface Blink {
   type: "blink"
   bezierPoints: [number, number, number, number]
@@ -9,8 +7,4 @@ export interface Blink {
   watchOnlyColored?: boolean
   duration: number
   range: [number, number]
-}
-
-export interface ClientStepEffect extends Omit<StepEffect, "region"> {
-  type: "step"
 }

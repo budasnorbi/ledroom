@@ -28,8 +28,15 @@ function Dashboard() {
   )
 
   const selectedSong = useStore((state) => {
-    const [song] = state.songs.filter((song) => song.id === selectedSongId)
+    const song = state.songs.find((song) => song.id === selectedSongId)
     return song ?? null
+  })
+
+  const selectedRegionId = useStore((state) => {
+    const region = state.regions.find(
+      (region) => region.songId === state.selectedSongId && region.selected
+    )
+    return region ? region.id : null
   })
 
   useEffect(() => {
@@ -62,7 +69,7 @@ function Dashboard() {
             bpm={selectedSong.bpm}
             beatAroundEnd={selectedSong.beatAroundEnd}
             beatOffset={selectedSong.beatOffset}
-            selectedSongId={selectedSong?.id}
+            selectedSongId={selectedSong.id}
           />
         )}
       </div>
@@ -80,10 +87,10 @@ function Dashboard() {
           volume={selectedSong.volume}
         />
       )}
-      {selectedSong?.selectedRegionId && (
+      {selectedRegionId && (
         <EffectController
           wavesurferRef={wavesurferRef as MutableRefObject<WaveSurfer>}
-          selectedRegionId={selectedSong.selectedRegionId}
+          selectedRegionId={selectedRegionId}
         />
       )}
       {/* <Preview /> */}

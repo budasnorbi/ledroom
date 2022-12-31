@@ -6,10 +6,11 @@ import { Methods } from "../types/api"
 import { api } from "../api/web"
 import { OptionalSongSchema } from "@ledroom2/validations"
 import { renderRegions } from "../utils/renderRegions"
+import { songs } from "@prisma/client"
 
 interface Props extends Pick<DBSong, "bpm" | "beatOffset" | "beatAroundEnd"> {
   wavesurferRef: MutableRefObject<WaveSurfer>
-  selectedSongId: number
+  selectedSongId: songs["id"]
 }
 
 const BeatController: FC<Props> = memo(

@@ -1,5 +1,6 @@
 import { StoreApi } from "zustand"
 import type { Store, SongsSlice } from "../types/store"
+import type { songs } from "@prisma/client"
 
 import { api } from "../api/web"
 
@@ -9,8 +10,6 @@ import { Methods } from "../types/api"
 
 export const songInitialState = {
   songs: [],
-  regions: [],
-  effects: [],
   selectedSongId: null
 }
 
@@ -34,21 +33,19 @@ export const songSlice = (
     selectSong(data.id)
   },
 
-  addSongs({ songs, selectedRegionId }) {
+  addSongs({ songs, selectedSongId }) {
     set((state) => {
       for (let i = 0; i < songs.length; i++) {
         const { regions: _regions, ...song } = songs[i]
         state.songs.push(song)
         for (let k = 0; k < _regions.length; k++) {
-          const { stepEffect, ...region } = _regions[k]
+          const { effects, ...region } = _regions[k]
           state.regions.push(region)
-          if (stepEffect) {
-            state.effects.push({ ...stepEffect, type: "step" })
-          }
+          state.effects.push(...effects)
         }
       }
 
-      state.selectedSongId = selectedRegionId
+      state.selectedSongId = selectedSongId
     }, "addSongs")
   },
 

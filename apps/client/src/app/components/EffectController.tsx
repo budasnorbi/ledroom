@@ -2,6 +2,8 @@ import { ChangeEvent, FC, MutableRefObject, useEffect, useState } from "react"
 import { useStore } from "../store/store"
 import { Delete } from "./icons/delete"
 import { StepEffectForm } from "./effects/StepEffect"
+import { DBSong } from "@ledroom2/types"
+import { regions } from "@prisma/client"
 
 interface Props {
   wavesurferRef: MutableRefObject<WaveSurfer>
@@ -31,24 +33,15 @@ export const EffectController: FC<Props> = ({ wavesurferRef, selectedRegionId })
   const selectOrAddEffect = useStore.use.selectOrAddEffect()
 
   const selectedEffect = useStore((state) => {
-    const selectedSong = state.songs.find((song) => song.id === state.selectedSongId)
+    const song = state.songs.find((song) => song.id === state.selectedSongId) as DBSong
 
-    if (!selectedSong) {
-      return null
-    }
+    const region = state.regions.find(
+      (region) => region.songId === song.id && region.selected
+    ) as regions
 
-    const region = state.regions.find((region) => region.id === selectedSong.selectedRegionId)
+    const effect = state.effects.find((effect) => effect.regionId === region.id && effect.selected)
 
-    if (!region) {
-      return null
-    }
-
-    const selectedEffect = state.effects.find(
-      (effect) =>
-        selectedSong.selectedRegionId === effect.regionId && effect.id === region.selectedEffect
-    )
-
-    return selectedEffect ?? null
+    return effect ?? null
   })
 
   const [selectedEffectOption, selectEffectOption] = useState<"" | "step">("")
@@ -60,7 +53,7 @@ export const EffectController: FC<Props> = ({ wavesurferRef, selectedRegionId })
   }
 
   useEffect(() => {
-    selectEffectOption(selectedEffect?.type ? selectedEffect.type : "")
+    selectEffectOption(selectedEffect === null ? "" : (selectedEffect.type as "step"))
   }, [selectedRegionId])
 
   useEffect(() => {

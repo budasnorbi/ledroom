@@ -1,9 +1,8 @@
 import * as yup from "yup"
 
-const songId = yup.number()
+const songId = yup.string().uuid()
 const startTime = yup.number()
 const endTime = yup.number()
-const selectedEffect = yup.string().length(21)
 
 export const addRegionSchema = yup.object({
   songId: songId.required(),
@@ -14,8 +13,7 @@ export const addRegionSchema = yup.object({
 export const patchRegionSchema = yup.object({
   songId: songId.optional(),
   startTime: startTime.optional(),
-  endTime: endTime.optional(),
-  selectedEffect: selectedEffect.nullable()
+  endTime: endTime.optional()
 })
 
 export type AddRegionSchema = yup.InferType<typeof addRegionSchema>

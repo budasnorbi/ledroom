@@ -13,13 +13,14 @@ import {
 
 import { renderRegions } from "../utils//renderRegions"
 import * as socketApi from "../api/socket"
+import { songs } from "@prisma/client"
 
 // let handleSpacePress: any
 
 interface WaveSurferProps {
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>
   setMusicCurrentTime: React.Dispatch<React.SetStateAction<number>>
-  selectedSongId: number
+  selectedSongId: songs["id"] | null
 }
 
 const WaveSurfer: FC<WaveSurferProps> = ({
@@ -124,6 +125,8 @@ const WaveSurfer: FC<WaveSurferProps> = ({
         window.removeEventListener("keydown", handleSpacePress)
         window.addEventListener("keydown", handleSpacePress) */
 
+      const selectedRegion = selectedSong.regions.find((region) => region.selected)?.id
+
       renderRegions(
         wavesurfer,
         {
@@ -131,7 +134,7 @@ const WaveSurfer: FC<WaveSurferProps> = ({
           beatOffset,
           bpm,
           songId: selectedSong.song.id,
-          selectedRegionId: selectedSong.song.selectedRegionId
+          selectedRegionId: selectedRegion
         },
         {
           addRegion,

@@ -1,6 +1,7 @@
 import type { GetSongsResponse, UploadSongResponse, DBRegion, DBSong } from "@ledroom2/types"
 import type { Region } from "wavesurfer.js/src/plugin/regions"
-import type { ClientStepEffect } from "../types/effect"
+import type { effect_ranges, songs } from "@prisma/client"
+import type { StepEffects } from "@ledroom2/types"
 
 export type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -19,19 +20,23 @@ export type SelectRegion = (selectedRegion: Region, wavesurfer: WaveSurfer) => v
 
 export interface SongsSlice {
   songs: DBSong[]
-  selectedSongId: null | number
+  selectedSongId: songs["id"] | null
   addSongs: (data: GetSongsResponse) => void
   addSong: (data: UploadSongResponse) => void
-  removeSong: (id: number) => void
-  selectSong: (id: number | null) => void
-  updateSongBeatConfig: (bpm: number, beatOffset: number, beatAroundEnd: number) => void
-  updateLastTimePosition: (time: number) => void
-  updateSongVolume: (volume: number) => void
+  removeSong: (id: songs["id"]) => void
+  selectSong: (id: songs["id"] | null) => void
+  updateSongBeatConfig: (
+    bpm: songs["bpm"],
+    beatOffset: songs["beatOffset"],
+    beatAroundEnd: songs["beatAroundEnd"]
+  ) => void
+  updateLastTimePosition: (time: songs["lastTimePosition"]) => void
+  updateSongVolume: (volume: songs["volume"]) => void
 }
 
 export interface EffectSlice {
-  effects: ClientStepEffect[]
-  updateStepEffect: (partialStep: Partial<ClientStepEffect>) => void
+  effects: StepEffects[]
+  updateStepEffect: (partialStep: Partial<StepEffects>) => void
   selectOrAddEffect: (type: "" | "step") => void
   removeSelectedEffect: () => void
 }
@@ -42,6 +47,10 @@ export interface RegionsSlice {
   selectRegion: SelectRegion
   removeSelectedRegion: (waveSurfer: WaveSurfer) => void
   updateRegionTime: UpdateRegionTime
+}
+
+export interface RangesSlice {
+  ranges: effect_ranges[]
 }
 
 export type Store = SongsSlice & WavesurferSlice & EffectSlice & RegionsSlice

@@ -1,5 +1,4 @@
 import { Repository } from "typeorm"
-import { Song } from "@ledroom2/models"
 import { Injectable } from "@nestjs/common"
 import { DataSource } from "typeorm/data-source/DataSource"
 import { SongsWithRelation } from "@ledroom2/types"
@@ -22,7 +21,7 @@ export class SongsRepository extends Repository<Song> {
         "lastTimePosition",
         "volume"
       ],
-      relations: ["regions", "regions.stepEffect"]
+      relations: ["regions", "regions.stepEffect", "stepEffect.ranges"]
     }) as any
   }
 

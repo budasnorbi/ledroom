@@ -1,11 +1,12 @@
 import { AddStepEffect, DBRegion, DBSong, PatchRegionResponse } from "@ledroom2/types"
-import { PatchRegionSchema, StepEffectSchema } from "@ledroom2/validations"
+import { PatchRegionSchema, PatchStepEffectSchema, StepEffectSchema } from "@ledroom2/validations"
 import { StoreApi } from "zustand"
 import { api } from "../api/web"
 import { Methods } from "../types/api"
-import { ClientStepEffect } from "../types/effect"
 import { Store, EffectSlice } from "../types/store"
 import * as socket from "../api/socket"
+import { step_effects } from "@prisma/client"
+import { getSongIndexById, getStepEffect, getStepEffectIndex } from "../utils/storeUtils"
 
 export const effectInitialState = {
   effects: []
@@ -17,23 +18,25 @@ export const effectSlice = (
 ): EffectSlice => ({
   ...effectInitialState,
   async updateStepEffect(partialStep) {
-    const { selectedSongId, songs, effects } = get()
+    const store = get()
 
-    const songIndex = songs.findIndex((song) => song.id === selectedSongId) as number
+    if (!store.selectedSongId) {
+      return
+    }
+
+    const songIndex = getSongIndexById(store, store.selectedSongId)
 
     if (songIndex === -1) {
       return
     }
 
-    const effectIndex = effects.findIndex(
-      (effect) => songs[songIndex].selectedRegionId === effect.regionId && effect.type === "step"
-    )
+    const effectIndex = getStepEffectIndex(store)
 
     if (effectIndex === -1) {
       return
     }
-
-    const response = await api<void, Partial<ClientStepEffect>>(
+    /* 
+    const response = await api<void, Partial<step_effects>>(
       `/effect/step/${effects[effectIndex].id}`,
       {
         method: Methods.PATCH,
@@ -44,23 +47,19 @@ export const effectSlice = (
     if (response.statusCode !== 204) {
       return
     }
-
+ */
     socket.renderEffectChanges()
-    set((state) => {
-      const effect = state.effects.find(
-        (effect) =>
-          state.songs[songIndex].selectedRegionId === effect.regionId && effect.type === "step"
-      ) as ClientStepEffect
+    /*  set((state) => {
+      const effect = state.effects[effectIndex]
 
       ;(Object.keys(partialStep) as Array<keyof typeof partialStep>).forEach((key) => {
-        /* @ts-ignore */
         effect[key] = partialStep[key]
       })
-    })
+    }) */
   },
 
   async selectOrAddEffect(type) {
-    const { selectedSongId, songs, effects, regions } = get()
+    /* const { selectedSongId, songs, effects, regions } = get()
 
     const songIndex = songs.findIndex((song) => song.id === selectedSongId)
 
@@ -102,15 +101,12 @@ export const effectSlice = (
       )
 
       if (effect) {
-        const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
-          `/region/${songs[songIndex].selectedRegionId}`,
-          {
-            method: Methods.PATCH,
-            body: {
-              selectedEffect: effect.id
-            }
+        const response = await api<void, PatchStepEffectSchema>(`/effect/${effect.id}`, {
+          method: Methods.PATCH,
+          body: {
+            selected: true
           }
-        )
+        })
 
         if (response.statusCode !== 204) {
           return
@@ -127,9 +123,7 @@ export const effectSlice = (
           clipColor: { r: 0, g: 0, b: 0, a: 1 },
           speed: 1,
           barCount: 50,
-          direction: "left",
-          rangeStart: 0,
-          rangeEnd: 900
+          direction: "left"
         }
 
         const effectCreateResponse = await api<AddStepEffect, StepEffectSchema>("/effect/step", {
@@ -170,10 +164,10 @@ export const effectSlice = (
           }
         }, "addStepEffect")
       }
-    }
+    } */
   },
   async removeSelectedEffect() {
-    const { selectedSongId, songs, regions, effects } = get()
+    /* const { selectedSongId, songs, regions, effects } = get()
 
     const songIndex = songs.findIndex((song) => song.id === selectedSongId)
 
@@ -210,6 +204,6 @@ export const effectSlice = (
       state.effects = state.effects.filter((effect) => effect.id !== state.effects[effectIndex].id)
 
       state.regions[regionIndex].selectedEffect = null
-    })
+    }) */
   }
 })

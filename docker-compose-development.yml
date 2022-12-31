@@ -2,15 +2,14 @@ version: "3.8"
 
 services:
   db:
-    image: mysql:8.0.28
+    image: postgres
     platform: linux/x86_64
     container_name: ledroom-db
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
-      MYSQL_HOST: localhost
-      MYSQL_PORT: ${DB_PORT_CONTAINER}
+      POSTGRES_PASSWORD: ${DB_PASS_BACKEND}
+      POSTGRES_USER: postgres
     volumes:
-      - ./db/data:/var/lib/mysql
+      - ./db/data:/var/lib/postgresql/data
       - ./db/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - ${DB_PORT_PUBLIC}:${DB_PORT_CONTAINER}
+      - ${DB_PORT_PUBLIC}:5432

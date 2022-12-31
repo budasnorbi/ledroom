@@ -3,9 +3,10 @@ import { api } from "../api/web"
 import { useStore } from "../store/store"
 import type { UploadSongResponse } from "@ledroom2/types"
 import { Methods } from "../types/api"
+import { songs } from "@prisma/client"
 
 interface Props {
-  selectedSongId: number | undefined
+  selectedSongId: songs["id"] | undefined
 }
 
 export const SongLoadController: FC<Props> = (props) => {
@@ -16,12 +17,11 @@ export const SongLoadController: FC<Props> = (props) => {
   const addSong = useStore.use.addSong()
 
   const handleSongChoose = async (event: ChangeEvent<HTMLSelectElement>) => {
-    const id = parseInt(event.target.value)
-    selectSong(id)
+    selectSong(event.target.value)
   }
 
   const handleSongRemove = () => {
-    removeSong(props.selectedSongId as number)
+    removeSong(props.selectedSongId as string)
   }
 
   const handleSongLoad = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -60,7 +60,7 @@ export const SongLoadController: FC<Props> = (props) => {
           Upload
         </label>
       </div>
-      {props.selectedSongId !== undefined && (
+      {props.selectedSongId && (
         <>
           <select
             onChange={handleSongChoose}

@@ -9,7 +9,10 @@
     "lint": "nx workspace-lint && npx nx run-many --all --target=lint --parallel",
     "start:client": "env-cmd -f ./env/.env.development nx run client:serve",
     "start:api": "env-cmd -f ./env/.env.development nx run api:serve",
-    "start:both": "env-cmd -f ./env/.env.development nx run-many --parallel --target=serve --projects=client,api"
+    "start:both": "env-cmd -f ./env/.env.development nx run-many --parallel --target=serve --projects=client,api",
+    "prisma:generate": "npx prisma generate --schema=./apps/api/prisma/schema.prisma",
+    "prisma:studio": "npx prisma studio --schema=./apps/api/prisma/schema.prisma",
+    "prisma:migrate": "npx prisma migrate dev --schema=./apps/api/prisma/schema.prisma"
   },
   "private": true,
   "dependencies": {
@@ -21,6 +24,7 @@
     "@nestjs/swagger": "^6.1.2",
     "@nestjs/typeorm": "^9.0.1",
     "@nestjs/websockets": "^9.0.11",
+    "@prisma/client": "^4.6.1",
     "autoprefixer": "^10.4.13",
     "core-js": "^3.6.5",
     "env-cmd": "^10.1.0",
@@ -28,8 +32,8 @@
     "immer": "^9.0.15",
     "lodash": "^4.17.21",
     "music-tempo": "^1.0.3",
-    "mysql2": "^2.3.3",
-    "nanoid": "^3.0.0",
+    "pg": "^8.8.0",
+    "prisma": "^4.6.1",
     "react": "18.2.0",
     "react-bezier-curve-editor": "^1.1.2",
     "react-color": "^2.19.3",

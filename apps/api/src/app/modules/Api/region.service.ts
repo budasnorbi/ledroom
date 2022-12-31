@@ -1,49 +1,43 @@
-import { BadRequestException, Injectable } from "@nestjs/common"
-import { nanoid } from "nanoid"
-
-import { RegionsRepository } from "../../repositories/Regions.repository"
-import { SongsRepository } from "../../repositories/Songs.repository"
-
+import { Injectable } from "@nestjs/common"
+import { PrismaService } from "../../prisma.service"
 import type { AddRegionSchema, PatchRegionSchema } from "@ledroom2/validations"
-import { Region } from "@ledroom2/models"
+import type { regions } from "@prisma/client"
 
 @Injectable()
 export class RegionService {
-  constructor(
-    private songRepository: SongsRepository,
-    private regionsRepository: RegionsRepository
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async addRegion(body: AddRegionSchema) {
-    const id = nanoid()
     const { endTime, songId, startTime } = body
 
-    const newRegion = this.regionsRepository.create({
-      id,
-      songId,
-      endTime,
-      startTime
+    const savedRegion = await this.prismaService.regions.create({
+      data: {
+        songId,
+        endTime,
+        startTime
+      },
+      select: {
+        id: true
+      }
     })
 
-    await this.regionsRepository.save(newRegion)
-    await this.songRepository.update({ id: songId }, { selectedRegionId: id })
-
-    return { id }
+    return { id: savedRegion.id }
   }
 
-  async patchRegion(regionId: string, body: Partial<PatchRegionSchema>) {
-    await this.regionsRepository.update({ id: regionId }, body)
-  }
-
-  async deleteRegion(regionId: string) {
-    const region: Pick<Region, "songId"> = await this.regionsRepository.findOne({
-      where: { id: regionId },
-      select: ["songId"]
+  async patchRegion(regionId: regions["id"], body: Partial<PatchRegionSchema>) {
+    await this.prismaService.regions.update({
+      where: {
+        id: regionId
+      },
+      data: body
     })
+  }
 
-    await this.songRepository.update({ id: region.songId }, { selectedRegionId: null })
-    await this.regionsRepository
-      .delete({ id: regionId, songId: region.songId })
-      .then((res) => console.log(res))
+  async deleteRegion(regionId: regions["id"]) {
+    await this.prismaService.regions.delete({
+      where: {
+        id: regionId
+      }
+    })
   }
 }

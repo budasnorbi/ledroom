@@ -8,22 +8,19 @@ import type { AddRegion, SelectRegion, UpdateRegionTime } from "../types/store"
 import type { PatchRegionSchema, AddRegionSchema } from "@ledroom2/validations"
 import type { DBRegion } from "@ledroom2/types"
 import type { Region } from "wavesurfer.js/src/plugin/regions"
+import { regions, songs } from "@prisma/client"
+
+interface TRenderRegionsParams {
+  bpm: songs["bpm"]
+  beatOffset: songs["beatAroundEnd"]
+  beatAroundEnd: songs["beatAroundEnd"]
+  songId: songs["id"]
+  selectedRegionId?: regions["id"] | null
+}
 
 export const renderRegions = (
   wavesurfer: WaveSurfer,
-  {
-    bpm,
-    beatOffset,
-    beatAroundEnd,
-    songId,
-    selectedRegionId
-  }: {
-    bpm: number
-    beatOffset: number
-    beatAroundEnd: number
-    songId: number
-    selectedRegionId?: string | null
-  },
+  { bpm, beatOffset, beatAroundEnd, songId, selectedRegionId }: TRenderRegionsParams,
   {
     addRegion,
     updateRegionTime,
@@ -227,7 +224,7 @@ export const renderRegions = (
         songId,
         startTime: region.start,
         endTime: region.end,
-        selectedEffect: null
+        selected: true
       })
 
       const effectRegion = wavesurfer.regions.add({

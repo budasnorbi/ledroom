@@ -1,4 +1,4 @@
-{
+/* {
   "files.exclude": {
     "node_modules": true,
     "**/yarn.lock": true,
@@ -26,4 +26,4 @@
     "**/*.md": true,
     "tools": true
   }
-}
+} 

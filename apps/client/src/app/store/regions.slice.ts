@@ -1,10 +1,20 @@
 import { DBSong, SelectRegiongResponse, PatchRegionResponse } from "@ledroom2/types"
 import { PatchRegionSchema } from "@ledroom2/validations"
+import { regions } from "@prisma/client"
 import { StoreApi } from "zustand"
 import * as socket from "../api/socket"
 import { api } from "../api/web"
 import { Methods } from "../types/api"
 import { Store, EffectSlice, RegionsSlice } from "../types/store"
+import {
+  getRegionById,
+  getSelectedRegion,
+  getSelectedRegionBySongId,
+  getSelectedSongIndex,
+  getSongById,
+  getSongIndexById,
+  unSelectRegionBySongId
+} from "../utils/storeUtils"
 
 export const regionsInitialState = {
   regions: []
@@ -17,15 +27,15 @@ export const regionsSlice = (
   ...regionsInitialState,
   async addRegion(newRegion) {
     set((state) => {
-      state.regions.push(newRegion)
-
-      const song = state.songs.find((song) => song.id === newRegion.songId)
+      const song = getSongById(state, newRegion.id)
 
       if (!song) {
         return
       }
 
-      song.selectedRegionId = newRegion.id
+      unSelectRegionBySongId(state, song.id)
+
+      state.regions.push(newRegion)
     }, "addRegion")
   },
 
@@ -35,7 +45,7 @@ export const regionsSlice = (
       return
     }
 
-    const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
+    /*const response = await api<PatchRegionResponse, Partial<PatchRegionSchema>>(
       `/region/${selectedRegion.id}`,
       {
         method: Methods.PATCH,
@@ -47,7 +57,7 @@ export const regionsSlice = (
 
     if (response.statusCode !== 204) {
       return
-    }
+    }*/
 
     for (const key in wavesurfer.regions.list) {
       const _region = wavesurfer.regions.list[key]
@@ -69,35 +79,52 @@ export const regionsSlice = (
         return
       }
 
-      song.selectedRegionId = selectedRegion.id
+      for (let i = 0; i < state.regions.length; i++) {
+        const region = state.regions[i]
+      }
+
+      const region = state.regions.find((region) => region.id === selectedRegion.id)
+
+      if (region) {
+        region.selected = true
+      }
     }, "selectRegion")
   },
 
   async removeSelectedRegion(wavesurferRef) {
-    const { songs, selectedSongId } = get()
-    const songIndex = songs.findIndex((song) => song.id === selectedSongId)
+    const state = get()
 
-    if (songIndex === -1 || songs[songIndex].selectedRegionId === null) {
+    if (state.selectedSongId === null) {
       return
     }
 
-    const response = await api(`/region/${songs[songIndex].selectedRegionId}`, {
+    const songIndex = getSelectedSongIndex(state)
+
+    if (songIndex === -1) {
+      return
+    }
+
+    /* const response = await api(`/region/${songs[songIndex].selectedRegionId}`, {
       method: Methods.DELETE
     })
 
     if (response.statusCode !== 204) {
       return
-    }
+    } */
 
     socket.renderEffectChanges()
     set((state) => {
+      const selectedRegion = getSelectedRegion(state)
+
+      if (!selectedRegion) {
+        return
+      }
+
+      wavesurferRef.regions.list[selectedRegion.id].remove()
+
       state.regions = state.regions.filter(
-        (region) => region.id !== (state.songs[songIndex].selectedRegionId as string)
+        (region) => region.songId === state.songs[songIndex].id && !region.selected
       )
-
-      wavesurferRef.regions.list[state.songs[songIndex].selectedRegionId as string].remove()
-
-      state.songs[songIndex].selectedRegionId = null
     }, "removeRegion")
   },
 

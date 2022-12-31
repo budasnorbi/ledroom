@@ -1,10 +1,11 @@
 import { ChromePicker, ColorResult } from "react-color"
 
 import { ChangeEvent, FC, useCallback, useEffect, useMemo, useState } from "react"
-import { ClientStepEffect } from "../../types/effect"
 import { useStore } from "../../store/store"
+import type { DBSong, StepEffects } from "@ledroom2/types"
+import { regions } from "@prisma/client"
 
-interface Props extends ClientStepEffect {}
+interface Props extends StepEffects {}
 
 const colorPickerStyle = {
   default: {
@@ -23,24 +24,21 @@ export const StepEffectForm: FC<Props> = (props) => {
   const [clipColor, setClipColor] = useState(props.clipColor)
 
   const effect = useStore((state) => {
-    const song = state.songs.find((song) => song.id === state.selectedSongId)
-    if (!song) {
-      return null
-    }
-    const effect = state.effects.find(
-      (effect) => effect.regionId === song.selectedRegionId && effect.type === "step"
-    )
-    if (!effect) {
-      return null
-    }
-    return effect
+    const song = state.songs.find((song) => song.id === state.selectedSongId) as DBSong
+    const region = state.regions.find(
+      (region) => region.id === song.id && region.selected
+    ) as regions
+
+    const effect = state.effects.find((effect) => effect.regionId === region.id && effect.selected)
+
+    return effect ?? null
   })
 
   if (!effect) {
     return null
   }
 
-  const { barCount, speed, direction, rangeStart, rangeEnd, regionId } = effect
+  const { barCount, speed, direction, regionId } = effect
 
   useEffect(() => {
     setBarColor(effect.barColor)
@@ -80,13 +78,13 @@ export const StepEffectForm: FC<Props> = (props) => {
   // RANGESTART CHANGE
   const onRangeStartChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
     const rangeStart = parseInt(event.target.value)
-    updateStepEffect({ rangeStart })
+    // updateStepEffect({ rangeStart })
   }, [])
 
   // RANGEEND CHANGE
   const onRangeEndChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
     const rangeEnd = parseInt(event.target.value)
-    updateStepEffect({ rangeEnd })
+    // updateStepEffect({ rangeEnd })
   }, [])
 
   // DIRECTION CHANGE
@@ -198,22 +196,22 @@ export const StepEffectForm: FC<Props> = (props) => {
               <label className="block text-gray-700 text-sm mb-2" htmlFor="rangeStart">
                 start
               </label>
-              <select
+              {/* <select
                 name="rangeStart"
                 id="rangeStart"
                 value={rangeStart}
                 onChange={onRangeStartChange}
               >
                 {rangeOptions}
-              </select>
+              </select> */}
             </div>
             <div className="w-full">
               <label className="block text-gray-700 text-sm mb-2" htmlFor="rangeEnd">
                 end
               </label>
-              <select name="rangeEnd" id="rangeEnd" value={rangeEnd} onChange={onRangeEndChange}>
+              {/* <select name="rangeEnd" id="rangeEnd" value={rangeEnd} onChange={onRangeEndChange}>
                 {rangeOptions}
-              </select>
+              </select> */}
             </div>
           </div>
         </div>

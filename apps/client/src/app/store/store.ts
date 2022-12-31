@@ -7,6 +7,7 @@ import { songInitialState, songSlice } from "./songs.slice"
 import { wavesurferIntialState, wavesurferSlice } from "./wavesurfer.slice"
 import { effectInitialState, effectSlice } from "./effects.slice"
 import { regionsInitialState, regionsSlice } from "./regions.slice"
+import { rangesSlice } from "./ranges"
 
 const createSelectors = <S extends UseBoundStore<StoreApi<State>>>(_store: S) => {
   const store = _store as WithSelectors<typeof _store>
@@ -34,6 +35,7 @@ export const useStore = createSelectors(
         ...songSlice(setState, getState),
         ...effectSlice(setState, getState),
         ...regionsSlice(setState, getState),
+        ...rangesSlice(setState, getState),
         resetStore() {
           setState(async (state) => {
             state.effects = effectInitialState.effects
