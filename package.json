@@ -1,18 +1,19 @@
 {
-  "name": "ledroom2",
+  "name": "ledroom",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
     "build": "nx build",
     "test": "nx run-many --all --target=test --parallel",
-    "lint": "nx workspace-lint && npx nx run-many --all --target=lint --parallel",
-    "start:client": "env-cmd -f ./env/.env.development nx run client:serve",
+    "lint": "nx workspace-lint && yarn nx run-many --all --target=lint --parallel",
+    "start:app": "env-cmd -f ./env/.env.development nx run app:serve",
     "start:api": "env-cmd -f ./env/.env.development nx run api:serve",
-    "start:both": "env-cmd -f ./env/.env.development nx run-many --parallel --target=serve --projects=client,api",
-    "prisma:generate": "npx prisma generate --schema=./apps/api/prisma/schema.prisma",
-    "prisma:studio": "npx prisma studio --schema=./apps/api/prisma/schema.prisma",
-    "prisma:migrate": "npx prisma migrate dev --schema=./apps/api/prisma/schema.prisma"
+    "start:both": "env-cmd -f ./env/.env.development nx run-many --parallel --target=serve --projects=app,api",
+    "start:db": "docker-compose --file ./docker-compose-development.yml --env-file ./env/.env.development up db",
+    "prisma:generate": "yarn prisma generate --schema=./apps/api/prisma/schema.prisma",
+    "prisma:studio": "yarn prisma studio --schema=./apps/api/prisma/schema.prisma",
+    "prisma:migrate": "yarn prisma migrate dev --schema=./apps/api/prisma/schema.prisma"
   },
   "private": true,
   "dependencies": {
@@ -71,7 +72,7 @@
     "@types/express": "^4.17.14",
     "@types/jest": "28.1.1",
     "@types/multer": "^1.4.7",
-    "@types/node": "18.7.1",
+    "@types/node": "18.7.18",
     "@types/react": "18.0.20",
     "@types/react-color": "^3.0.6",
     "@types/react-dom": "18.0.6",

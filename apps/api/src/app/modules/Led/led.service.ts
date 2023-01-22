@@ -52,14 +52,14 @@ export class LedService {
     this.updateTime(time)
 
     if (!this.ledFrameIntervalID) {
-      const fpsTick = () => {
+/*       const fpsTick = () => {
         const colors = this.songEffect(this.song.regions, this.musicTime)
 
         socket.emit("frame", colors)
         this.udpService.sendData(fixColorOrder(colors))
       }
-
-      this.ledFrameIntervalID = setInterval(fpsTick, 1000 / this.fps)
+ */
+      //this.ledFrameIntervalID = setInterval(fpsTick, 1000 / this.fps)
     }
   }
 
@@ -126,10 +126,10 @@ export class LedService {
   }
 
   async renderEffectChange(socket: Server) {
-    await this.syncSongDetails()
+   /*  await this.syncSongDetails()
     const colors = this.songEffect(this.song.regions, this.musicTime)
 
     socket.emit("frame", colors)
-    this.udpService.sendData(fixColorOrder(colors))
+    this.udpService.sendData(fixColorOrder(colors)) */
   }
 }

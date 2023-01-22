@@ -27,11 +27,12 @@ model region {
   endTime       Float          @default(0)
   selected      Boolean        @default(true)
   song          song           @relation(fields: [songId], references: [songId], onDelete: Cascade, onUpdate: NoAction)
+  step_effects  step_effect?
+  blink_effects blink_effect?
 }
 
-model step_effects {
+model step_effect {
   stepEffectId String  @id() @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
-  regionId String @unique() @db.Uuid
   type         String  @default("step")
   barColor     Json    @db.Json
   clipColor    Json    @db.Json
@@ -39,11 +40,13 @@ model step_effects {
   barCount     Int     @default(50) @db.SmallInt
   direction    String  @default("left") @db.Char(5)
   selected     Boolean @default(true)
+
+  regions  region? @relation(fields: [regionId], references: [regionId], onDelete: Cascade, onUpdate: NoAction)
+  regionId String   @unique() @db.Uuid
 }
 
-model blink_effects {
+model blink_effect {
   blinkEffectId String  @id() @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
-  regionId String  @unique() @db.Uuid
   type          String  @default("blink")
   barColor      Json    @db.Json
   clipColor     Json    @db.Json
@@ -51,4 +54,7 @@ model blink_effects {
   barCount      Int     @default(50) @db.SmallInt
   direction     String  @default("left") @db.Char(5)
   selected      Boolean @default(true)
+
+  regions  region? @relation(fields: [regionId], references: [regionId], onDelete: Cascade, onUpdate: NoAction)
+  regionId String   @unique() @db.Uuid
 }
